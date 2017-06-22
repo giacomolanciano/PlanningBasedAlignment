@@ -1,10 +1,10 @@
-package org.processmining.newpackageivy.algorithms;
+package org.processmining.planningbasedalignment.algorithms;
 
 import org.processmining.framework.plugin.PluginContext;
-import org.processmining.newpackageivy.models.YourFirstInput;
-import org.processmining.newpackageivy.models.YourOutput;
-import org.processmining.newpackageivy.models.YourSecondInput;
-import org.processmining.newpackageivy.parameters.YourParameters;
+import org.processmining.planningbasedalignment.models.YourFirstInput;
+import org.processmining.planningbasedalignment.models.YourOutput;
+import org.processmining.planningbasedalignment.models.YourSecondInput;
+import org.processmining.planningbasedalignment.parameters.YourParameters;
 
 public class YourAlgorithm {
 

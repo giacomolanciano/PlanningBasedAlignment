@@ -1,4 +1,4 @@
-package org.processmining.newpackageivy.models;
+package org.processmining.planningbasedalignment.models;
 
 
 public class YourOutput {
