@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Timestamp;
-import java.util.Vector;
 
 public class Utilities {
 
@@ -65,47 +64,6 @@ public class Utilities {
 	}
 
 	/**
-	 * Format string to be a valid PDDL identifier.
-	 * 
-	 * @param string The string to be formatted.
-	 * @return The correctly formatted string.
-	 */
-	public static String getCorrectPddlFormat(String string)  {
-
-		if(string.contains(" "))
-			string = string.replaceAll(" ", "_");
-
-		if(string.contains("/"))
-			string = string.replaceAll("\\/", "");
-
-		if(string.contains("("))
-			string = string.replaceAll("\\(", "");
-
-		if(string.contains(")"))
-			string = string.replaceAll("\\)", "");
-
-		if(string.contains("<"))
-			string = string.replaceAll("\\<", "");
-
-		if(string.contains(">"))
-			string = string.replaceAll("\\>", "");
-
-		if(string.contains("."))
-			string = string.replaceAll("\\.", "");
-
-		if(string.contains(","))
-			string = string.replaceAll("\\,", "_");
-
-		if(string.contains("+"))
-			string = string.replaceAll("\\+", "_");
-
-		if(string.contains("-"))
-			string = string.replaceAll("\\-", "_");
-
-		return string;
-	}
-
-	/**
 	 * Check whether the given string is the textual representation of an integer.
 	 * 
 	 * @param string The string to be checked.
@@ -146,24 +104,5 @@ public class Utilities {
 		}
 		return false;
 	}
-
-	/**
-	 * 
-	 * 
-	 * @param activityName
-	 * @param moveType
-	 * @return
-	 */
-	public static String getCostOfActivity(String activityName, AlignmentMove moveType) {
-		for(Vector<String> entry : Globals.getActivitiesCostsVector()) {
-			if(entry.elementAt(0).equalsIgnoreCase(activityName)) {
-				if(moveType == AlignmentMove.MOVE_IN_MODEL)
-					return(entry.elementAt(1));
-				else if(moveType == AlignmentMove.MOVE_IN_LOG)
-					return(entry.elementAt(2));
-			}
-		}
-		return null;
-	}
-
+	
 }

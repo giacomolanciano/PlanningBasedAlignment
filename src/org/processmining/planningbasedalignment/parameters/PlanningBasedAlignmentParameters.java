@@ -1,5 +1,6 @@
 package org.processmining.planningbasedalignment.parameters;
 
+import java.util.Arrays;
 import java.util.Map;
 
 import org.deckfour.xes.classification.XEventClass;
@@ -119,6 +120,15 @@ public class PlanningBasedAlignmentParameters extends PluginParametersImpl {
 
 	public void setTracesLengthBounds(int[] tracesLengthBounds) {
 		this.tracesLengthBounds = tracesLengthBounds;
+	}
+
+	@Override
+	public String toString() {
+		return "PlanningBasedAlignmentParameters [initialMarking=" + initialMarking + ", finalMarking=" + finalMarking
+				+ ", plannerSearchStrategy=" + plannerSearchStrategy + ", transitionsEventsMapping="
+				+ transitionsEventsMapping + ", movesOnLogCosts=" + movesOnLogCosts + ", movesOnModelCosts="
+				+ movesOnModelCosts + ", synchronousMovesCosts=" + synchronousMovesCosts + ", tracesInterval="
+				+ Arrays.toString(tracesInterval) + ", tracesLengthBounds=" + Arrays.toString(tracesLengthBounds) + "]";
 	}
 	
 }

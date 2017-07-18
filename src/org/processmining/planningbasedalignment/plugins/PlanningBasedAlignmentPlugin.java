@@ -1,7 +1,7 @@
 package org.processmining.planningbasedalignment.plugins;
 
+import java.io.IOException;
 import java.text.NumberFormat;
-import java.util.Collection;
 
 import org.deckfour.xes.extension.std.XConceptExtension;
 import org.deckfour.xes.model.XLog;
@@ -41,6 +41,7 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	 * @param log The first input.
 	 * @param petrinet The second input.
 	 * @return The result of the replay of the event log on the Petri net.
+	 * @throws IOException 
 	 */
 	@UITopiaVariant(affiliation = AFFILIATION, author = AUTHOR, email = EMAIL)
 	@PluginVariant(variantLabel = "Your plug-in name, dialog", requiredParameterLabels = { 0, 1 })
@@ -52,20 +53,63 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 		if (parameters == null) {
 			context.getFutureResult(0).cancel(true);
 			return null;
-		} else {
-			context.log("replay is performed. All parameters are set.");
-
-			// This connection MUST exists, as it is constructed by the configuration if necessary
-			context.getConnectionManager().getFirstConnection(EvClassLogPetrinetConnection.class, context, petrinet, log);
-
-			// start algorithm
-			PNRepResult res = replayLogPrivate(context, log, petrinet, parameters);
-
-			context.getFutureResult(0).setLabel(
-					"Replay result - log " + XConceptExtension.instance().extractName(log) + " on " + petrinet.getLabel()
-							+ " using Automated Planning");
-			return res;
 		}
+		
+		context.log("replay is performed. All parameters are set.");
+
+		// This connection MUST exists, as it is constructed by the configuration if necessary
+		context.getConnectionManager().getFirstConnection(EvClassLogPetrinetConnection.class, context, petrinet, log);
+
+		// start algorithm
+		PNRepResult res = replayLog(context, log, petrinet, parameters);
+
+		context.getFutureResult(0).setLabel(
+				"Replay result - log " + XConceptExtension.instance().extractName(log) + " on " + petrinet.getLabel()
+				+ " using Automated Planning");
+		return res;
+
+	}
+	
+	
+	/**
+	 * The plug-in variant that allows one to test.
+	 * 
+	 * @param context The context to run in.
+	 * @return The output.
+	 * @throws ConnectionCannotBeObtained 
+	 */
+	@UITopiaVariant(affiliation = AFFILIATION, author = AUTHOR, email = EMAIL)
+	@PluginVariant(variantLabel = "Your plug-in name, dialog", requiredParameterLabels = { 0, 1 })
+	public PNRepResult testUI(UIPluginContext context, XLog log, Petrinet petrinet) throws ConnectionCannotBeObtained {
+		
+		ConfigurationUI configurationUI = new ConfigurationUI();
+		PlanningBasedAlignmentParameters parameters = configurationUI.getPlanningBasedAlignmentParameters(context, petrinet, log);
+		if (parameters == null) {
+			context.getFutureResult(0).cancel(true);
+			return null;
+		}
+		
+		
+//		XLogInfo logInfo = XLogInfoFactory.createLogInfo(log);
+//		
+//		for (XEventClass c : logInfo.getEventClasses(new XEventNameClassifier()).getClasses())
+//			System.out.println(c);
+//		
+//		for (XTrace t : log) {
+//			
+//			for (XEvent e : t) {
+//				String activityName = XConceptExtension.instance().extractName(e);
+//				System.out.println("\t"+activityName);
+//			}
+//			
+//			break;
+//		}
+
+		
+//		buildPddlEncodingMappings(petrinet, parameters);
+		
+		
+		return null;
 	}
 	
 	
@@ -77,7 +121,7 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	 * @param parameters
 	 * @return
 	 */
-	private PNRepResult replayLogPrivate(PluginContext context, XLog log, Petrinet net, PlanningBasedAlignmentParameters parameters) {
+	private PNRepResult replayLog(PluginContext context, XLog log, Petrinet net, PlanningBasedAlignmentParameters parameters) {
 
 		PNRepResult replayRes = null;
 
@@ -110,35 +154,35 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	 * @param parameters The parameters to use.
 	 * @return The result of the replay of the event log on the Petri net.
 	 */
-	private PNRepResult runConnections(PluginContext context, XLog log, Petrinet petrinet, PlanningBasedAlignmentParameters parameters) {
-		if (parameters.isTryConnections()) {
-			// Try to found a connection that matches the inputs and the parameters.
-			Collection<PlanningBasedAlignmentConnection> connections;
-			try {
-				connections = context.getConnectionManager().getConnections(
-						PlanningBasedAlignmentConnection.class, context, log, petrinet);
-				for (PlanningBasedAlignmentConnection connection : connections) {
-					if (connection.getObjectWithRole(PlanningBasedAlignmentConnection.LOG_LABEL)
-							.equals(log) && connection.getObjectWithRole(PlanningBasedAlignmentConnection.PETRINET_LABEL)
-							.equals(petrinet) && connection.getParameters().equals(parameters)) {
-						// Found a match. Return the associated output as result of the algorithm.
-						return connection.getObjectWithRole(PlanningBasedAlignmentConnection.PN_REPLAY_RESULT_LABEL);
-					}
-				}
-			} catch (ConnectionCannotBeObtained e) {
-				// do nothing
-			}
-		}
-		
-		// No connection found. Apply the algorithm to compute a fresh output result.
-		PNRepResult output = apply(context, log, petrinet, parameters);
-		if (parameters.isTryConnections()) {
-			// Store a connection containing the inputs, output, and parameters.
-			context.getConnectionManager().addConnection(
-					new PlanningBasedAlignmentConnection(log, petrinet, parameters, output));
-		}
-		// Return the output.
-		return output;		
-	}
+//	private PNRepResult runConnections(PluginContext context, XLog log, Petrinet petrinet, PlanningBasedAlignmentParameters parameters) {
+//		if (parameters.isTryConnections()) {
+//			// Try to found a connection that matches the inputs and the parameters.
+//			Collection<PlanningBasedAlignmentConnection> connections;
+//			try {
+//				connections = context.getConnectionManager().getConnections(
+//						PlanningBasedAlignmentConnection.class, context, log, petrinet);
+//				for (PlanningBasedAlignmentConnection connection : connections) {
+//					if (connection.getObjectWithRole(PlanningBasedAlignmentConnection.LOG_LABEL)
+//							.equals(log) && connection.getObjectWithRole(PlanningBasedAlignmentConnection.PETRINET_LABEL)
+//							.equals(petrinet) && connection.getParameters().equals(parameters)) {
+//						// Found a match. Return the associated output as result of the algorithm.
+//						return connection.getObjectWithRole(PlanningBasedAlignmentConnection.PN_REPLAY_RESULT_LABEL);
+//					}
+//				}
+//			} catch (ConnectionCannotBeObtained e) {
+//				// do nothing
+//			}
+//		}
+//		
+//		// No connection found. Apply the algorithm to compute a fresh output result.
+//		PNRepResult output = apply(context, log, petrinet, parameters);
+//		if (parameters.isTryConnections()) {
+//			// Store a connection containing the inputs, output, and parameters.
+//			context.getConnectionManager().addConnection(
+//					new PlanningBasedAlignmentConnection(log, petrinet, parameters, output));
+//		}
+//		// Return the output.
+//		return output;		
+//	}
 
 }

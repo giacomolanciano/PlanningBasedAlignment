@@ -147,8 +147,13 @@ public class ConfigurationUI {
 	}
 
 	
+	/**
+	 * Check the existence of an initial marking for the given Petri net. If no, create one.
+	 * 
+	 * @param context
+	 * @param petrinet
+	 */
 	private void checkInitialMarking(UIPluginContext context, Petrinet petrinet) {
-		// check existence of initial marking
 		try {
 			InitialMarkingConnection initCon = context.getConnectionManager().getFirstConnection(
 					InitialMarkingConnection.class, context, petrinet);
@@ -172,6 +177,12 @@ public class ConfigurationUI {
 	}
 
 
+	/**
+	 * Check the existence of an final marking for the given Petri net. If no, create one.
+	 * 
+	 * @param context
+	 * @param petrinet
+	 */
 	private void checkFinalMarking(UIPluginContext context, Petrinet petrinet) {
 		// check existence of final marking
 		try {
@@ -250,16 +261,17 @@ public class ConfigurationUI {
 				break;
 			case FINISHED :
 				return new Object[] {
+					// the order must match with the constants defined at the beginning of the class
 					mapping,
 					((PlannerSettingsDialog) configurationStepsDialogs[0]).getChosenStrategy(),
-					((PlannerSettingsDialog) configurationStepsDialogs[0]).getTracesInterval(),
-					((PlannerSettingsDialog) configurationStepsDialogs[0]).getTracesLengthBounds(),
+					((PlannerSettingsDialog) configurationStepsDialogs[0]).getChosenTracesInterval(),
+					((PlannerSettingsDialog) configurationStepsDialogs[0]).getChosenTracesLengthBounds(),
 					((AlignmentSettingsDialog) configurationStepsDialogs[1]).getMovesOnLogCosts(),
 					((AlignmentSettingsDialog) configurationStepsDialogs[1]).getMovesOnModelCosts(),
 					((AlignmentSettingsDialog) configurationStepsDialogs[1]).getSynchronousMovesCosts()
 				};
 			default :
-				return new Object[] { null };
+				return null;
 			}
 		}
 	}

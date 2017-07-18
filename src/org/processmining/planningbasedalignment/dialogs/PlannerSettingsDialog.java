@@ -11,6 +11,7 @@ import javax.swing.table.DefaultTableModel;
 import org.deckfour.xes.info.XLogInfo;
 import org.deckfour.xes.info.XLogInfoFactory;
 import org.deckfour.xes.model.XLog;
+import org.deckfour.xes.model.XTrace;
 import org.processmining.framework.util.ui.widgets.ProMTable;
 import org.processmining.planningbasedalignment.utils.PlannerSearchStrategy;
 
@@ -25,6 +26,7 @@ public class PlannerSettingsDialog extends JComponent {
 	
 	private static final int TABLE_WIDTH = 400;
 	private static final int TABLE_HEIGHT = 70;
+	private static final int TABLE_FIELDS_NUM = 2;
 
 	/**
 	 * The radio button for selecting optimal strategy.
@@ -71,7 +73,7 @@ public class PlannerSettingsDialog extends JComponent {
 		XLogInfo logInfo = XLogInfoFactory.createLogInfo(log);
 		
 		// trace ids interval
-		Object[][] tracesInterval = new Object[1][2];
+		Object[][] tracesInterval = new Object[1][TABLE_FIELDS_NUM];
 		tracesInterval[0][0] = 1;
 		tracesInterval[0][1] = logInfo.getNumberOfTraces();
 		tracesIntervalModel = new DefaultTableModel(tracesInterval, new Object[] { "From", "To" }) {
@@ -79,7 +81,7 @@ public class PlannerSettingsDialog extends JComponent {
 
 			@Override
 			public boolean isCellEditable(int row, int column) {
-				return (column != 0);
+				return true;
 			};
 		};
 		ProMTable tracesIntervalTable = new ProMTable(tracesIntervalModel);
@@ -88,15 +90,14 @@ public class PlannerSettingsDialog extends JComponent {
 		
 		
 		// traces length bounds
-		Object[][] tracesLengthBounds = new Object[1][2];
-		tracesLengthBounds[0][0] = 1;
-		tracesLengthBounds[0][1] = logInfo.getNumberOfTraces();  //TODO get max length
+		Object[][] tracesLengthBounds = new Object[1][TABLE_FIELDS_NUM];
+		tracesLengthBounds[0] = getActualTracesLengthBounds(log);
 		tracesLengthBoundsModel = new DefaultTableModel(tracesLengthBounds, new Object[] { "Min length", "Max length" }) {
 			private static final long serialVersionUID = -6019224467802441949L;
 
 			@Override
 			public boolean isCellEditable(int row, int column) {
-				return (column != 0);
+				return true;
 			};
 		};
 		ProMTable tracesLengthBoundsTable = new ProMTable(tracesLengthBoundsModel);
@@ -135,6 +136,27 @@ public class PlannerSettingsDialog extends JComponent {
 	
 	
 	/**
+	 * Compute the minimum and maximum traces lengths of the given event log.
+	 * 
+	 * @param log The XLog representing the event log.
+	 * @return An array of Object containing the minimum and maximum traces lengths respectively.
+	 */
+	private Object[] getActualTracesLengthBounds(XLog log) {
+		int maxLength = 0;
+		int minLength = log.get(0).size();
+		int traceLength;
+		for (XTrace trace : log) {
+			traceLength = trace.size();
+			if (traceLength > maxLength)
+				maxLength = traceLength;
+			if (traceLength < minLength)
+				minLength = traceLength;
+		}
+		return new Object[] { minLength, maxLength };
+	}
+
+
+	/**
 	 * Tells which search strategy has been chosen.
 	 * 
 	 * @return The chosen PlannerSearchStrategy.
@@ -153,7 +175,7 @@ public class PlannerSettingsDialog extends JComponent {
 	 * 
 	 * @return An array of two integers, respectively the start and the end of the interval.
 	 */
-	public int[] getTracesInterval() {
+	public int[] getChosenTracesInterval() {
 		int start = (int) tracesIntervalModel.getValueAt(0, 0);
 		int end = (int) tracesIntervalModel.getValueAt(0, 1);
 		return new int[]{start, end};
@@ -165,7 +187,7 @@ public class PlannerSettingsDialog extends JComponent {
 	 * 
 	 * @return An array of two integers, respectively the minimum and the maximum length.
 	 */
-	public int[] getTracesLengthBounds() {
+	public int[] getChosenTracesLengthBounds() {
 		int minLength = (int) tracesLengthBoundsModel.getValueAt(0, 0);
 		int maxLength = (int) tracesLengthBoundsModel.getValueAt(0, 1);
 		return new int[]{minLength, maxLength};
