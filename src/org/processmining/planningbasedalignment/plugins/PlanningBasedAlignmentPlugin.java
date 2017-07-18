@@ -21,12 +21,17 @@ import org.processmining.plugins.petrinet.replayresult.PNRepResult;
 @Plugin(
 	name = "Planning-based Event Log & Petri Net alignment",
 	parameterLabels = { "Event Log", "Petri Net", "Name of your parameters" }, 
-	returnLabels = { "Petri Net Replay Result" }, returnTypes = { PNRepResult.class },
+	returnLabels = { "Petri Net Replay Result" },
+	returnTypes = { PNRepResult.class },
 	userAccessible = true,
 	help = HelpMessages.PLANNING_BASED_ALIGNMENT_HELP
 )
 
 public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
+	
+	private static final String AFFILIATION = "Sapienza University of Rome";
+	private static final String AUTHOR = "Giacomo Lanciano";
+	private static final String EMAIL = "lanciano.1487019@studenti.uniroma1.it";
 
 	/**
 	 * The plug-in variant that runs in any context and requires a parameters.
@@ -35,9 +40,9 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	 * @param log The first input.
 	 * @param petrinet The second input.
 	 * @param parameters The parameters to use.
-	 * @return The output.
+	 * @return The result of the replay of the event log on the Petri net.
 	 */
-	@UITopiaVariant(affiliation = "Sapienza University of Rome", author = "Giacomo Lanciano", email = "lanciano.1487019@studenti.uniroma1.it")
+	@UITopiaVariant(affiliation = AFFILIATION, author = AUTHOR, email = EMAIL)
 	@PluginVariant(variantLabel = "Your plug-in name, parameters", requiredParameterLabels = { 0, 1, 2 })
 	public PNRepResult run(PluginContext context, XLog log, Petrinet petrinet, PlanningBasedAlignmentParameters parameters) {
 		// Apply the algorithm depending on whether a connection already exists.
@@ -50,9 +55,9 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	 * @param context The context to run in.
 	 * @param log The first input.
 	 * @param petrinet The second input.
-	 * @return The output.
+	 * @return The result of the replay of the event log on the Petri net.
 	 */
-	@UITopiaVariant(affiliation = "Sapienza University of Rome", author = "Giacomo Lanciano", email = "lanciano.1487019@studenti.uniroma1.it")
+	@UITopiaVariant(affiliation = AFFILIATION, author = AUTHOR, email = EMAIL)
 	@PluginVariant(variantLabel = "Your plug-in name, parameters", requiredParameterLabels = { 0, 1 })
 	public PNRepResult runDefault(PluginContext context, XLog log, Petrinet petrinet) {
 		// Get the default parameters.
@@ -67,9 +72,9 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	 * @param context The context to run in.
 	 * @param log The first input.
 	 * @param petrinet The second input.
-	 * @return The output.
+	 * @return The result of the replay of the event log on the Petri net.
 	 */
-	@UITopiaVariant(affiliation = "Sapienza University of Rome", author = "Giacomo Lanciano", email = "lanciano.1487019@studenti.uniroma1.it")
+	@UITopiaVariant(affiliation = AFFILIATION, author = AUTHOR, email = EMAIL)
 	@PluginVariant(variantLabel = "Your plug-in name, dialog", requiredParameterLabels = { 0, 1 })
 	public PNRepResult runUI(UIPluginContext context, XLog log, Petrinet petrinet) {
 		// Get the default parameters.
@@ -91,9 +96,9 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	 * The plug-in variant that allows one to test the dialog to get the parameters.
 	 * 
 	 * @param context The context to run in.
-	 * @return The output.
+	 * @return The result of the replay of the event log on the Petri net.
 	 */
-	@UITopiaVariant(affiliation = "Sapienza University of Rome", author = "Giacomo Lanciano", email = "lanciano.1487019@studenti.uniroma1.it")
+	@UITopiaVariant(affiliation = AFFILIATION, author = AUTHOR, email = EMAIL)
 	@PluginVariant(variantLabel = "Your plug-in name, dialog", requiredParameterLabels = { })
 	public PNRepResult testUI(UIPluginContext context) {
 		// Create default inputs.
@@ -131,11 +136,11 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 				connections = context.getConnectionManager().getConnections(
 						PlanningBasedAlignmentConnection.class, context, log, petrinet);
 				for (PlanningBasedAlignmentConnection connection : connections) {
-					if (connection.getObjectWithRole(PlanningBasedAlignmentConnection.LOG)
-							.equals(log) && connection.getObjectWithRole(PlanningBasedAlignmentConnection.PETRINET)
+					if (connection.getObjectWithRole(PlanningBasedAlignmentConnection.LOG_LABEL)
+							.equals(log) && connection.getObjectWithRole(PlanningBasedAlignmentConnection.PETRINET_LABEL)
 							.equals(petrinet) && connection.getParameters().equals(parameters)) {
 						// Found a match. Return the associated output as result of the algorithm.
-						return connection.getObjectWithRole(PlanningBasedAlignmentConnection.PN_REPLAY_RESULT);
+						return connection.getObjectWithRole(PlanningBasedAlignmentConnection.PN_REPLAY_RESULT_LABEL);
 					}
 				}
 			} catch (ConnectionCannotBeObtained e) {

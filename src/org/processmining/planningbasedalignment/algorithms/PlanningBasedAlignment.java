@@ -30,7 +30,7 @@ public class PlanningBasedAlignment {
 		
 		
 		time += System.currentTimeMillis();
-		parameters.displayMessage("[PlanningBasedAlignment] Output = " + output.toString());
+		//parameters.displayMessage("[PlanningBasedAlignment] Output = " + output.toString());
 		parameters.displayMessage("[PlanningBasedAlignment] End (took " + time/1000.0 + "  seconds).");
 	    
 		return output;

@@ -11,17 +11,17 @@ public class PlanningBasedAlignmentConnection extends AbstractConnection {
 	/**
 	 * Label for event log.
 	 */
-	public final static String LOG = "Event Log";
+	public final static String LOG_LABEL = "Event Log";
 	
 	/**
 	 * Label for Petri net.
 	 */
-	public final static String PETRINET = "Petri Net";
+	public final static String PETRINET_LABEL = "Petri Net";
 	
 	/**
 	 * Label for Petri net replay result.
 	 */
-	public final static String PN_REPLAY_RESULT = "Petri Net Replay Result";
+	public final static String PN_REPLAY_RESULT_LABEL = "Petri Net Replay Result";
 
 	/**
 	 * Private copy of parameters.
@@ -30,16 +30,16 @@ public class PlanningBasedAlignmentConnection extends AbstractConnection {
 
 	/**
 	 * Create a connection.
-	 * @param input1 First input.
-	 * @param input2 Second input.
-	 * @param output Output.
-	 * @param parameters Parameters.
+	 * @param log The first input.
+	 * @param petrinet The second input.
+	 * @param output The result of the replay of the event log on the Petri net.
+	 * @param parameters The parameters to use.
 	 */
-	public PlanningBasedAlignmentConnection(XLog input1, Petrinet input2, PNRepResult output, PlanningBasedAlignmentParameters parameters) {
+	public PlanningBasedAlignmentConnection(XLog log, Petrinet petrinet, PNRepResult output, PlanningBasedAlignmentParameters parameters) {
 		super("Planning-based Alignment connection");
-		put(LOG, input1);
-		put(PETRINET, input2);
-		put(PN_REPLAY_RESULT, output);
+		put(LOG_LABEL, log);
+		put(PETRINET_LABEL, petrinet);
+		put(PN_REPLAY_RESULT_LABEL, output);
 		this.parameters = new PlanningBasedAlignmentParameters(parameters);
 	}
 
