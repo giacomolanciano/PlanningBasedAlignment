@@ -1,0 +1,174 @@
+package org.processmining.planningbasedalignment.dialogs;
+
+import java.awt.Color;
+import java.awt.Dimension;
+
+import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
+import javax.swing.JRadioButton;
+import javax.swing.table.DefaultTableModel;
+
+import org.deckfour.xes.info.XLogInfo;
+import org.deckfour.xes.info.XLogInfoFactory;
+import org.deckfour.xes.model.XLog;
+import org.processmining.framework.util.ui.widgets.ProMTable;
+import org.processmining.planningbasedalignment.utils.PlannerSearchStrategy;
+
+import com.fluxicon.slickerbox.factory.SlickerFactory;
+
+import info.clearthought.layout.TableLayout;
+import info.clearthought.layout.TableLayoutConstants;
+
+public class PlannerSettingsDialog extends JComponent {
+
+	private static final long serialVersionUID = -60087716353524468L;
+	
+	private static final int TABLE_WIDTH = 400;
+	private static final int TABLE_HEIGHT = 70;
+
+	/**
+	 * The radio button for selecting optimal strategy.
+	 */
+	private final JRadioButton optimalStrategy;
+	
+	/**
+	 * The radio button for selecting sub-optimal strategy.
+	 */
+	private final JRadioButton subOptimalStrategy;
+	
+	/**
+	 * The table holding data for the trace interval.
+	 */
+	DefaultTableModel tracesIntervalModel;
+	
+	/**
+	 * The table holding data for the trace length boundaries.
+	 */
+	DefaultTableModel tracesLengthBoundsModel;
+	
+	
+	public PlannerSettingsDialog(XLog log) {
+		
+		double size[][] = { 
+				{ 30, TableLayoutConstants.FILL, 50 },					// cols
+				{ 30, 30, 30, 60, TABLE_HEIGHT, 60, TABLE_HEIGHT} };	// rows
+		
+		setLayout(new TableLayout(size));
+		setBackground(new Color(200, 200, 200));
+
+		SlickerFactory slickerFactory = SlickerFactory.instance();
+		
+		// strategy choices
+		ButtonGroup plannerSearchStrategySelection = new ButtonGroup();
+		
+		optimalStrategy = slickerFactory.createRadioButton("Optimal (Blind A*)");
+		plannerSearchStrategySelection.add(optimalStrategy);
+		optimalStrategy.setSelected(true);  // optimal strategy set by default
+		
+		subOptimalStrategy = slickerFactory.createRadioButton("Sub-optimal (Lazy Greedy)");
+		plannerSearchStrategySelection.add(subOptimalStrategy);
+		
+		XLogInfo logInfo = XLogInfoFactory.createLogInfo(log);
+		
+		// trace ids interval
+		Object[][] tracesInterval = new Object[1][2];
+		tracesInterval[0][0] = 1;
+		tracesInterval[0][1] = logInfo.getNumberOfTraces();
+		tracesIntervalModel = new DefaultTableModel(tracesInterval, new Object[] { "From", "To" }) {
+			private static final long serialVersionUID = -6019224467802441949L;
+
+			@Override
+			public boolean isCellEditable(int row, int column) {
+				return (column != 0);
+			};
+		};
+		ProMTable tracesIntervalTable = new ProMTable(tracesIntervalModel);
+		tracesIntervalTable.setPreferredSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
+		tracesIntervalTable.setMinimumSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
+		
+		
+		// traces length bounds
+		Object[][] tracesLengthBounds = new Object[1][2];
+		tracesLengthBounds[0][0] = 1;
+		tracesLengthBounds[0][1] = logInfo.getNumberOfTraces();  //TODO get max length
+		tracesLengthBoundsModel = new DefaultTableModel(tracesLengthBounds, new Object[] { "Min length", "Max length" }) {
+			private static final long serialVersionUID = -6019224467802441949L;
+
+			@Override
+			public boolean isCellEditable(int row, int column) {
+				return (column != 0);
+			};
+		};
+		ProMTable tracesLengthBoundsTable = new ProMTable(tracesLengthBoundsModel);
+		tracesLengthBoundsTable.setPreferredSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
+		tracesLengthBoundsTable.setMinimumSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
+		
+		
+		// add components to view
+		int basicRowCounter = 0;
+		
+		add(slickerFactory.createLabel("<html><h2>Select Planner Search Strategy</h2></html>"), 
+				"0," + basicRowCounter + ",1," + basicRowCounter + ",l,b");
+		basicRowCounter++;
+		
+		add(optimalStrategy, "0," + basicRowCounter + ",1," + basicRowCounter + ",l,b");
+		basicRowCounter++;
+		
+		add(subOptimalStrategy, "0," + basicRowCounter + ",1," + basicRowCounter + ",l,b");
+		basicRowCounter++;
+		
+		add(slickerFactory.createLabel("<html><h2>Select the interval of trace to align</h2></html>"), 
+				"0," + basicRowCounter + ",1," + basicRowCounter + ",l,b");
+		basicRowCounter++;
+		
+		add(tracesIntervalTable, "0," + basicRowCounter + ",1," + basicRowCounter + ",l,t");
+		basicRowCounter++;
+		
+		add(slickerFactory.createLabel("<html><h2>Select the bounds for traces length</h2></html>"), 
+				"0," + basicRowCounter + ",1," + basicRowCounter + ",l,b");
+		basicRowCounter++;
+		
+		add(tracesLengthBoundsTable, "0," + basicRowCounter + ",1," + basicRowCounter + ",l,t");
+		basicRowCounter++;
+		
+	}
+	
+	
+	/**
+	 * Tells which search strategy has been chosen.
+	 * 
+	 * @return The chosen PlannerSearchStrategy.
+	 */
+	public PlannerSearchStrategy getChosenStrategy() {
+		if (optimalStrategy.isSelected())
+			return PlannerSearchStrategy.BLIND_A_STAR;
+		if (subOptimalStrategy.isSelected())
+			return PlannerSearchStrategy.LAZY_GREEDY;
+		return null;
+	}
+	
+	
+	/**
+	 * Returns the endpoints (trace ids) of the interval of traces to be aligned.
+	 * 
+	 * @return An array of two integers, respectively the start and the end of the interval.
+	 */
+	public int[] getTracesInterval() {
+		int start = (int) tracesIntervalModel.getValueAt(0, 0);
+		int end = (int) tracesIntervalModel.getValueAt(0, 1);
+		return new int[]{start, end};
+	}
+	
+	
+	/**
+	 * Returns the length boundaries for the traces to be aligned.
+	 * 
+	 * @return An array of two integers, respectively the minimum and the maximum length.
+	 */
+	public int[] getTracesLengthBounds() {
+		int minLength = (int) tracesLengthBoundsModel.getValueAt(0, 0);
+		int maxLength = (int) tracesLengthBoundsModel.getValueAt(0, 1);
+		return new int[]{minLength, maxLength};
+	}
+
+}

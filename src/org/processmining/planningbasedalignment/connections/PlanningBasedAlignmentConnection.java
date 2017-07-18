@@ -35,7 +35,7 @@ public class PlanningBasedAlignmentConnection extends AbstractConnection {
 	 * @param output The result of the replay of the event log on the Petri net.
 	 * @param parameters The parameters to use.
 	 */
-	public PlanningBasedAlignmentConnection(XLog log, Petrinet petrinet, PNRepResult output, PlanningBasedAlignmentParameters parameters) {
+	public PlanningBasedAlignmentConnection(XLog log, Petrinet petrinet, PlanningBasedAlignmentParameters parameters, PNRepResult output) {
 		super("Planning-based Alignment connection");
 		put(LOG_LABEL, log);
 		put(PETRINET_LABEL, petrinet);
