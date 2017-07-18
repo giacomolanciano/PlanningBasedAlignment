@@ -16,3 +16,5 @@
 /tests/bin-test-instrument
 /tests/cover-html
 /tests/*.class
+
+/python27*

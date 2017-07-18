@@ -35,20 +35,22 @@ public class Utilities {
 	}
 	
 	/**
-	 * Delete all contents from the given directory
+	 * Delete all contents from the given directory or create it if not existing.
 	 * 
 	 * @param folder The File object representing the folder.
 	 */
-	public static void deleteFolderContents(File folder) {
+	public static void cleanFolder(File folder) {
 		File[] files = folder.listFiles();
 		if(files!=null) { 
 			for(File file : files) {
 				if(file.isDirectory()) {
-					deleteFolderContents(file);
+					cleanFolder(file);
 				} else {
 					file.delete();
 				}
 			}
+		} else {
+			folder.mkdir();
 		}
 	}
 	

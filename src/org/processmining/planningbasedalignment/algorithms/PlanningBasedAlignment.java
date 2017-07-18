@@ -1,12 +1,10 @@
 package org.processmining.planningbasedalignment.algorithms;
 
-import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -23,16 +21,14 @@ import org.processmining.planningbasedalignment.utils.StreamGobbler;
 import org.processmining.planningbasedalignment.utils.Utilities;
 import org.processmining.plugins.petrinet.replayresult.PNRepResult;
 
-import sun.util.logging.resources.logging;
-
 public class PlanningBasedAlignment {
 	
 	private static final String WINDOWS = "windows";
 	private static final String PYTHON_WIN_DIR = "python27/";
 	private static final String PYTHON_WIN_AMD64_DIR = "python27amd64/";
 	private static final String FAST_DOWNWARD_DIR = "fast-downward/";
-	private static final String PLANS_FOUND_DIR = FAST_DOWNWARD_DIR + "plans_found/";
-	private static final String PDDL_FILES_DIR = FAST_DOWNWARD_DIR + "Conformance_Checking/";
+	private static final String PLANS_FOUND_DIR = "plans_found/";
+	private static final String PDDL_FILES_DIR = "pddl_files/";
 	private static final String PDDL_EXT = ".pddl";
 	private static final String PDDL_DOMAIN_FILE_PREFIX = PDDL_FILES_DIR + "domain";
 	private static final String PDDL_PROBLEM_FILE_PREFIX = PDDL_FILES_DIR + "problem";
@@ -54,7 +50,9 @@ public class PlanningBasedAlignment {
 	private float totalAlignmentCost = 0;
 	private float totalAlignmentTime = 0;
 
-	protected Pattern decimalNumberRegexPattern = Pattern.compile("\\d+(,\\d{3})*(\\.\\d+)*");
+	private Pattern decimalNumberRegexPattern = Pattern.compile("\\d+(,\\d{3})*(\\.\\d+)*");
+	
+	private File plansFoundDir;
 
 	/**
 	 * The method that performs the alignment of an event log and a Petri net using Automated Planning.
@@ -82,131 +80,43 @@ public class PlanningBasedAlignment {
 			traceIdToCheckFrom = traceInterval[0];
 			traceIdToCheckTo = traceInterval[1];
 			
+//			System.out.println("traceInterval: "+Arrays.toString(traceInterval));
+			
 			// set traces length bounds
 			int[] traceLengthBounds = parameters.getTracesLengthBounds();
 			minTracesLength = traceLengthBounds[0];
 			maxTracesLength = traceLengthBounds[1];
+			
+//			System.out.println("traceLengthBounds: "+Arrays.toString(traceLengthBounds));
 
 			// cleanup folders
 			File plansFoundDir = new File(PLANS_FOUND_DIR);
 			File pddlFilesDir = new File(PDDL_FILES_DIR);
-			Utilities.deleteFolderContents(plansFoundDir);
-			Utilities.deleteFolderContents(pddlFilesDir);
-
+			Utilities.cleanFolder(plansFoundDir);
+			Utilities.cleanFolder(pddlFilesDir);
 
 			/* PLANNER INPUTS BUILDING */
-			
-			//TODO change implementation according to parameters
-			AbstractPddlEncoder pddlEncoder = new StandardPddlEncoder(petrinet, parameters);
-			
-			// consider only the traces in the chosen interval
-			for(int traceId = traceIdToCheckFrom-1; traceId < traceIdToCheckTo; traceId++) {
-
-				XTrace trace = log.get(traceId);
-				int traceLength = trace.size();						
-				
-				// check whether the trace matches the length bounds
-				if(traceLength >= minTracesLength && traceLength <= maxTracesLength)  {
-					
-					// create PDDL encodings (domain & problem) for current trace
-					StringBuffer sbDomain = pddlEncoder.createPropositionalDomain(trace);
-					StringBuffer sbProblem = pddlEncoder.createPropositionalProblem(trace);
-					String sbDomainFileName = PDDL_DOMAIN_FILE_PREFIX + traceId + PDDL_EXT;
-					String sbProblemFileName = PDDL_PROBLEM_FILE_PREFIX + traceId + PDDL_EXT;
-					Utilities.writeFile(sbDomainFileName, sbDomain);
-					Utilities.writeFile(sbProblemFileName, sbProblem);
-
-				}
-			}
-
+			buildPlannerInput(log, petrinet, parameters);
 
 			/* PLANNER INVOCATION */
-
-			String[] commandArgs = buildFastDownardCommandArgs(parameters);
-
-			// execute external planner script and wait for results
-			ProcessBuilder processBuilder = new ProcessBuilder(commandArgs);
-			plannerManagerProcess = processBuilder.start();
-
-			//System.out.println(Arrays.toString(commandArgs));
-
-			// read std out & err in separated thread
-			StreamGobbler errorGobbler = new StreamGobbler(plannerManagerProcess.getErrorStream(), "ERROR");
-			StreamGobbler outputGobbler = new StreamGobbler(plannerManagerProcess.getInputStream(), "OUTPUT");
-			errorGobbler.start();
-			outputGobbler.start();
-
-			// wait for the process to return to read the generated outputs
-			plannerManagerProcess.waitFor();
-
-
-
+			invokePlanner(parameters);
+			
 			/* PLANNER OUTPUTS PROCESSING */
+//			processPlannerOutput(log);
 
-			for(final File alignmentFile : plansFoundDir.listFiles()) {
-
-				// extract traceId
-				Matcher traceIdMatcher = decimalNumberRegexPattern.matcher(alignmentFile.getName());
-				traceIdMatcher.find();
-				int traceId = Integer.parseInt(traceIdMatcher.group());
-
-				XTrace trace = log.get(traceId - 1);
-
-				// check execution results
-				BufferedReader processOutputReader = new BufferedReader(new FileReader(alignmentFile));
-				String outputLine = processOutputReader.readLine(); 
-				if (outputLine == null) {
-					tracesWithFailureVector.addElement(trace);
-					
-				} else {		
-
-					// read trace alignment cost from process output file
-					String traceAlignmentCost = new String();
-					String traceAlignmentTime = new String();
-					while (outputLine != null) {
-
-						// parse alignment cost
-						if(outputLine.startsWith(COST_ENTRY_PREFIX)) {
-
-							Matcher matcher = decimalNumberRegexPattern.matcher(outputLine);
-							matcher.find();
-							traceAlignmentCost = matcher.group();
-
-							if(Integer.parseInt(traceAlignmentCost) > 0)
-								alignedTracesAmount++;
-						}
-
-						// parse alignment time
-						if(outputLine.startsWith(SEARCH_TIME_ENTRY_PREFIX)) {
-
-							Matcher matcher = decimalNumberRegexPattern.matcher(outputLine);
-							matcher.find();
-							traceAlignmentTime = matcher.group();
-						}
-
-						outputLine = processOutputReader.readLine();
-					}									
-
-					// update total counters
-					totalAlignmentCost += Float.parseFloat(traceAlignmentCost);
-					totalAlignmentTime += Float.parseFloat(traceAlignmentTime);
-				}
-				processOutputReader.close();
-
-			}
-
+			
 		}
 		catch(Exception e){
 			e.printStackTrace();
 		}
 		
 		time += System.currentTimeMillis();
-		parameters.displayMessage("[PlanningBasedAlignment] Output = " + output.toString());
+//		parameters.displayMessage("[PlanningBasedAlignment] Output = " + output.toString());
 		parameters.displayMessage("[PlanningBasedAlignment] End (took " + time/1000.0 + "  seconds).");
 
 		return output;
 	}
-	
+
 	/**
 	 * Shut down all active computations.
 	 * 
@@ -259,7 +169,7 @@ public class PlanningBasedAlignment {
 			commandComponents.add("release64");
 		else
 			commandComponents.add("release32");
-
+		
 		commandComponents.add("--plan-file");
 		commandComponents.add(COMMAND_ARG_PLACEHOLDER);  // output file
 
@@ -282,6 +192,129 @@ public class PlanningBasedAlignment {
 
 		String[] commandArguments = commandComponents.toArray(new String[0]);
 		return commandArguments;
+	}
+	
+	/**
+	 * Produces the PDDL files (representing the instances of the alignment problem) to be fed to the planner.
+	 * 
+	 * @param log
+	 * @param petrinet
+	 * @param parameters
+	 */
+	protected void buildPlannerInput(XLog log, Petrinet petrinet, PlanningBasedAlignmentParameters parameters) {
+		
+		//TODO change implementation according to parameters
+		AbstractPddlEncoder pddlEncoder = new StandardPddlEncoder(petrinet, parameters);
+		
+		// consider only the traces in the chosen interval
+		for(int traceId = traceIdToCheckFrom-1; traceId < traceIdToCheckTo; traceId++) {
+
+			XTrace trace = log.get(traceId);
+			int traceLength = trace.size();						
+			
+			// check whether the trace matches the length bounds
+			if(traceLength >= minTracesLength && traceLength <= maxTracesLength)  {
+				
+				// create PDDL encodings (domain & problem) for current trace
+				StringBuffer sbDomain = pddlEncoder.createPropositionalDomain(trace);
+				StringBuffer sbProblem = pddlEncoder.createPropositionalProblem(trace);
+				String sbDomainFileName = PDDL_DOMAIN_FILE_PREFIX + (traceId+1) + PDDL_EXT;
+				String sbProblemFileName = PDDL_PROBLEM_FILE_PREFIX + (traceId+1) + PDDL_EXT;
+				Utilities.writeFile(sbDomainFileName, sbDomain);
+				Utilities.writeFile(sbProblemFileName, sbProblem);
+
+			}
+		}
+	}
+	
+	/**
+	 * Starts the execution of the planner.
+	 * 
+	 * @param parameters
+	 * @throws InterruptedException
+	 * @throws IOException
+	 */
+	protected void invokePlanner(PlanningBasedAlignmentParameters parameters) throws InterruptedException, IOException {
+		String[] commandArgs = buildFastDownardCommandArgs(parameters);
+
+		// execute external planner script and wait for results
+		ProcessBuilder processBuilder = new ProcessBuilder(commandArgs);
+		plannerManagerProcess = processBuilder.start();
+
+		//System.out.println(Arrays.toString(commandArgs));
+
+		// read std out & err in separated thread
+		StreamGobbler errorGobbler = new StreamGobbler(plannerManagerProcess.getErrorStream(), "ERROR");
+		StreamGobbler outputGobbler = new StreamGobbler(plannerManagerProcess.getInputStream(), "OUTPUT");
+		errorGobbler.start();
+		outputGobbler.start();
+
+		// wait for the process to return to read the generated outputs
+		plannerManagerProcess.waitFor();
+	}
+	
+	/**
+	 * Process planner outputs to build the alignment results. 
+	 * 
+	 * @param log
+	 * @throws IOException
+	 */
+	protected void processPlannerOutput(XLog log) throws IOException {
+		
+		// TODO Auto-generated method stub
+		
+		for(final File alignmentFile : plansFoundDir.listFiles()) {
+
+			// extract traceId
+			Matcher traceIdMatcher = decimalNumberRegexPattern.matcher(alignmentFile.getName());
+			traceIdMatcher.find();
+			int traceId = Integer.parseInt(traceIdMatcher.group());
+
+			XTrace trace = log.get(traceId - 1);
+
+			// check execution results
+			BufferedReader processOutputReader = new BufferedReader(new FileReader(alignmentFile));
+			String outputLine = processOutputReader.readLine(); 
+			if (outputLine == null) {
+				tracesWithFailureVector.addElement(trace);
+				
+			} else {		
+
+				// read trace alignment cost from process output file
+				String traceAlignmentCost = new String();
+				String traceAlignmentTime = new String();
+				while (outputLine != null) {
+
+					// parse alignment cost
+					if(outputLine.startsWith(COST_ENTRY_PREFIX)) {
+
+						Matcher matcher = decimalNumberRegexPattern.matcher(outputLine);
+						matcher.find();
+						traceAlignmentCost = matcher.group();
+
+						if(Integer.parseInt(traceAlignmentCost) > 0)
+							alignedTracesAmount++;
+					}
+
+					// parse alignment time
+					if(outputLine.startsWith(SEARCH_TIME_ENTRY_PREFIX)) {
+
+						Matcher matcher = decimalNumberRegexPattern.matcher(outputLine);
+						matcher.find();
+						traceAlignmentTime = matcher.group();
+					}
+
+					outputLine = processOutputReader.readLine();
+				}									
+
+				// update total counters
+				totalAlignmentCost += Float.parseFloat(traceAlignmentCost);
+				totalAlignmentTime += Float.parseFloat(traceAlignmentTime);
+			}
+			processOutputReader.close();
+
+		}
+
 	}
 	
 

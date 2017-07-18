@@ -74,8 +74,8 @@ public class PlannerSettingsDialog extends JComponent {
 		
 		// trace ids interval
 		Object[][] tracesInterval = new Object[1][TABLE_FIELDS_NUM];
-		tracesInterval[0][0] = 1;
-		tracesInterval[0][1] = logInfo.getNumberOfTraces();
+		tracesInterval[0][0] = "1";
+		tracesInterval[0][1] = ""+logInfo.getNumberOfTraces();
 		tracesIntervalModel = new DefaultTableModel(tracesInterval, new Object[] { "From", "To" }) {
 			private static final long serialVersionUID = -6019224467802441949L;
 
@@ -152,7 +152,7 @@ public class PlannerSettingsDialog extends JComponent {
 			if (traceLength < minLength)
 				minLength = traceLength;
 		}
-		return new Object[] { minLength, maxLength };
+		return new Object[] { ""+minLength, ""+maxLength };
 	}
 
 
@@ -176,8 +176,8 @@ public class PlannerSettingsDialog extends JComponent {
 	 * @return An array of two integers, respectively the start and the end of the interval.
 	 */
 	public int[] getChosenTracesInterval() {
-		int start = (int) tracesIntervalModel.getValueAt(0, 0);
-		int end = (int) tracesIntervalModel.getValueAt(0, 1);
+		int start = Integer.parseInt((String) tracesIntervalModel.getValueAt(0, 0));
+		int end = Integer.parseInt((String) tracesIntervalModel.getValueAt(0, 1));
 		return new int[]{start, end};
 	}
 	
@@ -188,8 +188,8 @@ public class PlannerSettingsDialog extends JComponent {
 	 * @return An array of two integers, respectively the minimum and the maximum length.
 	 */
 	public int[] getChosenTracesLengthBounds() {
-		int minLength = (int) tracesLengthBoundsModel.getValueAt(0, 0);
-		int maxLength = (int) tracesLengthBoundsModel.getValueAt(0, 1);
+		int minLength = Integer.parseInt((String) tracesLengthBoundsModel.getValueAt(0, 0));
+		int maxLength = Integer.parseInt((String) tracesLengthBoundsModel.getValueAt(0, 1));
 		return new int[]{minLength, maxLength};
 	}
 
