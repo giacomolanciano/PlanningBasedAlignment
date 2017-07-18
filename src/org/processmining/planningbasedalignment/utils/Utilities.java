@@ -8,9 +8,10 @@ import java.sql.Timestamp;
 public class Utilities {
 
 	/**
-	 * Create a file with the given name and write the given contents on it.
+	 * Create a file with the given name and write the given contents on it. If the file name contains a path, the
+	 * parent directories are automatically created.
 	 * 
-	 * @param fileName The name of the file to be created.
+	 * @param fileName The name of the file to be created (possibly a path).
 	 * @param buffer The contents to be written.
 	 * @return The newly create file.
 	 */
@@ -21,6 +22,7 @@ public class Utilities {
 		try {
 			file = new File(fileName);
 			file.setExecutable(true);
+			file.getParentFile().mkdirs();
 			fileWriter = new FileWriter(file);
 			fileWriter.write(buffer.toString());
 			fileWriter.close();

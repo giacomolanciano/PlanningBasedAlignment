@@ -20,10 +20,10 @@ import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmen
  * @author Giacomo
  *
  */
-public class StandardPddlEncoder extends PddlEncoder {
+public class StandardPddlEncoder extends AbstractPddlEncoder {
 
 	
-	protected StandardPddlEncoder(Petrinet petrinet, PlanningBasedAlignmentParameters parameters) {
+	public StandardPddlEncoder(Petrinet petrinet, PlanningBasedAlignmentParameters parameters) {
 		super(petrinet, parameters);
 	}
 
@@ -55,17 +55,16 @@ public class StandardPddlEncoder extends PddlEncoder {
 		pddlDomainBuffer.append("(allowed)\n");		
 		pddlDomainBuffer.append(")\n\n");			
 
-		//if(Globals.getPlannerPerspective().getCostCheckBox().isSelected()) {
 		// define total-cost function
 		pddlDomainBuffer.append("(:functions\n");	
 		pddlDomainBuffer.append("(total-cost)\n");			
-		pddlDomainBuffer.append(")\n\n");		
-		//}
+		pddlDomainBuffer.append(")\n\n");
 
 		for(Transition transition : petrinet.getTransitions()) {
 
 			/* Move Sync */			
 			String transitionName = encode(transition);
+			String mappedEventClass = encode(parameters.getTransitionsEventsMapping().get(transition));
 			Collection<PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode>> transitionInEdgesCollection = petrinet.getInEdges(transition);
 			Collection<PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode>> transitionOutEdgesCollection = petrinet.getOutEdges(transition);
 			
@@ -77,8 +76,7 @@ public class StandardPddlEncoder extends PddlEncoder {
 				String currentEventLabel = "ev" + currentEventIndex;				
 				String eventName = encode(event);
 
-				
-				if(eventName.equalsIgnoreCase(transitionName)) {
+				if(eventName.equalsIgnoreCase(mappedEventClass)) {
 					
 					pddlDomainBuffer.append("(:action moveSync" + "#" + transitionName + "#" + currentEventLabel + "\n");
 					pddlDomainBuffer.append(":precondition (and");
@@ -97,7 +95,7 @@ public class StandardPddlEncoder extends PddlEncoder {
 						pddlDomainBuffer.append(" (not (token " + encode(place) + "))");
 					}
 					for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> outEdge : transitionOutEdgesCollection) {
-						Place place = (Place) outEdge.getSource();
+						Place place = (Place) outEdge.getTarget();
 						pddlDomainBuffer.append(" (token " + encode(place) + ")");
 					}
 
@@ -128,7 +126,7 @@ public class StandardPddlEncoder extends PddlEncoder {
 				pddlDomainBuffer.append(" (token " + encode(place) + ")");
 			}
 
-			if(transitionInEdgesCollection.size()>1)
+			if(transitionInEdgesCollection.size() > 1)
 				pddlDomainBuffer.append(")\n");
 			else
 				pddlDomainBuffer.append("\n");
@@ -139,8 +137,8 @@ public class StandardPddlEncoder extends PddlEncoder {
 				Place place = (Place) inEdge.getSource();
 				pddlDomainBuffer.append(" (not (token " + encode(place) + "))");
 			}
-			for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionInEdgesCollection) {
-				Place place = (Place) inEdge.getSource();
+			for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionOutEdgesCollection) {
+				Place place = (Place) inEdge.getTarget();
 				pddlDomainBuffer.append(" (token " + encode(place) + ")");
 			}				
 
@@ -175,9 +173,11 @@ public class StandardPddlEncoder extends PddlEncoder {
 			pddlDomainBuffer.append(":effect (and (not (tracePointer " + currentEventLabel  + ")) (tracePointer " + nextEventLabel  + ")");
 
 			pddlDomainBuffer.append(" (increase (total-cost) ");
+			
 			// TODO exploit map
-			for(XEventClass entry : movesOnLogCosts.keySet()) {					
-				if(entry.toString().equalsIgnoreCase(eventName)) {
+			for(XEventClass entry : movesOnLogCosts.keySet()) {
+				String eventClass = encode(entry);
+				if(eventClass.equalsIgnoreCase(eventName)) {
 					pddlDomainBuffer.append(movesOnLogCosts.get(entry) + ")\n");
 					break;
 				}

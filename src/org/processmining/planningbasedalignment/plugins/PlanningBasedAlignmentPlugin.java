@@ -5,6 +5,7 @@ import java.text.NumberFormat;
 
 import org.deckfour.xes.extension.std.XConceptExtension;
 import org.deckfour.xes.model.XLog;
+import org.deckfour.xes.model.XTrace;
 import org.processmining.contexts.uitopia.UIPluginContext;
 import org.processmining.contexts.uitopia.annotations.UITopiaVariant;
 import org.processmining.framework.connections.ConnectionCannotBeObtained;
@@ -18,6 +19,9 @@ import org.processmining.planningbasedalignment.connections.PlanningBasedAlignme
 import org.processmining.planningbasedalignment.dialogs.ConfigurationUI;
 import org.processmining.planningbasedalignment.help.HelpMessages;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
+import org.processmining.planningbasedalignment.pddl.AbstractPddlEncoder;
+import org.processmining.planningbasedalignment.pddl.StandardPddlEncoder;
+import org.processmining.planningbasedalignment.utils.Utilities;
 import org.processmining.plugins.petrinet.replayresult.PNRepResult;
 
 @Plugin(
@@ -104,10 +108,22 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 //			
 //			break;
 //		}
-
 		
-//		buildPddlEncodingMappings(petrinet, parameters);
-		
+		AbstractPddlEncoder pddlEncoder = new StandardPddlEncoder(petrinet, parameters);
+		int i = 0;
+		int stop = 3;
+		for (XTrace t : log) {
+			
+			if (i == stop)
+				break;
+			
+			StringBuffer domain = pddlEncoder.createPropositionalDomain(t);
+			StringBuffer problem = pddlEncoder.createPropositionalProblem(t);
+			Utilities.writeFile("pddlEnc/domain" + (i+1) + ".pddl", domain);
+			Utilities.writeFile("pddlEnc/problem" + (i+1) + ".pddl", problem);
+			
+			i++;
+		}
 		
 		return null;
 	}

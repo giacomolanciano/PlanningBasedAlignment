@@ -21,7 +21,7 @@ import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmen
  * @author Giacomo
  *
  */
-public abstract class PddlEncoder {
+public abstract class AbstractPddlEncoder {
 
 	protected static final String INVISIBLE_TRANSITION_PREFIX = "generatedINV";
 	protected static final String DUMMY = "DUMMY";
@@ -32,7 +32,7 @@ public abstract class PddlEncoder {
 	protected Map<String, PetrinetNode> pddlIdToPetrinetNodeMapping = new HashMap<String, PetrinetNode>();
 	protected Map<String, XEventClass> pddlIdToEventClassMapping = new HashMap<String, XEventClass>();
 
-	protected PddlEncoder(Petrinet petrinet, PlanningBasedAlignmentParameters parameters) {
+	protected AbstractPddlEncoder(Petrinet petrinet, PlanningBasedAlignmentParameters parameters) {
 		this.petrinet = petrinet;
 		this.parameters = parameters;
 		buildPddlEncodingMappings();
@@ -69,20 +69,20 @@ public abstract class PddlEncoder {
 			String pddlTransition = transition.getLabel();
 			if(isInvisibleTransitionLabel(pddlTransition)) {
 				// if transition is invisible, generate an id
-				pddlTransition = PddlEncoder.getCorrectPddlFormat(
+				pddlTransition = AbstractPddlEncoder.getCorrectPddlFormat(
 						new String(INVISIBLE_TRANSITION_PREFIX + invisibleTransitionsCount));
 
 				// add a reference from the invisible transition to the generated id
 				invisibleTransitionToPddlIdMapping.put(transition, pddlTransition);
 				invisibleTransitionsCount++;
 			}
-			pddlTransition = PddlEncoder.getCorrectPddlFormat(pddlTransition);
+			pddlTransition = AbstractPddlEncoder.getCorrectPddlFormat(pddlTransition);
 			pddlIdToPetrinetNodeMapping.put(pddlTransition, transition);	// TODO handle alias
 
 //			System.out.println("\t" + pddlTransition);
 
 			// get pddl id for event class
-			String pddlEventLabel = PddlEncoder.getCorrectPddlFormat(eventLabel.toString());
+			String pddlEventLabel = AbstractPddlEncoder.getCorrectPddlFormat(eventLabel.toString());
 			if (!pddlEventLabel.equals(DUMMY))
 				pddlIdToEventClassMapping.put(pddlEventLabel, eventLabel);
 
@@ -92,7 +92,7 @@ public abstract class PddlEncoder {
 
 		// get pddl ids for places
 		for (Place place : petrinet.getPlaces()) {
-			String pddlPlace = PddlEncoder.getCorrectPddlFormat(place.getLabel());
+			String pddlPlace = AbstractPddlEncoder.getCorrectPddlFormat(place.getLabel());
 			pddlIdToPetrinetNodeMapping.put(pddlPlace, place);
 
 //			System.out.println("\t" + pddlPlace);
@@ -107,38 +107,23 @@ public abstract class PddlEncoder {
 	 * @return The correctly formatted string.
 	 */
 	public static String getCorrectPddlFormat(String string)  {
+		
+		//TODO restore
+//		string = string.replaceAll(" ", "_");
+		string = string.replaceAll(" ", "");
+		
+		string = string.replaceAll("\\/", "");
+		string = string.replaceAll("\\(", "");
+		string = string.replaceAll("\\)", "");
+		string = string.replaceAll("\\<", "");
+		string = string.replaceAll("\\>", "");
+		string = string.replaceAll("\\.", "");
+		string = string.replaceAll("\\,", "_");
+		string = string.replaceAll("\\+", "_");
+		string = string.replaceAll("\\-", "_");
 
-		if(string.contains(" "))
-			string = string.replaceAll(" ", "_");
-
-		if(string.contains("/"))
-			string = string.replaceAll("\\/", "");
-
-		if(string.contains("("))
-			string = string.replaceAll("\\(", "");
-
-		if(string.contains(")"))
-			string = string.replaceAll("\\)", "");
-
-		if(string.contains("<"))
-			string = string.replaceAll("\\<", "");
-
-		if(string.contains(">"))
-			string = string.replaceAll("\\>", "");
-
-		if(string.contains("."))
-			string = string.replaceAll("\\.", "");
-
-		if(string.contains(","))
-			string = string.replaceAll("\\,", "_");
-
-		if(string.contains("+"))
-			string = string.replaceAll("\\+", "_");
-
-		if(string.contains("-"))
-			string = string.replaceAll("\\-", "_");
-
-		return string;
+		//TODO restore to not lower case
+		return string.toLowerCase();
 	}
 
 	/**
@@ -152,7 +137,7 @@ public abstract class PddlEncoder {
 		if(isInvisibleTransitionLabel(pddlTransition)) {
 			return invisibleTransitionToPddlIdMapping.get(transition);
 		}
-		pddlTransition = PddlEncoder.getCorrectPddlFormat(pddlTransition);
+		pddlTransition = AbstractPddlEncoder.getCorrectPddlFormat(pddlTransition);
 		return pddlTransition;
 	}
 
@@ -163,7 +148,7 @@ public abstract class PddlEncoder {
 	 * @return
 	 */
 	public String encode(Place place) {
-		return PddlEncoder.getCorrectPddlFormat(place.getLabel());
+		return AbstractPddlEncoder.getCorrectPddlFormat(place.getLabel());
 	}
 
 	/**
@@ -173,7 +158,7 @@ public abstract class PddlEncoder {
 	 * @return
 	 */
 	public String encode(XEventClass eventLabel) {
-		return PddlEncoder.getCorrectPddlFormat(eventLabel.toString());
+		return AbstractPddlEncoder.getCorrectPddlFormat(eventLabel.toString());
 	}
 	
 	/**
@@ -183,7 +168,7 @@ public abstract class PddlEncoder {
 	 * @return
 	 */
 	public String encode(XEvent event) {
-		return PddlEncoder.getCorrectPddlFormat(XConceptExtension.instance().extractName(event));
+		return AbstractPddlEncoder.getCorrectPddlFormat(XConceptExtension.instance().extractName(event));
 	}
 	
 	public boolean isInvisibleTransitionLabel(String label) {
