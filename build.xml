@@ -11,7 +11,7 @@
 	<property name="project" value="PlanningBasedAlignment" />
 
 	<property name="author" value="Giacomo Lanciano" />
-	<property name="organization" value="La Sapienza University in Rome" />
+	<property name="organization" value="Sapienza University of Rome" />
 	<property name="description" value="PlanningBasedAlignment" />
 	<property name="license" value="L-GPL" />
 	<property name="logo" value="http://www.promtools.org/prom6/packages/prom_subtitle_hat_300.png" />
@@ -91,7 +91,7 @@
 	<target name="resolve">
 		<ivy:retrieve type="jar,bundle" sync="true" />
 		<!-- Uncomment next line if libraries need to be copied from ivy to lib folder. -->
-		<!--ivy:retrieve pattern="lib/[artifact]-[revision].[ext]" conf="lib" type="jar,bundle" sync="true" /-->
+		<ivy:retrieve pattern="lib/[artifact]-[revision].[ext]" conf="lib" type="jar,bundle" sync="true" />
 	</target>
 
 	<target name="javadoc">

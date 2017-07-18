@@ -18,8 +18,14 @@ import org.processmining.planningbasedalignment.models.YourOutput;
 import org.processmining.planningbasedalignment.models.YourSecondInput;
 import org.processmining.planningbasedalignment.parameters.YourParameters;
 
-@Plugin(name = "Your plug-in name", parameterLabels = { "Name of your first input", "Name of your second input", "Name of your parameters" }, 
-	    returnLabels = { "Name of your output" }, returnTypes = { YourOutput.class }, help = YourHelp.TEXT)
+@Plugin(
+	name = "Your plug-in name",
+	parameterLabels = { "Name of your first input", "Name of your second input", "Name of your parameters" }, 
+	returnLabels = { "Name of your output" }, returnTypes = { YourOutput.class },
+	userAccessible = true,
+	help = YourHelp.TEXT
+)
+
 public class YourPlugin extends YourAlgorithm {
 
 	/**

@@ -1,0 +1,18 @@
+# /
+/bin
+/dist
+/bindist
+/classes
+/doc
+/*.class
+
+# /tests/
+/tests/bin
+/tests/dist
+/tests/bindist
+/tests/doc
+/tests/classes
+/tests/bin-test
+/tests/bin-test-instrument
+/tests/cover-html
+/tests/*.class
