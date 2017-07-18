@@ -1,8 +1,5 @@
 package org.processmining.planningbasedalignment.dialogs;
 
-import info.clearthought.layout.TableLayout;
-import info.clearthought.layout.TableLayoutConstants;
-
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -19,15 +16,18 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import org.deckfour.xes.model.XLog;
 import org.processmining.contexts.uitopia.UIPluginContext;
 import org.processmining.framework.util.ui.widgets.ProMList;
-import org.processmining.planningbasedalignment.models.YourFirstInput;
-import org.processmining.planningbasedalignment.models.YourSecondInput;
-import org.processmining.planningbasedalignment.parameters.YourParameters;
+import org.processmining.models.graphbased.directed.petrinet.Petrinet;
+import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 
 import com.fluxicon.slickerbox.components.NiceSlider;
 import com.fluxicon.slickerbox.components.NiceSlider.Orientation;
 import com.fluxicon.slickerbox.factory.SlickerFactory;
+
+import info.clearthought.layout.TableLayout;
+import info.clearthought.layout.TableLayoutConstants;
 
 public class YourDialog extends JPanel {
 
@@ -39,8 +39,8 @@ public class YourDialog extends JPanel {
 	/**
 	 * The JPanel that allows the user to set (a subset of) the parameters.
 	 */
-	public YourDialog(UIPluginContext context, YourFirstInput input1, YourSecondInput input2,
-			final YourParameters parameters) {
+	public YourDialog(UIPluginContext context, XLog input1, Petrinet input2,
+			final PlanningBasedAlignmentParameters parameters) {
 		double size[][] = { { TableLayoutConstants.FILL }, { TableLayoutConstants.FILL, 30, 30 } };
 		setLayout(new TableLayout(size));
 		Set<String> values = new HashSet<String>();

@@ -1,23 +1,23 @@
 package org.processmining.planningbasedalignment.parameters;
 
+import org.deckfour.xes.model.XLog;
 import org.processmining.basicutils.parameters.impl.PluginParametersImpl;
-import org.processmining.planningbasedalignment.models.YourFirstInput;
-import org.processmining.planningbasedalignment.models.YourSecondInput;
+import org.processmining.models.graphbased.directed.petrinet.Petrinet;
 
-public class YourParameters extends PluginParametersImpl {
+public class PlanningBasedAlignmentParameters extends PluginParametersImpl {
 
 	private boolean yourBoolean;
 	private int yourInteger;
 	private String yourString;
 	
-	public YourParameters(YourFirstInput input1, YourSecondInput input2) {
+	public PlanningBasedAlignmentParameters(XLog log, Petrinet petrinet) {
 		super();
-		setYourBoolean(input1.equals(input2));
-		setYourInteger(input1.toString().length() - input2.toString().length());
-		setYourString(input1.toString() + input2.toString());
+		setYourBoolean(log.equals(petrinet));
+		setYourInteger(log.toString().length() - petrinet.toString().length());
+		setYourString(log.toString() + petrinet.toString());
 	}
 
-	public YourParameters(YourParameters parameters) {
+	public PlanningBasedAlignmentParameters(PlanningBasedAlignmentParameters parameters) {
 		super(parameters);
 		setYourBoolean(parameters.isYourBoolean());
 		setYourInteger(parameters.getYourInteger());
@@ -25,8 +25,8 @@ public class YourParameters extends PluginParametersImpl {
 	}
 	
 	public boolean equals(Object object) {
-		if (object instanceof YourParameters) {
-			YourParameters parameters = (YourParameters) object;
+		if (object instanceof PlanningBasedAlignmentParameters) {
+			PlanningBasedAlignmentParameters parameters = (PlanningBasedAlignmentParameters) object;
 			return super.equals(parameters) &&
 					isYourBoolean() == parameters.isYourBoolean() &&
 					getYourInteger() == parameters.getYourInteger() &&
