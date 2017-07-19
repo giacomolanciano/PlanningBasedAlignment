@@ -16,6 +16,12 @@ import org.processmining.planningbasedalignment.help.HelpMessages;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 import org.processmining.plugins.DataConformance.DataAlignment.PetriNet.ResultReplayPetriNetWithData;
 
+/**
+ * The ProM plug-in for Planning-based Alignment of an event log and a Petri net.
+ * 
+ * @author Giacomo Lanciano
+ *
+ */
 @Plugin(
 	name = "Planning-based Event Log & Petri Net alignment",
 	parameterLabels = { "Event Log", "Petri Net", "Name of your parameters" }, 
@@ -69,6 +75,7 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	}
 	
 	/**
+	 * Invokes the algorithm to compute replay result.
 	 * 
 	 * @param context The context to run in.
 	 * @param log The event log to replay.

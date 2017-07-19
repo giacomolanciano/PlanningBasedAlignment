@@ -20,10 +20,15 @@ import com.fluxicon.slickerbox.factory.SlickerFactory;
 import info.clearthought.layout.TableLayout;
 import info.clearthought.layout.TableLayoutConstants;
 
+/**
+ * The panel for setting the parameters of the planner.
+ * 
+ * @author Giacomo Lanciano
+ *
+ */
 public class PlannerSettingsDialog extends JComponent {
 
 	private static final long serialVersionUID = -60087716353524468L;
-	
 	private static final int TABLE_WIDTH = 400;
 	private static final int TABLE_HEIGHT = 70;
 	private static final int TABLE_FIELDS_NUM = 2;

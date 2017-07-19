@@ -4,6 +4,12 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+/**
+ * Utility functions to deal with OS-related stuff.
+ * 
+ * @author Giacomo Lanciano
+ *
+ */
 public class OSUtils {
 
 	/**

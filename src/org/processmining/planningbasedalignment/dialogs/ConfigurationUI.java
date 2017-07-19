@@ -37,7 +37,9 @@ import org.processmining.planningbasedalignment.utils.PlannerSearchStrategy;
 import org.processmining.plugins.connectionfactories.logpetrinet.TransEvClassMapping;
 
 /**
- * Borrowed from PNetReplayer
+ * Borrowed from PNetReplayer.
+ * 
+ * The GUI for setting the parameters of the Planning-based Alignment plug-in.
  */
 public class ConfigurationUI {
 

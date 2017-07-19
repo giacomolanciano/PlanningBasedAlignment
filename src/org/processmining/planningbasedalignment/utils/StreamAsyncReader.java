@@ -6,14 +6,24 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 /**
- * Class for reading and printing an InputStream on a separated thread.
+ * Class for reading and printing on stdout an {@link InputStream} in a separated thread.
+ * 
+ * @author Giacomo Lanciano
  *
  */
-public class StreamGobbler extends Thread {
+public class StreamAsyncReader extends Thread {
+	
+	/**
+	 * The {@link InputStream} to be handled.
+	 */
 	InputStream is;
+	
+	/**
+	 * The tag to be associated to each prints.
+	 */
 	String type;
 
-	public StreamGobbler(InputStream is, String type) {
+	public StreamAsyncReader(InputStream is, String type) {
 		this.is = is;
 		this.type = type;
 	}

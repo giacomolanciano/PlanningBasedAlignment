@@ -26,14 +26,25 @@ public abstract class AbstractPddlEncoder {
 	public static final String SYNCH_MOVE_PREFIX = "movesync";
 	public static final String MODEL_MOVE_PREFIX = "moveinthemodel";
 	public static final String LOG_MOVE_PREFIX = "moveinthelog";
-	
 	protected static final String INVISIBLE_TRANSITION_PREFIX = "generatedinv";
 	protected static final String DUMMY = "DUMMY";
 	
 	protected DataPetriNet petrinet;
 	protected PlanningBasedAlignmentParameters parameters;
+	
+	/**
+	 * The mapping between Petri net invisible transitions and related PDDL ids.
+	 */
 	protected Map<Transition, String> invisibleTransitionToPddlIdMapping = new HashMap<Transition, String>();
+	
+	/**
+	 * The mapping between PDDL ids and related Petri net nodes.
+	 */
 	protected Map<String, PetrinetNode> pddlIdToPetrinetNodeMapping = new HashMap<String, PetrinetNode>();
+	
+	/**
+	 * The mapping between PDDL ids and related event classes.
+	 */
 	protected Map<String, XEventClass> pddlIdToEventClassMapping = new HashMap<String, XEventClass>();
 
 	protected AbstractPddlEncoder(DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) {
@@ -163,6 +174,12 @@ public abstract class AbstractPddlEncoder {
 		return AbstractPddlEncoder.getCorrectPddlFormat(XConceptExtension.instance().extractName(event));
 	}
 	
+	/**
+	 * Tells whether the given label is associated to an invisible Petri net transition.
+	 * 
+	 * @param label The String representing the label.
+	 * @return true if the given label is associated to an invisible Petri net transition.
+	 */
 	public boolean isInvisibleTransitionLabel(String label) {
 		return label.isEmpty() 
 				|| label.equalsIgnoreCase("") 

@@ -21,7 +21,7 @@ import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmen
 import org.processmining.planningbasedalignment.pddl.AbstractPddlEncoder;
 import org.processmining.planningbasedalignment.pddl.StandardPddlEncoder;
 import org.processmining.planningbasedalignment.utils.PlannerSearchStrategy;
-import org.processmining.planningbasedalignment.utils.StreamGobbler;
+import org.processmining.planningbasedalignment.utils.StreamAsyncReader;
 import org.processmining.planningbasedalignment.utils.OSUtils;
 import org.processmining.plugins.DataConformance.DataAlignment.DataAlignmentState;
 import org.processmining.plugins.DataConformance.DataAlignment.GenericTrace;
@@ -30,29 +30,40 @@ import org.processmining.plugins.DataConformance.framework.ExecutionStep;
 import org.processmining.plugins.DataConformance.framework.ExecutionTrace;
 import org.processmining.plugins.DataConformance.framework.VariableMatchCosts;
 
+/**
+ * The implementation of the algorithm for Planning-based Alignment of an event log and a Petri net.
+ * 
+ * @author Giacomo Lanciano
+ *
+ */
 public class PlanningBasedAlignment {
 	
-	private static final String WINDOWS = "windows";
-	private static final String PYTHON_WIN_DIR = "python27/";
-	private static final String PYTHON_WIN_AMD64_DIR = "python27amd64/";
-	private static final String FAST_DOWNWARD_DIR = "fast-downward/";
-	private static final String PLANS_FOUND_DIR = "plans_found/";
-	private static final String PDDL_FILES_DIR = "pddl_files/";
-	private static final String PDDL_EXT = ".pddl";
-	private static final String PDDL_DOMAIN_FILE_PREFIX = PDDL_FILES_DIR + "domain";
-	private static final String PDDL_PROBLEM_FILE_PREFIX = PDDL_FILES_DIR + "problem";
-	private static final String COST_ENTRY_PREFIX = "; cost = ";
-	private static final String SEARCH_TIME_ENTRY_PREFIX = "; searchtime = ";
-	private static final String COMMAND_ARG_PLACEHOLDER = "+";
-	private static final String PLANNER_MANAGER_SCRIPT = "planner_manager.py";
-	private static final String FAST_DOWNWARD_SCRIPT = "fast-downward.py";
-	private static final String CASE_PREFIX = "Case ";
-	private static final int INITIAL_EXECUTION_TRACE_CAPACITY = 10;
+	protected static final String WINDOWS = "windows";
+	protected static final String PYTHON_WIN_DIR = "python27/";
+	protected static final String PYTHON_WIN_AMD64_DIR = "python27amd64/";
+	protected static final String FAST_DOWNWARD_DIR = "fast-downward/";
+	protected static final String PLANS_FOUND_DIR = "plans_found/";
+	protected static final String PDDL_FILES_DIR = "pddl_files/";
+	protected static final String PDDL_EXT = ".pddl";
+	protected static final String PDDL_DOMAIN_FILE_PREFIX = PDDL_FILES_DIR + "domain";
+	protected static final String PDDL_PROBLEM_FILE_PREFIX = PDDL_FILES_DIR + "problem";
+	protected static final String COST_ENTRY_PREFIX = "; cost = ";
+	protected static final String SEARCH_TIME_ENTRY_PREFIX = "; searchtime = ";
+	protected static final String COMMAND_ARG_PLACEHOLDER = "+";
+	protected static final String PLANNER_MANAGER_SCRIPT = "planner_manager.py";
+	protected static final String FAST_DOWNWARD_SCRIPT = "fast-downward.py";
+	protected static final String CASE_PREFIX = "Case ";
+	protected static final int INITIAL_EXECUTION_TRACE_CAPACITY = 10;
 	
-	private AbstractPddlEncoder pddlEncoder;
-	private Process plannerManagerProcess;
-	private File plansFoundDir;
-	private File pddlFilesDir;
+	/**
+	 * The object used to generate the PDDL encodings.
+	 */
+	protected AbstractPddlEncoder pddlEncoder;
+	
+	/**
+	 * The separated process in which the planner is executed.
+	 */
+	protected Process plannerManagerProcess;
 
 	/**
 	 * The method that performs the alignment of an event log and a Petri net using Automated Planning.
@@ -63,10 +74,13 @@ public class PlanningBasedAlignment {
 	 * @param parameters The parameters to use.
 	 * @return The result of the replay of the event log on the Petri net.
 	 */
-	public ResultReplayPetriNetWithData apply(PluginContext context, XLog log, DataPetriNet petrinet,
+	protected ResultReplayPetriNetWithData apply(PluginContext context, XLog log, DataPetriNet petrinet,
 			PlanningBasedAlignmentParameters parameters) {
-		
+		  
 		ResultReplayPetriNetWithData output = null;
+		
+		File pddlFilesDir;	// The input directory for the planner.
+		File plansFoundDir; // The output directory for the planner.
 		
 		try {
 			// cleanup folders
@@ -82,7 +96,7 @@ public class PlanningBasedAlignment {
 			invokePlanner(parameters);
 			
 			/* PLANNER OUTPUTS PROCESSING */
-			output = processPlannerOutput(log, petrinet, parameters);
+			output = processPlannerOutput(log, petrinet, parameters, plansFoundDir);
 			
 		} catch (InterruptedException e) {
 			killSubprocesses();
@@ -103,8 +117,8 @@ public class PlanningBasedAlignment {
 	
 	/**
 	 * Build the arguments list needed to launch Fast-Downward planner, tuned according to user selections. 
-	 * Notice that, by default, the domain and problem files are not indicate and should be defined before running 
-	 * the command.
+	 * Notice that the output, the domain and problem files are defined by the planner manager module once that PDDL
+	 * encodings are generated.
 	 * 
 	 * @return an array of Strings containing the arguments.
 	 * @throws IOException 
@@ -148,7 +162,6 @@ public class PlanningBasedAlignment {
 		
 		commandComponents.add("--plan-file");
 		commandComponents.add(COMMAND_ARG_PLACEHOLDER);  // output file
-
 		commandComponents.add(COMMAND_ARG_PLACEHOLDER);  // domain file
 		commandComponents.add(COMMAND_ARG_PLACEHOLDER);  // problem file
 
@@ -228,8 +241,8 @@ public class PlanningBasedAlignment {
 		//System.out.println(Arrays.toString(commandArgs));
 
 		// read std out & err in separated thread
-		StreamGobbler errorGobbler = new StreamGobbler(plannerManagerProcess.getErrorStream(), "ERROR");
-		StreamGobbler outputGobbler = new StreamGobbler(plannerManagerProcess.getInputStream(), "OUTPUT");
+		StreamAsyncReader errorGobbler = new StreamAsyncReader(plannerManagerProcess.getErrorStream(), "ERROR");
+		StreamAsyncReader outputGobbler = new StreamAsyncReader(plannerManagerProcess.getInputStream(), "OUTPUT");
 		errorGobbler.start();
 		outputGobbler.start();
 
@@ -244,7 +257,7 @@ public class PlanningBasedAlignment {
 	 * @throws IOException
 	 */
 	protected ResultReplayPetriNetWithData processPlannerOutput(XLog log, DataPetriNet petrinet,
-			PlanningBasedAlignmentParameters parameters) throws IOException {
+			PlanningBasedAlignmentParameters parameters, File plansFoundDir) throws IOException {
 				
 		Pattern decimalNumberRegexPattern = Pattern.compile("\\d+(,\\d{3})*(\\.\\d+)*");
 		

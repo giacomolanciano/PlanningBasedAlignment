@@ -29,6 +29,11 @@ import com.fluxicon.slickerbox.factory.SlickerFactory;
 import info.clearthought.layout.TableLayout;
 import info.clearthought.layout.TableLayoutConstants;
 
+/**
+ * Borrowed from PNetReplayer.
+ * 
+ * The panel for setting the costs of the alignment moves.
+ */
 public class AlignmentSettingsDialog extends JComponent {
 
 	private static final long serialVersionUID = -1764028439791226196L;

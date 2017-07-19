@@ -10,16 +10,57 @@ import org.processmining.models.semantics.petrinet.Marking;
 import org.processmining.planningbasedalignment.utils.PlannerSearchStrategy;
 import org.processmining.plugins.connectionfactories.logpetrinet.TransEvClassMapping;
 
+/**
+ * The parameters needed by the plug-in for Planning-based Alignment.
+ * 
+ * @author Giacomo Lanciano
+ *
+ */
 public class PlanningBasedAlignmentParameters extends PluginParametersImpl {
 
+	/**
+	 * The initial marking of the Petri net.
+	 */
 	private Marking initialMarking;
+	
+	/**
+	 * The final marking of the Petri net.
+	 */
 	private Marking finalMarking;
+	
+	/**
+	 * The search strategy (e.g. optimal).
+	 */
 	private PlannerSearchStrategy plannerSearchStrategy;
+	
+	/**
+	 * The mappings between Petri net transition and event classes.
+	 */
 	private TransEvClassMapping transitionsEventsMapping;
+	
+	/**
+	 * The costs associated to each event class for moves in log.
+	 */
 	private Map<XEventClass, Integer> movesOnLogCosts;
+	
+	/**
+	 * The costs associated to each Petri net transition for moves in model.
+	 */
 	private Map<Transition, Integer> movesOnModelCosts;
+	
+	/**
+	 * The costs associated to each synchronous move (indexed according to Petri net transitions).
+	 */
 	private Map<Transition, Integer> synchronousMovesCosts;
+	
+	/**
+	 * The interval of traces in the log to be aligned.
+	 */
 	private int[] tracesInterval;
+	
+	/**
+	 * The length boundaries to by matched by the traces in the log to be aligned.
+	 */
 	private int[] tracesLengthBounds;
 	
 	public PlanningBasedAlignmentParameters() {

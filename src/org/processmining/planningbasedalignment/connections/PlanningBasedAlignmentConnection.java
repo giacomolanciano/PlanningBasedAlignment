@@ -6,6 +6,12 @@ import org.processmining.framework.connections.impl.AbstractConnection;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 import org.processmining.plugins.DataConformance.DataAlignment.PetriNet.ResultReplayPetriNetWithData;
 
+/**
+ * The connection among plug-in inputs and outputs.
+ * 
+ * @author Giacomo Lanciano
+ *
+ */
 public class PlanningBasedAlignmentConnection extends AbstractConnection {
 
 	/**
@@ -30,6 +36,7 @@ public class PlanningBasedAlignmentConnection extends AbstractConnection {
 
 	/**
 	 * Create a connection.
+	 * 
 	 * @param log The event log to replay.
 	 * @param petrinet The Petri net on which the log has to be replayed.
 	 * @param output The result of the replay of the event log on the Petri net.
