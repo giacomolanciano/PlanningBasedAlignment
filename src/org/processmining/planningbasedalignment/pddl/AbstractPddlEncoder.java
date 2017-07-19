@@ -8,7 +8,7 @@ import org.deckfour.xes.classification.XEventClass;
 import org.deckfour.xes.extension.std.XConceptExtension;
 import org.deckfour.xes.model.XEvent;
 import org.deckfour.xes.model.XTrace;
-import org.processmining.models.graphbased.directed.petrinet.Petrinet;
+import org.processmining.datapetrinets.DataPetriNet;
 import org.processmining.models.graphbased.directed.petrinet.PetrinetNode;
 import org.processmining.models.graphbased.directed.petrinet.elements.Place;
 import org.processmining.models.graphbased.directed.petrinet.elements.Transition;
@@ -18,21 +18,26 @@ import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmen
  * Abstract class that can be extended to provide different ways of encoding an alignment-based conformance checking
  * problem in PDDL.
  * 
- * @author Giacomo
+ * @author Giacomo Lanciano
  *
  */
 public abstract class AbstractPddlEncoder {
 
-	protected static final String INVISIBLE_TRANSITION_PREFIX = "generatedINV";
+	public static final String SYNCH_MOVE_PREFIX = "movesync";
+	public static final String MODEL_MOVE_PREFIX = "moveinthemodel";
+	public static final String LOG_MOVE_PREFIX = "moveinthelog";
+	
+	protected static final String INVISIBLE_TRANSITION_PREFIX = "generatedinv";
 	protected static final String DUMMY = "DUMMY";
 	
-	protected Petrinet petrinet;
+	protected DataPetriNet petrinet;
 	protected PlanningBasedAlignmentParameters parameters;
+	
 	protected Map<Transition, String> invisibleTransitionToPddlIdMapping = new HashMap<Transition, String>();
 	protected Map<String, PetrinetNode> pddlIdToPetrinetNodeMapping = new HashMap<String, PetrinetNode>();
 	protected Map<String, XEventClass> pddlIdToEventClassMapping = new HashMap<String, XEventClass>();
 
-	protected AbstractPddlEncoder(Petrinet petrinet, PlanningBasedAlignmentParameters parameters) {
+	protected AbstractPddlEncoder(DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) {
 		this.petrinet = petrinet;
 		this.parameters = parameters;
 		buildPddlEncodingMappings();
@@ -77,7 +82,7 @@ public abstract class AbstractPddlEncoder {
 				invisibleTransitionsCount++;
 			}
 			pddlTransition = AbstractPddlEncoder.getCorrectPddlFormat(pddlTransition);
-			pddlIdToPetrinetNodeMapping.put(pddlTransition, transition);	// TODO handle alias
+			pddlIdToPetrinetNodeMapping.put(pddlTransition, transition);	// TODO handle aliasing
 
 //			System.out.println("\t" + pddlTransition);
 
@@ -101,17 +106,13 @@ public abstract class AbstractPddlEncoder {
 	}
 
 	/**
-	 * Format string to be a valid PDDL identifier.
+	 * Format string to be a valid PDDL identifier. Notice that lower-case ids are safer.
 	 * 
 	 * @param string The string to be formatted.
 	 * @return The correctly formatted string.
 	 */
-	public static String getCorrectPddlFormat(String string)  {
-		
-		//TODO restore
-//		string = string.replaceAll(" ", "_");
+	protected static String getCorrectPddlFormat(String string)  {
 		string = string.replaceAll(" ", "");
-		
 		string = string.replaceAll("\\/", "");
 		string = string.replaceAll("\\(", "");
 		string = string.replaceAll("\\)", "");
@@ -121,8 +122,6 @@ public abstract class AbstractPddlEncoder {
 		string = string.replaceAll("\\,", "_");
 		string = string.replaceAll("\\+", "_");
 		string = string.replaceAll("\\-", "_");
-
-		//TODO restore to not lower case
 		return string.toLowerCase();
 	}
 
@@ -176,6 +175,48 @@ public abstract class AbstractPddlEncoder {
 				|| label.equalsIgnoreCase("") 
 				|| label.equalsIgnoreCase(" ") 
 				|| label.equalsIgnoreCase("\"");
+	}
+
+	/**
+	 * @return the invisibleTransitionToPddlIdMapping
+	 */
+	public Map<Transition, String> getInvisibleTransitionToPddlIdMapping() {
+		return invisibleTransitionToPddlIdMapping;
+	}
+
+	/**
+	 * @param invisibleTransitionToPddlIdMapping the invisibleTransitionToPddlIdMapping to set
+	 */
+	public void setInvisibleTransitionToPddlIdMapping(Map<Transition, String> invisibleTransitionToPddlIdMapping) {
+		this.invisibleTransitionToPddlIdMapping = invisibleTransitionToPddlIdMapping;
+	}
+
+	/**
+	 * @return the pddlIdToPetrinetNodeMapping
+	 */
+	public Map<String, PetrinetNode> getPddlIdToPetrinetNodeMapping() {
+		return pddlIdToPetrinetNodeMapping;
+	}
+
+	/**
+	 * @param pddlIdToPetrinetNodeMapping the pddlIdToPetrinetNodeMapping to set
+	 */
+	public void setPddlIdToPetrinetNodeMapping(Map<String, PetrinetNode> pddlIdToPetrinetNodeMapping) {
+		this.pddlIdToPetrinetNodeMapping = pddlIdToPetrinetNodeMapping;
+	}
+
+	/**
+	 * @return the pddlIdToEventClassMapping
+	 */
+	public Map<String, XEventClass> getPddlIdToEventClassMapping() {
+		return pddlIdToEventClassMapping;
+	}
+
+	/**
+	 * @param pddlIdToEventClassMapping the pddlIdToEventClassMapping to set
+	 */
+	public void setPddlIdToEventClassMapping(Map<String, XEventClass> pddlIdToEventClassMapping) {
+		this.pddlIdToEventClassMapping = pddlIdToEventClassMapping;
 	}
 
 }

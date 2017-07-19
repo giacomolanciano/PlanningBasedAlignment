@@ -5,21 +5,30 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Vector;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.deckfour.xes.classification.XEventClass;
+import org.deckfour.xes.classification.XEventClassifier;
 import org.deckfour.xes.model.XLog;
 import org.deckfour.xes.model.XTrace;
+import org.processmining.datapetrinets.DataPetriNet;
 import org.processmining.framework.plugin.PluginContext;
-import org.processmining.models.graphbased.directed.petrinet.Petrinet;
+import org.processmining.models.graphbased.directed.petrinet.elements.Transition;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 import org.processmining.planningbasedalignment.pddl.AbstractPddlEncoder;
 import org.processmining.planningbasedalignment.pddl.StandardPddlEncoder;
 import org.processmining.planningbasedalignment.utils.PlannerSearchStrategy;
 import org.processmining.planningbasedalignment.utils.StreamGobbler;
 import org.processmining.planningbasedalignment.utils.Utilities;
-import org.processmining.plugins.petrinet.replayresult.PNRepResult;
+import org.processmining.plugins.DataConformance.DataAlignment.DataAlignmentState;
+import org.processmining.plugins.DataConformance.DataAlignment.GenericTrace;
+import org.processmining.plugins.DataConformance.DataAlignment.PetriNet.ResultReplayPetriNetWithData;
+import org.processmining.plugins.DataConformance.framework.ExecutionStep;
+import org.processmining.plugins.DataConformance.framework.ExecutionTrace;
+import org.processmining.plugins.DataConformance.framework.VariableMatchCosts;
 
 public class PlanningBasedAlignment {
 	
@@ -32,7 +41,6 @@ public class PlanningBasedAlignment {
 	private static final String PDDL_EXT = ".pddl";
 	private static final String PDDL_DOMAIN_FILE_PREFIX = PDDL_FILES_DIR + "domain";
 	private static final String PDDL_PROBLEM_FILE_PREFIX = PDDL_FILES_DIR + "problem";
-	private static final String PLAN_FILE_PREFIX = PLANS_FOUND_DIR + "alignment_";
 	private static final String COST_ENTRY_PREFIX = "; cost = ";
 	private static final String SEARCH_TIME_ENTRY_PREFIX = "; searchtime = ";
 	private static final String COMMAND_ARG_PLACEHOLDER = "+";
@@ -40,19 +48,18 @@ public class PlanningBasedAlignment {
 	private static final String FAST_DOWNWARD_SCRIPT = "fast-downward.py";
 	
 	private Process plannerManagerProcess;
-	private Vector<XTrace> tracesWithFailureVector = new Vector<XTrace>();
 
 	private int traceIdToCheckFrom;
 	private int traceIdToCheckTo;
 	private int minTracesLength;
 	private int maxTracesLength;
-	private int alignedTracesAmount = 0;
-	private float totalAlignmentCost = 0;
-	private float totalAlignmentTime = 0;
 
 	private Pattern decimalNumberRegexPattern = Pattern.compile("\\d+(,\\d{3})*(\\.\\d+)*");
 	
 	private File plansFoundDir;
+	private File pddlFilesDir;
+	
+	private AbstractPddlEncoder pddlEncoder;
 
 	/**
 	 * The method that performs the alignment of an event log and a Petri net using Automated Planning.
@@ -63,9 +70,10 @@ public class PlanningBasedAlignment {
 	 * @param parameters The parameters to use.
 	 * @return The result of the replay of the event log on the Petri net.
 	 */
-	public PNRepResult apply(PluginContext context, XLog log, Petrinet petrinet, PlanningBasedAlignmentParameters parameters) {
+	public ResultReplayPetriNetWithData apply(PluginContext context, XLog log, DataPetriNet petrinet,
+			PlanningBasedAlignmentParameters parameters) {
 		
-		PNRepResult output = null;
+		ResultReplayPetriNetWithData output = null;
 
 		long time = -System.currentTimeMillis();
 		parameters.displayMessage("[PlanningBasedAlignment] Start");
@@ -90,8 +98,8 @@ public class PlanningBasedAlignment {
 //			System.out.println("traceLengthBounds: "+Arrays.toString(traceLengthBounds));
 
 			// cleanup folders
-			File plansFoundDir = new File(PLANS_FOUND_DIR);
-			File pddlFilesDir = new File(PDDL_FILES_DIR);
+			plansFoundDir = new File(PLANS_FOUND_DIR);
+			pddlFilesDir = new File(PDDL_FILES_DIR);
 			Utilities.cleanFolder(plansFoundDir);
 			Utilities.cleanFolder(pddlFilesDir);
 
@@ -102,7 +110,7 @@ public class PlanningBasedAlignment {
 			invokePlanner(parameters);
 			
 			/* PLANNER OUTPUTS PROCESSING */
-//			processPlannerOutput(log);
+			output = processPlannerOutput(log, petrinet, parameters);
 
 			
 		}
@@ -201,10 +209,10 @@ public class PlanningBasedAlignment {
 	 * @param petrinet
 	 * @param parameters
 	 */
-	protected void buildPlannerInput(XLog log, Petrinet petrinet, PlanningBasedAlignmentParameters parameters) {
+	protected void buildPlannerInput(XLog log, DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) {
 		
 		//TODO change implementation according to parameters
-		AbstractPddlEncoder pddlEncoder = new StandardPddlEncoder(petrinet, parameters);
+		pddlEncoder = new StandardPddlEncoder(petrinet, parameters);
 		
 		// consider only the traces in the chosen interval
 		for(int traceId = traceIdToCheckFrom-1; traceId < traceIdToCheckTo; traceId++) {
@@ -259,10 +267,16 @@ public class PlanningBasedAlignment {
 	 * @param log
 	 * @throws IOException
 	 */
-	protected void processPlannerOutput(XLog log) throws IOException {
+	protected ResultReplayPetriNetWithData processPlannerOutput(XLog log, DataPetriNet petrinet,
+			PlanningBasedAlignmentParameters parameters) throws IOException {
 		
-		// TODO Auto-generated method stub
+		ResultReplayPetriNetWithData replayResults = null;
+		ArrayList<DataAlignmentState> alignments = new ArrayList<DataAlignmentState>();
 		
+		float cost;
+		ExecutionTrace logTrace;
+		ExecutionTrace processTrace;
+		DataAlignmentState dataAlignmentState;
 		for(final File alignmentFile : plansFoundDir.listFiles()) {
 
 			// extract traceId
@@ -270,52 +284,87 @@ public class PlanningBasedAlignment {
 			traceIdMatcher.find();
 			int traceId = Integer.parseInt(traceIdMatcher.group());
 
-			XTrace trace = log.get(traceId - 1);
+			cost = 0;
+			logTrace = new GenericTrace(10, "Case " + traceId);
+			processTrace = new GenericTrace(10, "Case " + traceId);
 
-			// check execution results
+
+			// read trace alignment cost from process output file
+			String traceAlignmentCost = new String();
+			String traceAlignmentTime = new String();
 			BufferedReader processOutputReader = new BufferedReader(new FileReader(alignmentFile));
 			String outputLine = processOutputReader.readLine(); 
-			if (outputLine == null) {
-				tracesWithFailureVector.addElement(trace);
-				
-			} else {		
+			while (outputLine != null) {
 
-				// read trace alignment cost from process output file
-				String traceAlignmentCost = new String();
-				String traceAlignmentTime = new String();
-				while (outputLine != null) {
-
+				if(outputLine.startsWith(COST_ENTRY_PREFIX)) {
 					// parse alignment cost
-					if(outputLine.startsWith(COST_ENTRY_PREFIX)) {
+					Matcher matcher = decimalNumberRegexPattern.matcher(outputLine);
+					matcher.find();
+					traceAlignmentCost = matcher.group();
+					cost = Float.parseFloat(traceAlignmentCost);
 
-						Matcher matcher = decimalNumberRegexPattern.matcher(outputLine);
-						matcher.find();
-						traceAlignmentCost = matcher.group();
+				} else if(outputLine.startsWith(SEARCH_TIME_ENTRY_PREFIX)) {
+					// parse alignment time						
+					Matcher matcher = decimalNumberRegexPattern.matcher(outputLine);
+					matcher.find();
+					traceAlignmentTime = matcher.group();
 
-						if(Integer.parseInt(traceAlignmentCost) > 0)
-							alignedTracesAmount++;
+				} else {						
+					ExecutionStep step = null;
+					String stepName = extractMovePddlId(outputLine);
+
+					// check move type
+					if (isSynchronousMove(outputLine)) {							
+						Transition transition = (Transition) pddlEncoder.getPddlIdToPetrinetNodeMapping().get(stepName);
+						step = new ExecutionStep(transition.getLabel(), transition);
+						logTrace.add(step);
+						processTrace.add(step);
+
+					} else if (isModelMove(outputLine)) {
+						Transition transition = (Transition) pddlEncoder.getPddlIdToPetrinetNodeMapping().get(stepName);
+						step = new ExecutionStep(transition.getLabel(), transition);
+						logTrace.add(ExecutionStep.bottomStep);
+						processTrace.add(step);
+
+					} else if (isLogMove(outputLine)) {
+						XEventClass eventClass = pddlEncoder.getPddlIdToEventClassMapping().get(stepName);
+						step = new ExecutionStep(eventClass.getId(), eventClass);
+						logTrace.add(step);
+						processTrace.add(ExecutionStep.bottomStep);
+
 					}
-
-					// parse alignment time
-					if(outputLine.startsWith(SEARCH_TIME_ENTRY_PREFIX)) {
-
-						Matcher matcher = decimalNumberRegexPattern.matcher(outputLine);
-						matcher.find();
-						traceAlignmentTime = matcher.group();
-					}
-
-					outputLine = processOutputReader.readLine();
-				}									
-
-				// update total counters
-				totalAlignmentCost += Float.parseFloat(traceAlignmentCost);
-				totalAlignmentTime += Float.parseFloat(traceAlignmentTime);
+				}
+				outputLine = processOutputReader.readLine();
 			}
+
 			processOutputReader.close();
-
+			
+			dataAlignmentState = new DataAlignmentState(logTrace, processTrace, cost);
+			alignments.add(dataAlignmentState);
 		}
-
+		
+		VariableMatchCosts variableCost = VariableMatchCosts.NOCOST;			//dummy
+		Map<String, String> variableMapping = new HashMap<String, String>();	//dummy
+		XEventClassifier eventClassifier = parameters.getTransitionsEventsMapping().getEventClassifier();
+		replayResults = new ResultReplayPetriNetWithData(alignments, variableCost, variableMapping, petrinet, log, eventClassifier);
+		return replayResults;
 	}
 	
-
+	public boolean isSynchronousMove(String outputLine) {
+		return outputLine.startsWith("(" + AbstractPddlEncoder.SYNCH_MOVE_PREFIX);
+	}
+	
+	public boolean isModelMove(String outputLine) {
+		return outputLine.startsWith("(" + AbstractPddlEncoder.MODEL_MOVE_PREFIX);
+	}
+	
+	public boolean isLogMove(String outputLine) {
+		return outputLine.startsWith("(" + AbstractPddlEncoder.LOG_MOVE_PREFIX);
+	}
+	
+	public String extractMovePddlId(String outputLine) {
+		String[] tokens = outputLine.split("#");
+		return tokens[1].replaceAll("\\)", "").trim();
+	}
+	
 }

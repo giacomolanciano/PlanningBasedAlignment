@@ -18,6 +18,7 @@ import org.deckfour.uitopia.api.event.TaskListener.InteractionResult;
 import org.deckfour.xes.classification.XEventClass;
 import org.deckfour.xes.model.XLog;
 import org.processmining.contexts.uitopia.UIPluginContext;
+import org.processmining.datapetrinets.DataPetriNet;
 import org.processmining.framework.connections.Connection;
 import org.processmining.framework.connections.ConnectionCannotBeObtained;
 import org.processmining.framework.connections.annotations.ConnectionObjectFactory;
@@ -28,7 +29,6 @@ import org.processmining.framework.util.Pair;
 import org.processmining.models.connections.petrinets.EvClassLogPetrinetConnection;
 import org.processmining.models.connections.petrinets.behavioral.FinalMarkingConnection;
 import org.processmining.models.connections.petrinets.behavioral.InitialMarkingConnection;
-import org.processmining.models.graphbased.directed.petrinet.Petrinet;
 import org.processmining.models.graphbased.directed.petrinet.PetrinetGraph;
 import org.processmining.models.graphbased.directed.petrinet.elements.Transition;
 import org.processmining.models.semantics.petrinet.Marking;
@@ -36,6 +36,9 @@ import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmen
 import org.processmining.planningbasedalignment.utils.PlannerSearchStrategy;
 import org.processmining.plugins.connectionfactories.logpetrinet.TransEvClassMapping;
 
+/**
+ * Borrowed from PNetReplayer
+ */
 public class ConfigurationUI {
 
 	public static final int TRANSITIONS_EVENT_CLASSES_MAPPING = 0;
@@ -62,7 +65,7 @@ public class ConfigurationUI {
 	private JComponent[] configurationStepsDialogs;
 
 	public PlanningBasedAlignmentParameters getPlanningBasedAlignmentParameters(
-			UIPluginContext context, Petrinet petrinet, XLog log) throws ConnectionCannotBeObtained {
+			UIPluginContext context, DataPetriNet petrinet, XLog log) throws ConnectionCannotBeObtained {
 		
 		// init local parameter
 		PlanningBasedAlignmentParameters parameters = null;
@@ -153,7 +156,7 @@ public class ConfigurationUI {
 	 * @param context
 	 * @param petrinet
 	 */
-	private void checkInitialMarking(UIPluginContext context, Petrinet petrinet) {
+	private void checkInitialMarking(UIPluginContext context, DataPetriNet petrinet) {
 		try {
 			InitialMarkingConnection initCon = context.getConnectionManager().getFirstConnection(
 					InitialMarkingConnection.class, context, petrinet);
@@ -183,7 +186,7 @@ public class ConfigurationUI {
 	 * @param context
 	 * @param petrinet
 	 */
-	private void checkFinalMarking(UIPluginContext context, Petrinet petrinet) {
+	private void checkFinalMarking(UIPluginContext context, DataPetriNet petrinet) {
 		// check existence of final marking
 		try {
 			context.getConnectionManager().getFirstConnection(FinalMarkingConnection.class, context, petrinet);

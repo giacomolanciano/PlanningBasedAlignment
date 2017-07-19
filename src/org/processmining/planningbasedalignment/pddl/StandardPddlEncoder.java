@@ -6,7 +6,7 @@ import java.util.Map;
 import org.deckfour.xes.classification.XEventClass;
 import org.deckfour.xes.model.XEvent;
 import org.deckfour.xes.model.XTrace;
-import org.processmining.models.graphbased.directed.petrinet.Petrinet;
+import org.processmining.datapetrinets.DataPetriNet;
 import org.processmining.models.graphbased.directed.petrinet.PetrinetEdge;
 import org.processmining.models.graphbased.directed.petrinet.PetrinetNode;
 import org.processmining.models.graphbased.directed.petrinet.elements.Place;
@@ -17,13 +17,13 @@ import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmen
 /**
  * A standard implementation of the PDDL encoder.
  * 
- * @author Giacomo
+ * @author Giacomo Lanciano
  *
  */
 public class StandardPddlEncoder extends AbstractPddlEncoder {
 
 	
-	public StandardPddlEncoder(Petrinet petrinet, PlanningBasedAlignmentParameters parameters) {
+	public StandardPddlEncoder(DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) {
 		super(petrinet, parameters);
 	}
 
@@ -78,7 +78,7 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 
 				if(eventName.equalsIgnoreCase(mappedEventClass)) {
 					
-					pddlDomainBuffer.append("(:action moveSync" + "#" + transitionName + "#" + currentEventLabel + "\n");
+					pddlDomainBuffer.append("(:action " + SYNCH_MOVE_PREFIX + "#" + transitionName + "#" + currentEventLabel + "\n");
 					pddlDomainBuffer.append(":precondition (and");
 					
 					for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionInEdgesCollection) {
@@ -115,7 +115,7 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 
 
 			/* Move in the Model */
-			pddlDomainBuffer.append("(:action moveInTheModel" + "#" + transitionName + "\n");
+			pddlDomainBuffer.append("(:action " + MODEL_MOVE_PREFIX + "#" + transitionName + "\n");
 			pddlDomainBuffer.append(":precondition");
 
 			if(transitionInEdgesCollection.size() > 1)
@@ -168,7 +168,7 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 			else
 				nextEventLabel = "ev" + nextTraceIndex;
 
-			pddlDomainBuffer.append("(:action moveInTheLog#" + eventName + "#" + currentEventLabel + "-" + nextEventLabel + "\n");
+			pddlDomainBuffer.append("(:action " + LOG_MOVE_PREFIX + "#" + eventName + "#" + currentEventLabel + "-" + nextEventLabel + "\n");
 			pddlDomainBuffer.append(":precondition (and (tracePointer " + currentEventLabel  + ") (allowed))\n");
 			pddlDomainBuffer.append(":effect (and (not (tracePointer " + currentEventLabel  + ")) (tracePointer " + nextEventLabel  + ")");
 

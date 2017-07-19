@@ -17,4 +17,9 @@
 /tests/cover-html
 /tests/*.class
 
+#################################
+
+# git local
 /python27*
+/pddl_files*
+/plans_found*
