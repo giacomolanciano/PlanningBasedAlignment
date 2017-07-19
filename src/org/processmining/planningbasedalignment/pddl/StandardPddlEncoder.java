@@ -2,6 +2,7 @@ package org.processmining.planningbasedalignment.pddl;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.deckfour.xes.classification.XEventClass;
 import org.deckfour.xes.model.XEvent;
@@ -15,7 +16,8 @@ import org.processmining.models.semantics.petrinet.Marking;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 
 /**
- * A standard implementation of the PDDL encoder.
+ * A standard implementation of the PDDL encoder that does not take into account a possible partial ordering in the
+ * event log to be replayed on the Petri net.
  * 
  * @author Giacomo Lanciano
  *
@@ -28,13 +30,6 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 	}
 
 
-	/**
-	 * Create PDDL Domain for the given log trace.
-	 * 
-	 * @param trace
-	 * @param parameters
-	 * @return
-	 */
 	@Override
 	public StringBuffer createPropositionalDomain(XTrace trace) {
 
@@ -171,14 +166,13 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 			pddlDomainBuffer.append("(:action " + LOG_MOVE_PREFIX + "#" + eventName + "#" + currentEventLabel + "-" + nextEventLabel + "\n");
 			pddlDomainBuffer.append(":precondition (and (tracePointer " + currentEventLabel  + ") (allowed))\n");
 			pddlDomainBuffer.append(":effect (and (not (tracePointer " + currentEventLabel  + ")) (tracePointer " + nextEventLabel  + ")");
-
 			pddlDomainBuffer.append(" (increase (total-cost) ");
 			
-			// TODO exploit map
-			for(XEventClass entry : movesOnLogCosts.keySet()) {
-				String eventClass = encode(entry);
+			// get the cost of the event class
+			for(Entry<XEventClass, Integer> entry : movesOnLogCosts.entrySet()) {
+				String eventClass = encode(entry.getKey());
 				if(eventClass.equalsIgnoreCase(eventName)) {
-					pddlDomainBuffer.append(movesOnLogCosts.get(entry) + ")\n");
+					pddlDomainBuffer.append(entry.getValue() + ")\n");
 					break;
 				}
 			}
@@ -194,12 +188,6 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 	}
 
 	
-	/**
-	 * Create PDDL Domain for the given log trace.
-	 * 
-	 * @param trace
-	 * @return
-	 */
 	@Override
 	public StringBuffer createPropositionalProblem(XTrace trace) {
 

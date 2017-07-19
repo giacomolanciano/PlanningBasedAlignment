@@ -3,9 +3,8 @@ package org.processmining.planningbasedalignment.utils;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.sql.Timestamp;
 
-public class Utilities {
+public class OSUtils {
 
 	/**
 	 * Create a file with the given name and write the given contents on it. If the file name contains a path, the
@@ -64,49 +63,9 @@ public class Utilities {
 		String winArch = System.getenv("PROCESSOR_ARCHITECTURE");
 		String wow64Arch = System.getenv("PROCESSOR_ARCHITEW6432");
 		
-		return osArch != null && osArch.endsWith("64") || winArch != null && winArch.endsWith("64") || wow64Arch != null && wow64Arch.endsWith("64");
-	}
-
-	/**
-	 * Check whether the given string is the textual representation of an integer.
-	 * 
-	 * @param string The string to be checked.
-	 * @return true if the string represents an integer.
-	 */
-	public static boolean isInteger(String string) {
-		try { 
-			Integer.parseInt(string); 
-		} catch(NumberFormatException e) { 
-			return false; 
-		} catch(NullPointerException e) {
-			return false;
-		}
-		return true;
-	}
-
-	/**
-	 * Compute the current timestamp.
-	 * 
-	 * @return the current timestamp.
-	 */
-	public static Timestamp getCurrentTimestamp() {
-		java.util.Date date = new java.util.Date();
-		return new Timestamp(date.getTime());
-	}
-
-	/**
-	 * Check whether there is an upper case character in the given string.
-	 * 
-	 * @param string The string to be checked.
-	 * @return true if there is at least an upper case character.
-	 */
-	public static boolean isAnyCharUpperCase(String string){
-		for(int i=0; i < string.length(); i++){
-			char c = string.charAt(i);
-			if(Character.isUpperCase(c))
-				return true;
-		}
-		return false;
+		return osArch != null && osArch.endsWith("64")
+				|| winArch != null && winArch.endsWith("64")
+				|| wow64Arch != null && wow64Arch.endsWith("64");
 	}
 	
 }

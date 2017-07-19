@@ -32,7 +32,6 @@ public abstract class AbstractPddlEncoder {
 	
 	protected DataPetriNet petrinet;
 	protected PlanningBasedAlignmentParameters parameters;
-	
 	protected Map<Transition, String> invisibleTransitionToPddlIdMapping = new HashMap<Transition, String>();
 	protected Map<String, PetrinetNode> pddlIdToPetrinetNodeMapping = new HashMap<String, PetrinetNode>();
 	protected Map<String, XEventClass> pddlIdToEventClassMapping = new HashMap<String, XEventClass>();
@@ -40,28 +39,29 @@ public abstract class AbstractPddlEncoder {
 	protected AbstractPddlEncoder(DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) {
 		this.petrinet = petrinet;
 		this.parameters = parameters;
-		buildPddlEncodingMappings();
+		buildMappings();
 	}
 
 	/**
 	 * Create PDDL Domain for the given log trace.
 	 * 
-	 * @param trace
-	 * @param parameters
-	 * @return
+	 * @param trace The log trace.
+	 * @return A {@link StringBuffer} containing the PDDL Domain.}
 	 */
 	abstract public StringBuffer createPropositionalDomain(XTrace trace);
 
 	/**
 	 * Create PDDL Domain for the given log trace.
 	 * 
-	 * @param trace
-	 * @return
+	 * @param trace The log trace.
+	 * @return A {@link StringBuffer} containing the PDDL Problem.}
 	 */
 	abstract public StringBuffer createPropositionalProblem(XTrace trace);
 
-	
-	protected void buildPddlEncodingMappings() {
+	/**
+	 * Populate the mappings that relate Petri net nodes and events class with their PDDL identifiers.
+	 */
+	protected void buildMappings() {
 
 		Transition transition;
 		XEventClass eventLabel;
@@ -84,23 +84,16 @@ public abstract class AbstractPddlEncoder {
 			pddlTransition = AbstractPddlEncoder.getCorrectPddlFormat(pddlTransition);
 			pddlIdToPetrinetNodeMapping.put(pddlTransition, transition);	// TODO handle aliasing
 
-//			System.out.println("\t" + pddlTransition);
-
 			// get pddl id for event class
 			String pddlEventLabel = AbstractPddlEncoder.getCorrectPddlFormat(eventLabel.toString());
 			if (!pddlEventLabel.equals(DUMMY))
 				pddlIdToEventClassMapping.put(pddlEventLabel, eventLabel);
-
-//			System.out.println("\t" + pddlEventLabel);
-//			System.out.println();
 		}
 
 		// get pddl ids for places
 		for (Place place : petrinet.getPlaces()) {
 			String pddlPlace = AbstractPddlEncoder.getCorrectPddlFormat(place.getLabel());
 			pddlIdToPetrinetNodeMapping.put(pddlPlace, place);
-
-//			System.out.println("\t" + pddlPlace);
 		}
 
 	}
@@ -175,20 +168,6 @@ public abstract class AbstractPddlEncoder {
 				|| label.equalsIgnoreCase("") 
 				|| label.equalsIgnoreCase(" ") 
 				|| label.equalsIgnoreCase("\"");
-	}
-
-	/**
-	 * @return the invisibleTransitionToPddlIdMapping
-	 */
-	public Map<Transition, String> getInvisibleTransitionToPddlIdMapping() {
-		return invisibleTransitionToPddlIdMapping;
-	}
-
-	/**
-	 * @param invisibleTransitionToPddlIdMapping the invisibleTransitionToPddlIdMapping to set
-	 */
-	public void setInvisibleTransitionToPddlIdMapping(Map<Transition, String> invisibleTransitionToPddlIdMapping) {
-		this.invisibleTransitionToPddlIdMapping = invisibleTransitionToPddlIdMapping;
 	}
 
 	/**

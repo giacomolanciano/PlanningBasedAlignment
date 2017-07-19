@@ -22,7 +22,7 @@ import org.processmining.planningbasedalignment.pddl.AbstractPddlEncoder;
 import org.processmining.planningbasedalignment.pddl.StandardPddlEncoder;
 import org.processmining.planningbasedalignment.utils.PlannerSearchStrategy;
 import org.processmining.planningbasedalignment.utils.StreamGobbler;
-import org.processmining.planningbasedalignment.utils.Utilities;
+import org.processmining.planningbasedalignment.utils.OSUtils;
 import org.processmining.plugins.DataConformance.DataAlignment.DataAlignmentState;
 import org.processmining.plugins.DataConformance.DataAlignment.GenericTrace;
 import org.processmining.plugins.DataConformance.DataAlignment.PetriNet.ResultReplayPetriNetWithData;
@@ -46,20 +46,13 @@ public class PlanningBasedAlignment {
 	private static final String COMMAND_ARG_PLACEHOLDER = "+";
 	private static final String PLANNER_MANAGER_SCRIPT = "planner_manager.py";
 	private static final String FAST_DOWNWARD_SCRIPT = "fast-downward.py";
-	
-	private Process plannerManagerProcess;
-
-	private int traceIdToCheckFrom;
-	private int traceIdToCheckTo;
-	private int minTracesLength;
-	private int maxTracesLength;
-
-	private Pattern decimalNumberRegexPattern = Pattern.compile("\\d+(,\\d{3})*(\\.\\d+)*");
-	
-	private File plansFoundDir;
-	private File pddlFilesDir;
+	private static final String CASE_PREFIX = "Case ";
+	private static final int INITIAL_EXECUTION_TRACE_CAPACITY = 10;
 	
 	private AbstractPddlEncoder pddlEncoder;
+	private Process plannerManagerProcess;
+	private File plansFoundDir;
+	private File pddlFilesDir;
 
 	/**
 	 * The method that performs the alignment of an event log and a Petri net using Automated Planning.
@@ -74,34 +67,13 @@ public class PlanningBasedAlignment {
 			PlanningBasedAlignmentParameters parameters) {
 		
 		ResultReplayPetriNetWithData output = null;
-
-		long time = -System.currentTimeMillis();
-		parameters.displayMessage("[PlanningBasedAlignment] Start");
-		parameters.displayMessage("[PlanningBasedAlignment] First input = " + log.toString());
-		parameters.displayMessage("[PlanningBasedAlignment] Second input = " + petrinet.toString());
-		parameters.displayMessage("[PlanningBasedAlignment] Parameters = " + parameters.toString());
-		
 		
 		try {
-
-			int[] traceInterval = parameters.getTracesInterval();
-			traceIdToCheckFrom = traceInterval[0];
-			traceIdToCheckTo = traceInterval[1];
-			
-//			System.out.println("traceInterval: "+Arrays.toString(traceInterval));
-			
-			// set traces length bounds
-			int[] traceLengthBounds = parameters.getTracesLengthBounds();
-			minTracesLength = traceLengthBounds[0];
-			maxTracesLength = traceLengthBounds[1];
-			
-//			System.out.println("traceLengthBounds: "+Arrays.toString(traceLengthBounds));
-
 			// cleanup folders
 			plansFoundDir = new File(PLANS_FOUND_DIR);
 			pddlFilesDir = new File(PDDL_FILES_DIR);
-			Utilities.cleanFolder(plansFoundDir);
-			Utilities.cleanFolder(pddlFilesDir);
+			OSUtils.cleanFolder(plansFoundDir);
+			OSUtils.cleanFolder(pddlFilesDir);
 
 			/* PLANNER INPUTS BUILDING */
 			buildPlannerInput(log, petrinet, parameters);
@@ -111,17 +83,13 @@ public class PlanningBasedAlignment {
 			
 			/* PLANNER OUTPUTS PROCESSING */
 			output = processPlannerOutput(log, petrinet, parameters);
-
 			
-		}
-		catch(Exception e){
+		} catch (InterruptedException e) {
+			killSubprocesses();
+		} catch(Exception e){
 			e.printStackTrace();
 		}
 		
-		time += System.currentTimeMillis();
-//		parameters.displayMessage("[PlanningBasedAlignment] Output = " + output.toString());
-		parameters.displayMessage("[PlanningBasedAlignment] End (took " + time/1000.0 + "  seconds).");
-
 		return output;
 	}
 
@@ -149,7 +117,7 @@ public class PlanningBasedAlignment {
 		
 		String osName = System.getProperty("os.name").toLowerCase();
 		if (osName.contains(WINDOWS)) {
-			if (Utilities.is64bitsOS()) {
+			if (OSUtils.is64bitsOS()) {
 				pythonInterpreter = PYTHON_WIN_AMD64_DIR + pythonInterpreter;
 			} else {
 				pythonInterpreter = PYTHON_WIN_DIR + pythonInterpreter;
@@ -173,7 +141,7 @@ public class PlanningBasedAlignment {
 
 		// Fast-Downward is assumed to be built in advance both for 32 and 64 bits OS (being them Windows or Unix-like).
 		commandComponents.add("--build");
-		if (Utilities.is64bitsOS())
+		if (OSUtils.is64bitsOS())
 			commandComponents.add("release64");
 		else
 			commandComponents.add("release32");
@@ -211,32 +179,40 @@ public class PlanningBasedAlignment {
 	 */
 	protected void buildPlannerInput(XLog log, DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) {
 		
-		//TODO change implementation according to parameters
-		pddlEncoder = new StandardPddlEncoder(petrinet, parameters);
-		
+		int[] traceInterval = parameters.getTracesInterval();
+		int traceIdToCheckFrom = traceInterval[0];
+		int traceIdToCheckTo = traceInterval[1];
+
+		// set traces length bounds
+		int[] traceLengthBounds = parameters.getTracesLengthBounds();
+		int minTracesLength = traceLengthBounds[0];
+		int maxTracesLength = traceLengthBounds[1];
+
+		pddlEncoder = new StandardPddlEncoder(petrinet, parameters);	//TODO change implementation according to parameters
+
 		// consider only the traces in the chosen interval
 		for(int traceId = traceIdToCheckFrom-1; traceId < traceIdToCheckTo; traceId++) {
 
 			XTrace trace = log.get(traceId);
 			int traceLength = trace.size();						
-			
+
 			// check whether the trace matches the length bounds
 			if(traceLength >= minTracesLength && traceLength <= maxTracesLength)  {
-				
+
 				// create PDDL encodings (domain & problem) for current trace
 				StringBuffer sbDomain = pddlEncoder.createPropositionalDomain(trace);
 				StringBuffer sbProblem = pddlEncoder.createPropositionalProblem(trace);
 				String sbDomainFileName = PDDL_DOMAIN_FILE_PREFIX + (traceId+1) + PDDL_EXT;
 				String sbProblemFileName = PDDL_PROBLEM_FILE_PREFIX + (traceId+1) + PDDL_EXT;
-				Utilities.writeFile(sbDomainFileName, sbDomain);
-				Utilities.writeFile(sbProblemFileName, sbProblem);
+				OSUtils.writeFile(sbDomainFileName, sbDomain);
+				OSUtils.writeFile(sbProblemFileName, sbProblem);
 
 			}
 		}
 	}
 	
 	/**
-	 * Starts the execution of the planner.
+	 * Starts the execution of the planner for all the produced pairs domain/problem.
 	 * 
 	 * @param parameters
 	 * @throws InterruptedException
@@ -269,14 +245,17 @@ public class PlanningBasedAlignment {
 	 */
 	protected ResultReplayPetriNetWithData processPlannerOutput(XLog log, DataPetriNet petrinet,
 			PlanningBasedAlignmentParameters parameters) throws IOException {
-		
-		ResultReplayPetriNetWithData replayResults = null;
-		ArrayList<DataAlignmentState> alignments = new ArrayList<DataAlignmentState>();
+				
+		Pattern decimalNumberRegexPattern = Pattern.compile("\\d+(,\\d{3})*(\\.\\d+)*");
 		
 		float cost;
 		ExecutionTrace logTrace;
 		ExecutionTrace processTrace;
 		DataAlignmentState dataAlignmentState;
+		ArrayList<DataAlignmentState> alignments = new ArrayList<DataAlignmentState>();
+		ResultReplayPetriNetWithData result = null;
+		
+		// iterate over planner output files
 		for(final File alignmentFile : plansFoundDir.listFiles()) {
 
 			// extract traceId
@@ -285,13 +264,12 @@ public class PlanningBasedAlignment {
 			int traceId = Integer.parseInt(traceIdMatcher.group());
 
 			cost = 0;
-			logTrace = new GenericTrace(10, "Case " + traceId);
-			processTrace = new GenericTrace(10, "Case " + traceId);
+			logTrace = new GenericTrace(INITIAL_EXECUTION_TRACE_CAPACITY, CASE_PREFIX + traceId);
+			processTrace = new GenericTrace(INITIAL_EXECUTION_TRACE_CAPACITY, CASE_PREFIX + traceId);
 
-
-			// read trace alignment cost from process output file
+			// parse planner output file line by line
 			String traceAlignmentCost = new String();
-			String traceAlignmentTime = new String();
+//			String traceAlignmentTime = new String();
 			BufferedReader processOutputReader = new BufferedReader(new FileReader(alignmentFile));
 			String outputLine = processOutputReader.readLine(); 
 			while (outputLine != null) {
@@ -305,9 +283,9 @@ public class PlanningBasedAlignment {
 
 				} else if(outputLine.startsWith(SEARCH_TIME_ENTRY_PREFIX)) {
 					// parse alignment time						
-					Matcher matcher = decimalNumberRegexPattern.matcher(outputLine);
-					matcher.find();
-					traceAlignmentTime = matcher.group();
+//					Matcher matcher = decimalNumberRegexPattern.matcher(outputLine);
+//					matcher.find();
+//					traceAlignmentTime = matcher.group();
 
 				} else {						
 					ExecutionStep step = null;
@@ -336,33 +314,58 @@ public class PlanningBasedAlignment {
 				}
 				outputLine = processOutputReader.readLine();
 			}
-
 			processOutputReader.close();
 			
+			// add trace alignment to collection
 			dataAlignmentState = new DataAlignmentState(logTrace, processTrace, cost);
 			alignments.add(dataAlignmentState);
 		}
 		
-		VariableMatchCosts variableCost = VariableMatchCosts.NOCOST;			//dummy
-		Map<String, String> variableMapping = new HashMap<String, String>();	//dummy
+		VariableMatchCosts variableCost = VariableMatchCosts.NOCOST;			// dummy
+		Map<String, String> variableMapping = new HashMap<String, String>();	// dummy
 		XEventClassifier eventClassifier = parameters.getTransitionsEventsMapping().getEventClassifier();
-		replayResults = new ResultReplayPetriNetWithData(alignments, variableCost, variableMapping, petrinet, log, eventClassifier);
-		return replayResults;
+		result = new ResultReplayPetriNetWithData(alignments, variableCost, variableMapping, petrinet, log, eventClassifier);
+		return result;
 	}
 	
-	public boolean isSynchronousMove(String outputLine) {
+	/**
+	 * Check whether the given planner output file line is related to a synchronous move.
+	 * 
+	 * @param outputLine A String representing the output file line.
+	 * @return true if the output file line is related to a synchronous move.
+	 */
+	protected boolean isSynchronousMove(String outputLine) {
 		return outputLine.startsWith("(" + AbstractPddlEncoder.SYNCH_MOVE_PREFIX);
 	}
 	
-	public boolean isModelMove(String outputLine) {
+	/**
+	 * Check whether the given planner output file line is related to a model move.
+	 * 
+	 * @param outputLine A String representing the output file line.
+	 * @return true if the output file line is related to a model move.
+	 */
+	protected boolean isModelMove(String outputLine) {
 		return outputLine.startsWith("(" + AbstractPddlEncoder.MODEL_MOVE_PREFIX);
 	}
 	
-	public boolean isLogMove(String outputLine) {
+	/**
+	 * Check whether the given planner output file line is related to a log move.
+	 * 
+	 * @param outputLine A String representing the output file line.
+	 * @return true if the output file line is related to a log move.
+	 */
+	protected boolean isLogMove(String outputLine) {
 		return outputLine.startsWith("(" + AbstractPddlEncoder.LOG_MOVE_PREFIX);
 	}
 	
-	public String extractMovePddlId(String outputLine) {
+	/**
+	 * Extract from the given planner output file line the PDDL identifier of the related move. It could be either the 
+	 * name of a Petri net activity (possibly invisible), or the name of an event class.
+	 * 
+	 * @param outputLine A String representing the output file line.
+	 * @return true if the output file line is related to a log move.
+	 */
+	protected String extractMovePddlId(String outputLine) {
 		String[] tokens = outputLine.split("#");
 		return tokens[1].replaceAll("\\)", "").trim();
 	}
