@@ -57,55 +57,59 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 
 		for(Transition transition : petrinet.getTransitions()) {
 
-			/* Move Sync */			
 			String transitionName = encode(transition);
-			String mappedEventClass = encode(parameters.getTransitionsEventsMapping().get(transition));
 			Collection<PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode>> transitionInEdgesCollection = petrinet.getInEdges(transition);
 			Collection<PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode>> transitionOutEdgesCollection = petrinet.getOutEdges(transition);
 			
-			int i = 0;
-			for(XEvent event : trace) {
-
-				int currentEventIndex = i + 1;
-				int nextEventIndex = currentEventIndex + 1;
-				String currentEventLabel = "ev" + currentEventIndex;				
-				String eventName = encode(event);
-
-				if(eventName.equalsIgnoreCase(mappedEventClass)) {
-					
-					pddlDomainBuffer.append("(:action " + SYNCH_MOVE_PREFIX + "#" + transitionName + "#" + currentEventLabel + "\n");
-					pddlDomainBuffer.append(":precondition (and");
-					
-					for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionInEdgesCollection) {
-						Place place = (Place) inEdge.getSource();
-						pddlDomainBuffer.append(" (token " + encode(place) + ")");
+			if (!transition.isInvisible()) {
+				
+				/* Move Sync */			
+				int i = 0;
+				String mappedEventClass = encode(parameters.getTransitionsEventsMapping().get(transition));
+				for(XEvent event : trace) {
+	
+					int currentEventIndex = i + 1;
+					int nextEventIndex = currentEventIndex + 1;
+					String currentEventLabel = "ev" + currentEventIndex;				
+					String eventName = encode(event);
+	
+					if(eventName.equalsIgnoreCase(mappedEventClass)) {
+						
+						pddlDomainBuffer.append("(:action " + SYNCH_MOVE_PREFIX + "#" + transitionName + "#" + currentEventLabel + "\n");
+						pddlDomainBuffer.append(":precondition (and");
+						
+						for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionInEdgesCollection) {
+							Place place = (Place) inEdge.getSource();
+							pddlDomainBuffer.append(" (token " + encode(place) + ")");
+						}
+						
+						pddlDomainBuffer.append(" (tracePointer "+ currentEventLabel + ")");
+						pddlDomainBuffer.append(")\n");
+	
+						pddlDomainBuffer.append(":effect (and (allowed)");
+						for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionInEdgesCollection) {
+							Place place = (Place) inEdge.getSource();
+							pddlDomainBuffer.append(" (not (token " + encode(place) + "))");
+						}
+						for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> outEdge : transitionOutEdgesCollection) {
+							Place place = (Place) outEdge.getTarget();
+							pddlDomainBuffer.append(" (token " + encode(place) + ")");
+						}
+	
+						String nextEventLabel;
+						if(currentEventIndex == trace.size())
+							nextEventLabel = "evEND";
+						else
+							nextEventLabel = "ev" + nextEventIndex;
+	
+						pddlDomainBuffer.append(" (not (tracePointer "+ currentEventLabel + ")) (tracePointer "+ nextEventLabel + ")");
+						pddlDomainBuffer.append(")\n");
+						pddlDomainBuffer.append(")\n\n");
 					}
 					
-					pddlDomainBuffer.append(" (tracePointer "+ currentEventLabel + ")");
-					pddlDomainBuffer.append(")\n");
-
-					pddlDomainBuffer.append(":effect (and (allowed)");
-					for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionInEdgesCollection) {
-						Place place = (Place) inEdge.getSource();
-						pddlDomainBuffer.append(" (not (token " + encode(place) + "))");
-					}
-					for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> outEdge : transitionOutEdgesCollection) {
-						Place place = (Place) outEdge.getTarget();
-						pddlDomainBuffer.append(" (token " + encode(place) + ")");
-					}
-
-					String nextEventLabel;
-					if(currentEventIndex == trace.size())
-						nextEventLabel = "evEND";
-					else
-						nextEventLabel = "ev" + nextEventIndex;
-
-					pddlDomainBuffer.append(" (not (tracePointer "+ currentEventLabel + ")) (tracePointer "+ nextEventLabel + ")");
-					pddlDomainBuffer.append(")\n");
-					pddlDomainBuffer.append(")\n\n");
+					i++;
 				}
 				
-				i++;
 			}
 
 
@@ -137,10 +141,8 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 				pddlDomainBuffer.append(" (token " + encode(place) + ")");
 			}				
 
-			//if(Globals.getPlannerPerspective().getCostCheckBox().isSelected()) {
 			pddlDomainBuffer.append(" (increase (total-cost) ");
 			pddlDomainBuffer.append(movesOnModelCosts.get(transition) + ")\n");
-			//}
 
 			pddlDomainBuffer.append(")\n");
 			pddlDomainBuffer.append(")\n\n");

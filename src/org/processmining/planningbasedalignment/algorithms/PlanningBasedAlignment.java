@@ -20,9 +20,9 @@ import org.processmining.models.graphbased.directed.petrinet.elements.Transition
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 import org.processmining.planningbasedalignment.pddl.AbstractPddlEncoder;
 import org.processmining.planningbasedalignment.pddl.StandardPddlEncoder;
+import org.processmining.planningbasedalignment.utils.OSUtils;
 import org.processmining.planningbasedalignment.utils.PlannerSearchStrategy;
 import org.processmining.planningbasedalignment.utils.StreamAsyncReader;
-import org.processmining.planningbasedalignment.utils.OSUtils;
 import org.processmining.plugins.DataConformance.DataAlignment.DataAlignmentState;
 import org.processmining.plugins.DataConformance.DataAlignment.GenericTrace;
 import org.processmining.plugins.DataConformance.DataAlignment.PetriNet.ResultReplayPetriNetWithData;
@@ -314,6 +314,10 @@ public class PlanningBasedAlignment {
 					} else if (isModelMove(outputLine)) {
 						Transition transition = (Transition) pddlEncoder.getPddlIdToPetrinetNodeMapping().get(stepName);
 						step = new ExecutionStep(transition.getLabel(), transition);
+						
+						if (transition.isInvisible())
+							step.setInvisible(true);
+						
 						logTrace.add(ExecutionStep.bottomStep);
 						processTrace.add(step);
 
@@ -331,6 +335,7 @@ public class PlanningBasedAlignment {
 			
 			// add trace alignment to collection
 			dataAlignmentState = new DataAlignmentState(logTrace, processTrace, cost);
+			dataAlignmentState.setControlFlowFitness(0.3F);
 			alignments.add(dataAlignmentState);
 		}
 		
