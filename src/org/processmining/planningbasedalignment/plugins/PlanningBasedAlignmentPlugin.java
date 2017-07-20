@@ -6,7 +6,6 @@ import org.processmining.contexts.uitopia.UIPluginContext;
 import org.processmining.contexts.uitopia.annotations.UITopiaVariant;
 import org.processmining.datapetrinets.DataPetriNet;
 import org.processmining.framework.connections.ConnectionCannotBeObtained;
-import org.processmining.framework.plugin.PluginContext;
 import org.processmining.framework.plugin.annotations.Plugin;
 import org.processmining.framework.plugin.annotations.PluginVariant;
 import org.processmining.planningbasedalignment.algorithms.PlanningBasedAlignment;
@@ -83,7 +82,7 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	 * @param parameters The parameters to be used by the alignment algorithm.
 	 * @return The result of the replay of the event log on the Petri net.
 	 */
-	private ResultReplayPetriNetWithData replayLog(PluginContext context, XLog log, DataPetriNet petrinet,
+	private ResultReplayPetriNetWithData replayLog(UIPluginContext context, XLog log, DataPetriNet petrinet,
 			PlanningBasedAlignmentParameters parameters) {
 			
 		ResultReplayPetriNetWithData replayRes =  apply(context, log, petrinet, parameters);

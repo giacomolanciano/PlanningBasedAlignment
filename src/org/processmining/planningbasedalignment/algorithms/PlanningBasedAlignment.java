@@ -20,6 +20,7 @@ import org.processmining.models.graphbased.directed.petrinet.elements.Transition
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 import org.processmining.planningbasedalignment.pddl.AbstractPddlEncoder;
 import org.processmining.planningbasedalignment.pddl.StandardPddlEncoder;
+import org.processmining.planningbasedalignment.utils.AlignmentProgressChecker;
 import org.processmining.planningbasedalignment.utils.OSUtils;
 import org.processmining.planningbasedalignment.utils.PlannerSearchStrategy;
 import org.processmining.planningbasedalignment.utils.StreamAsyncReader;
@@ -64,6 +65,8 @@ public class PlanningBasedAlignment {
 	 * The separated process in which the planner is executed.
 	 */
 	protected Process plannerManagerProcess;
+	
+	protected AlignmentProgressChecker progressChecker;
 
 	/**
 	 * The method that performs the alignment of an event log and a Petri net using Automated Planning.
@@ -93,7 +96,7 @@ public class PlanningBasedAlignment {
 			buildPlannerInput(log, petrinet, parameters);
 
 			/* PLANNER INVOCATION */
-			invokePlanner(parameters);
+			invokePlanner(context, parameters, plansFoundDir);
 			
 			/* PLANNER OUTPUTS PROCESSING */
 			output = processPlannerOutput(log, petrinet, parameters, plansFoundDir);
@@ -112,7 +115,10 @@ public class PlanningBasedAlignment {
 	 * 
 	 */
 	protected void killSubprocesses() {
-		plannerManagerProcess.destroy();
+		if (plannerManagerProcess != null)
+			plannerManagerProcess.destroy();
+		if (progressChecker != null)
+			progressChecker.interrupt();
 	}
 	
 	/**
@@ -226,28 +232,34 @@ public class PlanningBasedAlignment {
 	
 	/**
 	 * Starts the execution of the planner for all the produced pairs domain/problem.
+	 * @param context 
 	 * 
 	 * @param parameters
+	 * @param plansFoundDir 
 	 * @throws InterruptedException
 	 * @throws IOException
 	 */
-	protected void invokePlanner(PlanningBasedAlignmentParameters parameters) throws InterruptedException, IOException {
+	protected void invokePlanner(PluginContext context, PlanningBasedAlignmentParameters parameters,
+			File alignmentsDirectory) throws InterruptedException, IOException {
 		String[] commandArgs = buildFastDownardCommandArgs(parameters);
 
 		// execute external planner script and wait for results
 		ProcessBuilder processBuilder = new ProcessBuilder(commandArgs);
 		plannerManagerProcess = processBuilder.start();
 
-		//System.out.println(Arrays.toString(commandArgs));
-
 		// read std out & err in separated thread
 		StreamAsyncReader errorGobbler = new StreamAsyncReader(plannerManagerProcess.getErrorStream(), "ERROR");
 		StreamAsyncReader outputGobbler = new StreamAsyncReader(plannerManagerProcess.getInputStream(), "OUTPUT");
 		errorGobbler.start();
 		outputGobbler.start();
+		
+		// start thread to show progress to the user
+		progressChecker = new AlignmentProgressChecker(context, alignmentsDirectory);
+		progressChecker.start();
 
 		// wait for the process to return to read the generated outputs
 		plannerManagerProcess.waitFor();
+		progressChecker.interrupt();
 	}
 	
 	/**
@@ -335,7 +347,7 @@ public class PlanningBasedAlignment {
 			
 			// add trace alignment to collection
 			dataAlignmentState = new DataAlignmentState(logTrace, processTrace, cost);
-			dataAlignmentState.setControlFlowFitness(0.3F);
+			dataAlignmentState.setControlFlowFitness(0.3F);	// TODO compute fitness
 			alignments.add(dataAlignmentState);
 		}
 		
