@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.deckfour.xes.classification.XEventClass;
-import org.deckfour.xes.extension.std.XConceptExtension;
+import org.deckfour.xes.classification.XEventClassifier;
 import org.deckfour.xes.model.XEvent;
 import org.deckfour.xes.model.XTrace;
 import org.processmining.datapetrinets.DataPetriNet;
@@ -173,7 +173,8 @@ public abstract class AbstractPddlEncoder {
 	 * @return
 	 */
 	public String encode(XEvent event) {
-		return AbstractPddlEncoder.getCorrectPddlFormat(XConceptExtension.instance().extractName(event));
+		XEventClassifier eventClassifier = parameters.getTransitionsEventsMapping().getEventClassifier();
+		return AbstractPddlEncoder.getCorrectPddlFormat(eventClassifier.getClassIdentity(event));
 	}
 	
 	/**

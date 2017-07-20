@@ -7,13 +7,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.deckfour.xes.classification.XEventClass;
 import org.deckfour.xes.classification.XEventClassifier;
+import org.deckfour.xes.model.XEvent;
 import org.deckfour.xes.model.XLog;
 import org.deckfour.xes.model.XTrace;
+import org.deckfour.xes.model.impl.XAttributeMapImpl;
+import org.deckfour.xes.model.impl.XTraceImpl;
 import org.processmining.datapetrinets.DataPetriNet;
 import org.processmining.framework.plugin.PluginContext;
 import org.processmining.models.graphbased.directed.petrinet.elements.Transition;
@@ -55,6 +59,7 @@ public class PlanningBasedAlignment {
 	protected static final String FAST_DOWNWARD_SCRIPT = "fast-downward.py";
 	protected static final String CASE_PREFIX = "Case ";
 	protected static final int INITIAL_EXECUTION_TRACE_CAPACITY = 10;
+	protected static final int EMPTY_TRACE_ID = 0;
 	
 	/**
 	 * The object used to generate the PDDL encodings.
@@ -66,6 +71,9 @@ public class PlanningBasedAlignment {
 	 */
 	protected Process plannerManagerProcess;
 	
+	/**
+	 * The separated thread that check alignment progress.
+	 */
 	protected AlignmentProgressChecker progressChecker;
 
 	/**
@@ -190,7 +198,7 @@ public class PlanningBasedAlignment {
 	}
 	
 	/**
-	 * Produces the PDDL files (representing the instances of the alignment problem) to be fed to the planner.
+	 * Produces the PDDL input files (representing the instances of the alignment problem) to be fed to the planner.
 	 * 
 	 * @param log
 	 * @param petrinet
@@ -209,6 +217,10 @@ public class PlanningBasedAlignment {
 
 		pddlEncoder = new StandardPddlEncoder(petrinet, parameters);	//TODO change implementation according to parameters
 
+		// add empty trace to the collection of trace to be aligned to compute fitness
+		XTrace emptyTrace = new XTraceImpl(new XAttributeMapImpl());
+		writePddlFiles(emptyTrace, EMPTY_TRACE_ID);
+		
 		// consider only the traces in the chosen interval
 		for(int traceId = traceIdToCheckFrom-1; traceId < traceIdToCheckTo; traceId++) {
 
@@ -219,15 +231,24 @@ public class PlanningBasedAlignment {
 			if(traceLength >= minTracesLength && traceLength <= maxTracesLength)  {
 
 				// create PDDL encodings (domain & problem) for current trace
-				StringBuffer sbDomain = pddlEncoder.createPropositionalDomain(trace);
-				StringBuffer sbProblem = pddlEncoder.createPropositionalProblem(trace);
-				String sbDomainFileName = PDDL_DOMAIN_FILE_PREFIX + (traceId+1) + PDDL_EXT;
-				String sbProblemFileName = PDDL_PROBLEM_FILE_PREFIX + (traceId+1) + PDDL_EXT;
-				OSUtils.writeFile(sbDomainFileName, sbDomain);
-				OSUtils.writeFile(sbProblemFileName, sbProblem);
-
+				writePddlFiles(trace, traceId+1);
 			}
 		}
+	}
+	
+	/**
+	 * Write the PDDL files related to the given trace.
+	 * 
+	 * @param trace The trace.
+	 * @param traceId The trace id.
+	 */
+	protected void writePddlFiles(XTrace trace, int traceId) {
+		StringBuffer sbDomain = pddlEncoder.createPropositionalDomain(trace);
+		StringBuffer sbProblem = pddlEncoder.createPropositionalProblem(trace);
+		String sbDomainFileName = PDDL_DOMAIN_FILE_PREFIX + traceId + PDDL_EXT;
+		String sbProblemFileName = PDDL_PROBLEM_FILE_PREFIX + traceId + PDDL_EXT;
+		OSUtils.writeFile(sbDomainFileName, sbDomain);
+		OSUtils.writeFile(sbProblemFileName, sbProblem);
 	}
 	
 	/**
@@ -273,7 +294,8 @@ public class PlanningBasedAlignment {
 				
 		Pattern decimalNumberRegexPattern = Pattern.compile("\\d+(,\\d{3})*(\\.\\d+)*");
 		
-		float cost;
+		float alignmentCost;
+		float emptyTraceCost = 0;
 		ExecutionTrace logTrace;
 		ExecutionTrace processTrace;
 		DataAlignmentState dataAlignmentState;
@@ -288,7 +310,7 @@ public class PlanningBasedAlignment {
 			traceIdMatcher.find();
 			int traceId = Integer.parseInt(traceIdMatcher.group());
 
-			cost = 0;
+			alignmentCost = 0;
 			logTrace = new GenericTrace(INITIAL_EXECUTION_TRACE_CAPACITY, CASE_PREFIX + traceId);
 			processTrace = new GenericTrace(INITIAL_EXECUTION_TRACE_CAPACITY, CASE_PREFIX + traceId);
 
@@ -304,7 +326,11 @@ public class PlanningBasedAlignment {
 					Matcher matcher = decimalNumberRegexPattern.matcher(outputLine);
 					matcher.find();
 					traceAlignmentCost = matcher.group();
-					cost = Float.parseFloat(traceAlignmentCost);
+					alignmentCost = Float.parseFloat(traceAlignmentCost);
+					
+					if (traceId == EMPTY_TRACE_ID)
+						// if empty trace, set the cost to compute fitness
+						emptyTraceCost = alignmentCost;
 
 				} else if(outputLine.startsWith(SEARCH_TIME_ENTRY_PREFIX)) {
 					// parse alignment time						
@@ -312,7 +338,9 @@ public class PlanningBasedAlignment {
 //					matcher.find();
 //					traceAlignmentTime = matcher.group();
 
-				} else {						
+				} else if (traceId != EMPTY_TRACE_ID) {
+					// if not empty trace, process the alignment move
+					
 					ExecutionStep step = null;
 					String stepName = extractMovePddlId(outputLine);
 
@@ -345,10 +373,22 @@ public class PlanningBasedAlignment {
 			}
 			processOutputReader.close();
 			
-			// add trace alignment to collection
-			dataAlignmentState = new DataAlignmentState(logTrace, processTrace, cost);
-			dataAlignmentState.setControlFlowFitness(0.3F);	// TODO compute fitness
-			alignments.add(dataAlignmentState);
+			if (traceId != EMPTY_TRACE_ID) {
+				XTrace trace = log.get(traceId-1);
+				
+				// create alignment object
+				dataAlignmentState = new DataAlignmentState(logTrace, processTrace, alignmentCost);
+				float fitness = computeFitness(trace, alignmentCost, emptyTraceCost, parameters);
+				
+				// since the visualization used by the plug-in takes also into account the data fitness, 
+				// control flow fitness has to be adjusted in order to be shown properly.
+				fitness = adjustFitness(fitness);
+				
+				dataAlignmentState.setControlFlowFitness(fitness);
+				
+				// add alignment object to collection
+				alignments.add(dataAlignmentState);
+			}
 		}
 		
 		VariableMatchCosts variableCost = VariableMatchCosts.NOCOST;			// dummy
@@ -398,6 +438,47 @@ public class PlanningBasedAlignment {
 	protected String extractMovePddlId(String outputLine) {
 		String[] tokens = outputLine.split("#");
 		return tokens[1].replaceAll("\\)", "").trim();
+	}
+	
+	/**
+	 * Compute the fitness of the given trace.
+	 * 
+	 * @param trace The trace.
+	 * @param alignmentCost The cost of aligning the trace.
+	 * @param emptyTraceCost The cost of aligning an empty trace on the same model (used for worst case scenario).
+	 * @param parameters The parameters of the plug-in.
+	 * @return a float representing the fitness of the trace.
+	 */
+	protected float computeFitness(XTrace trace, float alignmentCost, float emptyTraceCost,
+			PlanningBasedAlignmentParameters parameters) {
+		
+		XEventClassifier eventClassifier = parameters.getTransitionsEventsMapping().getEventClassifier();
+		
+		// compute the cost of performing a move in log for each event in the trace
+		float traceCost = 0;
+		for (XEvent event : trace) {
+			for(Entry<XEventClass, Integer> entry : parameters.getMovesOnLogCosts().entrySet()) {
+				String eventClass = entry.getKey().getId();
+				if(eventClass.equalsIgnoreCase(eventClassifier.getClassIdentity(event))) {
+					traceCost += entry.getValue();
+					break;
+				}
+			}
+		}
+		
+		float worstCaseCost = traceCost + emptyTraceCost;
+		return 1 - (alignmentCost / worstCaseCost);
+	}
+	
+	/**
+	 * Adjust the given fitness value for it to be correctly displayed by the visualizer of DataAwareReplayer package
+	 * (i.e. not taking into account the data fitness).
+	 * 
+	 * @param fitness The float representing the fitness value.
+	 * @return The adjusted value.
+	 */
+	protected float adjustFitness(float fitness) {
+		return (2 * fitness) - 1 ;
 	}
 	
 }

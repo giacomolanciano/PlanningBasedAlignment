@@ -201,11 +201,17 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 
 		pddlObjectsBuffer.append("(define (problem Align) (:domain Mining)\n");
 		pddlObjectsBuffer.append("(:objects\n");	
-
 		pddlInitBuffer = new StringBuffer("(:init\n");
-		pddlInitBuffer.append("(tracePointer ev1)\n");
+		
+		int traceLength = trace.size();
+		if (traceLength > 0)
+			pddlInitBuffer.append("(tracePointer ev1)\n");
+		else {
+			// if empty trace, trace pointer must be set at the end to allow for moves in model only
+			pddlInitBuffer.append("(tracePointer evEND)\n");
+		}
+		
 		pddlInitBuffer.append("(allowed)\n");
-
 		pddlGoalBuffer.append("(:goal\n");
 		pddlGoalBuffer.append("(and\n");
 
@@ -229,7 +235,6 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 			pddlObjectsBuffer.append(encode(place) + " - place\n");
 		}
 
-		int traceLength = trace.size();
 		for(int i = 0; i < traceLength; i++) {	
 			int currentEventIndex = i + 1;
 			pddlObjectsBuffer.append("ev" + currentEventIndex + " - event\n");		
