@@ -55,7 +55,7 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 		
 	    ConfigurationUI configurationUI = new ConfigurationUI();
 		PlanningBasedAlignmentParameters parameters = configurationUI.getPlanningBasedAlignmentParameters(
-				context, petrinet, log);
+				context, log, petrinet);
 		
 		if (parameters == null) {
 			context.getFutureResult(0).cancel(true);

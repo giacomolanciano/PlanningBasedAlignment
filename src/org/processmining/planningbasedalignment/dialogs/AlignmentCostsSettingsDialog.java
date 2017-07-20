@@ -34,7 +34,7 @@ import info.clearthought.layout.TableLayoutConstants;
  * 
  * The panel for setting the costs of the alignment moves.
  */
-public class AlignmentSettingsDialog extends JComponent {
+public class AlignmentCostsSettingsDialog extends JComponent {
 
 	private static final long serialVersionUID = -1764028439791226196L;
 
@@ -59,17 +59,17 @@ public class AlignmentSettingsDialog extends JComponent {
 
 	private final TableLayout tl;
 
-	protected AlignmentSettingsDialog(double[][] size) {
+	protected AlignmentCostsSettingsDialog(double[][] size) {
 		tl = new TableLayout(size);
 		setLayout(tl);
 
 	}
 
-	public AlignmentSettingsDialog(Collection<Transition> transCol, Collection<XEventClass> evClassCol) {
+	public AlignmentCostsSettingsDialog(Collection<Transition> transCol, Collection<XEventClass> evClassCol) {
 		this(transCol, evClassCol, null, null, null);
 	}
 
-	public AlignmentSettingsDialog(Collection<Transition> transCol, Collection<XEventClass> evClassCol,
+	public AlignmentCostsSettingsDialog(Collection<Transition> transCol, Collection<XEventClass> evClassCol,
 			Map<Transition, Integer> defMoveModelCost, Map<Transition, Integer> defSyncCost,
 			Map<XEventClass, Integer> defMoveLogCost) {
 		this(new double[][] {
