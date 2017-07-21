@@ -205,11 +205,8 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 		
 		int traceLength = trace.size();
 		if (traceLength > 0)
+			// if trace is non-empty, set trace pointer in init condition
 			pddlInitBuffer.append("(tracePointer ev1)\n");
-		else {
-			// if empty trace, trace pointer must be set at the end to allow for moves in model only
-			pddlInitBuffer.append("(tracePointer evEND)\n");
-		}
 		
 		pddlInitBuffer.append("(allowed)\n");
 		pddlGoalBuffer.append("(:goal\n");
@@ -247,7 +244,11 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 		pddlCostBuffer.append("(= (total-cost) 0)\n");
 		pddlInitBuffer.append(pddlCostBuffer);
 		pddlInitBuffer.append(")\n");
-		pddlGoalBuffer.append("(tracePointer evEND)\n");
+		
+		if (traceLength > 0)
+			// if trace is non-empty, set trace pointer in goal condition
+			pddlGoalBuffer.append("(tracePointer evEND)\n");
+		
 		pddlGoalBuffer.append("))\n");
 		pddlGoalBuffer.append("(:metric minimize (total-cost))\n");	
 		pddlProblemBuffer.append(pddlObjectsBuffer);
