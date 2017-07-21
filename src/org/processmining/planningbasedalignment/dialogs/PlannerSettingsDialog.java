@@ -46,12 +46,12 @@ public class PlannerSettingsDialog extends JComponent {
 	/**
 	 * The table holding data for the trace interval.
 	 */
-	DefaultTableModel tracesIntervalModel;
+	private DefaultTableModel tracesIntervalModel;
 	
 	/**
 	 * The table holding data for the trace length boundaries.
 	 */
-	DefaultTableModel tracesLengthBoundsModel;
+	private DefaultTableModel tracesLengthBoundsModel;
 	
 	
 	public PlannerSettingsDialog(XLog log) {
@@ -196,6 +196,35 @@ public class PlannerSettingsDialog extends JComponent {
 		int minLength = Integer.parseInt((String) tracesLengthBoundsModel.getValueAt(0, 0));
 		int maxLength = Integer.parseInt((String) tracesLengthBoundsModel.getValueAt(0, 1));
 		return new int[]{minLength, maxLength};
+	}
+	
+	/**
+	 * Check whether the inserted settings are valid.
+	 * 
+	 * @return true if the settings are valid.
+	 */
+	public boolean checkSettingsIntegrity() {
+		return checkTracesIntervalIntegrity() && checkTracesLengthBoundsIntegrity();
+	}
+	
+	/**
+	 * Check whether the inserted traces interval is valid.
+	 * 
+	 * @return true if the traces interval is valid.
+	 */
+	private boolean checkTracesIntervalIntegrity() {
+		int[] interval = getChosenTracesInterval();
+		return interval[0] <= interval[1];
+	}
+	
+	/**
+	 * Check whether the inserted traces length boundaries are valid.
+	 * 
+	 * @return true if the traces length boundaries are valid.
+	 */
+	private boolean checkTracesLengthBoundsIntegrity() {
+		int[] boundaries = getChosenTracesLengthBounds();
+		return boundaries[0] <= boundaries[1];
 	}
 
 }

@@ -191,8 +191,8 @@ public class ConfigurationUI {
 				String[] options = new String[] { "Keep guessed", "Create manually" };
 				int result = JOptionPane.showOptionDialog(context.getGlobalContext().getUI(),
 						"<HTML>No initial marking is found for this model. Based on the net structure the intial marking should be: [<B>"
-								+ guessedInitialMarking.iterator().next()
-								+ "</B>].<BR/>Do you want to use the guessed marking, or manually create a new one?</HTML>",
+						+ guessedInitialMarking.iterator().next()
+						+ "</B>].<BR/>Do you want to use the guessed marking, or manually create a new one?</HTML>",
 						"No Initial Marking", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options,
 						options[0]);
 				if (result == 1) {
@@ -359,13 +359,13 @@ public class ConfigurationUI {
 				break;
 			case FINISHED :
 				return new Object[] {
-					// the order must match with the constants defined at the beginning of the class
-					((PlannerSettingsDialog) configurationStepsDialogs[0]).getChosenStrategy(),
-					((PlannerSettingsDialog) configurationStepsDialogs[0]).getChosenTracesInterval(),
-					((PlannerSettingsDialog) configurationStepsDialogs[0]).getChosenTracesLengthBounds(),
-					((AlignmentCostsSettingsDialog) configurationStepsDialogs[1]).getMovesOnLogCosts(),
-					((AlignmentCostsSettingsDialog) configurationStepsDialogs[1]).getMovesOnModelCosts(),
-					((AlignmentCostsSettingsDialog) configurationStepsDialogs[1]).getSynchronousMovesCosts()
+						// the order must match with the constants defined at the beginning of the class
+						((PlannerSettingsDialog) configurationStepsDialogs[0]).getChosenStrategy(),
+						((PlannerSettingsDialog) configurationStepsDialogs[0]).getChosenTracesInterval(),
+						((PlannerSettingsDialog) configurationStepsDialogs[0]).getChosenTracesLengthBounds(),
+						((AlignmentCostsSettingsDialog) configurationStepsDialogs[1]).getMovesOnLogCosts(),
+						((AlignmentCostsSettingsDialog) configurationStepsDialogs[1]).getMovesOnModelCosts(),
+						((AlignmentCostsSettingsDialog) configurationStepsDialogs[1]).getSynchronousMovesCosts()
 				};
 			default :
 				return null;
@@ -383,9 +383,15 @@ public class ConfigurationUI {
 	private int move(int direction, TransEvClassMapping mapping) {
 		currentConfigurationStep += direction;
 
-		// check which algorithm is selected and adjust parameter as necessary
 		if (currentConfigurationStep == 1) {
-			configurationStepsDialogs[1] = new AlignmentCostsSettingsDialog(mapping.keySet(), mapping.values());
+			if (((PlannerSettingsDialog) configurationStepsDialogs[0]).checkSettingsIntegrity())
+				configurationStepsDialogs[1] = new AlignmentCostsSettingsDialog(mapping.keySet(), mapping.values());
+			else {
+				JOptionPane.showMessageDialog(new JPanel(),
+						"Invalid traces interval and/or length boundaries inserted. Review settings to continue.",
+						"Invalid settings", JOptionPane.ERROR_MESSAGE);
+				currentConfigurationStep -= 1;
+			}
 		}
 
 		if ((currentConfigurationStep >= 0) && (currentConfigurationStep < CONFIGURATION_STEPS_NUMBER)) {
