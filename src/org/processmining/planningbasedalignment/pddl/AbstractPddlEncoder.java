@@ -35,7 +35,7 @@ public abstract class AbstractPddlEncoder {
 	/**
 	 * The mapping between Petri net invisible transitions and related PDDL ids.
 	 */
-	protected Map<Transition, String> invisibleTransitionToPddlIdMapping = new HashMap<Transition, String>();
+	protected Map<Transition, String> transitionToPddlIdMapping = new HashMap<Transition, String>();
 	
 	/**
 	 * The mapping between PDDL ids and related Petri net nodes.
@@ -46,7 +46,7 @@ public abstract class AbstractPddlEncoder {
 	 * The mapping between PDDL ids and related event classes.
 	 */
 	protected Map<String, XEventClass> pddlIdToEventClassMapping = new HashMap<String, XEventClass>();
-
+	
 	protected AbstractPddlEncoder(DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) {
 		this.petrinet = petrinet;
 		this.parameters = parameters;
@@ -57,7 +57,7 @@ public abstract class AbstractPddlEncoder {
 	 * Create PDDL Domain for the given log trace.
 	 * 
 	 * @param trace The log trace.
-	 * @return A {@link StringBuffer} containing the PDDL Domain.}
+	 * @return A {@link StringBuffer} containing the PDDL Domain.
 	 */
 	abstract public StringBuffer createPropositionalDomain(XTrace trace);
 
@@ -65,7 +65,7 @@ public abstract class AbstractPddlEncoder {
 	 * Create PDDL Domain for the given log trace.
 	 * 
 	 * @param trace The log trace.
-	 * @return A {@link StringBuffer} containing the PDDL Problem.}
+	 * @return A {@link StringBuffer} containing the PDDL Problem.
 	 */
 	abstract public StringBuffer createPropositionalProblem(XTrace trace);
 
@@ -73,39 +73,55 @@ public abstract class AbstractPddlEncoder {
 	 * Populate the mappings that relate Petri net nodes and events class with their PDDL identifiers.
 	 */
 	protected void buildMappings() {
-
+		
+		// The mapping between PDDL ids and their occurrences.
+		Map<String, Integer> pddlIdToOccurrencesMapping = new HashMap<String, Integer>();
+		
 		Transition transition;
 		XEventClass eventLabel;
+		String pddlTransitionId;
+		String pddlEventLabelId;
+		Integer pddlIdOccurrences;
+		String pddlPlace;
 		int invisibleTransitionsCount = 0;
 		for (Entry<Transition, XEventClass> entry : parameters.getTransitionsEventsMapping().entrySet()) {
 			transition = entry.getKey();
 			eventLabel = entry.getValue();
 
 			// get pddl id for transition
-			String pddlTransition = getCorrectPddlFormat(transition.getLabel());
-			if(isInvisibleTransition(transition)) {
-				
-				if (isInvisibleTransitionLabel(pddlTransition)) {
-					// if transition label is empty, generate an id
-					pddlTransition = getCorrectPddlFormat(
-							new String(INVISIBLE_TRANSITION_PREFIX + invisibleTransitionsCount));
-					invisibleTransitionsCount++;
-				}
-				
-				// add a reference from the invisible transition to the generated id
-				invisibleTransitionToPddlIdMapping.put(transition, pddlTransition);
+			pddlTransitionId = getCorrectPddlFormat(transition.getLabel());
+			
+			if (isInvisibleTransition(transition) && isEmptyLabel(pddlTransitionId)) {
+				// transition label is empty, generate an id
+				pddlTransitionId = getCorrectPddlFormat(
+						new String(INVISIBLE_TRANSITION_PREFIX + invisibleTransitionsCount));
+				invisibleTransitionsCount++;
 			}
-			pddlIdToPetrinetNodeMapping.put(pddlTransition, transition);	// TODO handle aliasing
+				
+			// handle VISIBLE transitions aliasing
+			pddlIdOccurrences = pddlIdToOccurrencesMapping.get(pddlTransitionId);
+			if (pddlIdOccurrences != null) {
+				pddlIdToOccurrencesMapping.put(pddlTransitionId, pddlIdOccurrences + 1);
+				pddlTransitionId += "" + pddlIdOccurrences;
+			} else {
+				pddlIdToOccurrencesMapping.put(pddlTransitionId, 1);
+			}
+			
+			// add a mapping from the transition to the generated id
+			transitionToPddlIdMapping.put(transition, pddlTransitionId);
+			
+			// add a mapping from the generated id to the transition
+			pddlIdToPetrinetNodeMapping.put(pddlTransitionId, transition);
 
 			// get pddl id for event class
-			String pddlEventLabel = getCorrectPddlFormat(eventLabel.toString());
-			if (!pddlEventLabel.equals(DUMMY))
-				pddlIdToEventClassMapping.put(pddlEventLabel, eventLabel);
+			pddlEventLabelId = getCorrectPddlFormat(eventLabel.toString());
+			if (!pddlEventLabelId.equals(DUMMY))
+				pddlIdToEventClassMapping.put(pddlEventLabelId, eventLabel);
 		}
 
 		// get pddl ids for places
 		for (Place place : petrinet.getPlaces()) {
-			String pddlPlace = getCorrectPddlFormat(place.getLabel());
+			pddlPlace = getCorrectPddlFormat(place.getLabel());
 			pddlIdToPetrinetNodeMapping.put(pddlPlace, place);
 		}
 
@@ -138,12 +154,7 @@ public abstract class AbstractPddlEncoder {
 	 * @return
 	 */
 	public String encode(Transition transition) {
-		String pddlTransition = transition.getLabel();
-		if(isInvisibleTransition(transition)) {
-			return invisibleTransitionToPddlIdMapping.get(transition);
-		}
-		pddlTransition = AbstractPddlEncoder.getCorrectPddlFormat(pddlTransition);
-		return pddlTransition;
+		return transitionToPddlIdMapping.get(transition);
 	}
 
 	/**
@@ -153,7 +164,7 @@ public abstract class AbstractPddlEncoder {
 	 * @return
 	 */
 	public String encode(Place place) {
-		return AbstractPddlEncoder.getCorrectPddlFormat(place.getLabel());
+		return getCorrectPddlFormat(place.getLabel());
 	}
 
 	/**
@@ -163,7 +174,7 @@ public abstract class AbstractPddlEncoder {
 	 * @return
 	 */
 	public String encode(XEventClass eventLabel) {
-		return AbstractPddlEncoder.getCorrectPddlFormat(eventLabel.toString());
+		return getCorrectPddlFormat(eventLabel.toString());
 	}
 	
 	/**
@@ -174,7 +185,7 @@ public abstract class AbstractPddlEncoder {
 	 */
 	public String encode(XEvent event) {
 		XEventClassifier eventClassifier = parameters.getTransitionsEventsMapping().getEventClassifier();
-		return AbstractPddlEncoder.getCorrectPddlFormat(eventClassifier.getClassIdentity(event));
+		return getCorrectPddlFormat(eventClassifier.getClassIdentity(event));
 	}
 	
 	/**
@@ -185,7 +196,7 @@ public abstract class AbstractPddlEncoder {
 	 */
 	public boolean isInvisibleTransition(Transition transition) {
 		String transitionLabel = transition.getLabel();
-		boolean isInvisible = transition.isInvisible() || isInvisibleTransitionLabel(transitionLabel);
+		boolean isInvisible = transition.isInvisible() || isEmptyLabel(transitionLabel);
 		if (isInvisible)
 			transition.setInvisible(true);	// make sure the transition invisible property is correctly set
 		return isInvisible;
@@ -197,7 +208,7 @@ public abstract class AbstractPddlEncoder {
 	 * @param transition The String representing the label.
 	 * @return true if the given label is associated to an invisible Petri net transition.
 	 */
-	private boolean isInvisibleTransitionLabel(String transitionLabel) {
+	private boolean isEmptyLabel(String transitionLabel) {
 		return transitionLabel.isEmpty()
 				|| transitionLabel.equalsIgnoreCase("")
 				|| transitionLabel.equalsIgnoreCase(" ")
