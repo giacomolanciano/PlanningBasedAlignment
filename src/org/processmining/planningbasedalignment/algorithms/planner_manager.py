@@ -6,15 +6,7 @@ import sys
 from os import path
 from os import remove
 
-# to be kept equal to equivalent constants in ResultPerspective.java
-ROOT = path.dirname(path.abspath(__file__))
-SRC_DIR = path.join(ROOT, 'pddl_files')
-DEST_DIR = path.join(ROOT, 'plans_found')
-DEST_FILE = path.join(DEST_DIR, 'alignment_')
-
-ALIGNMENT_FILE_POS = 5
-DOMAIN_FILE_POS = 6
-PROBLEM_FILE_POS = DOMAIN_FILE_POS + 1
+PLANNER_MANAGER_ARGS_NUM = 2
 PLANNER_INPUT_EXT = '.pddl'
 DOMAIN_FILE_PATTERN = 'domain*'
 PROBLEM_FILE_PATTERN = 'problem'
@@ -24,12 +16,18 @@ TOTAL_TIME_ENTRY_PREFIX = 'Total time: '
 SEARCH_TIME_ENTRY_PREFIX = '; searchtime = '
 TIME_CONVERSION_COEFF = 1000
 
+# positions expressed with respect to the TRUNCATED sys.argv
+ALIGNMENT_FILE_POS = 5
+DOMAIN_FILE_POS = 6
+PROBLEM_FILE_POS = DOMAIN_FILE_POS + 1
+
 
 if __name__ == '__main__':
 
     # the argument list has to match the following structure:
     #
-    # ['< planner_manager_path >',  # to be discarded
+    # ['< planner_manager_path >',  # to be discarded    
+    # '< root_dir_path >',
     # 'python',
     # '.../fast-downward/fast-downward.py',
     # '--build',
@@ -43,7 +41,13 @@ if __name__ == '__main__':
     # '--search',
     # '< chosen_strategy >']
 
-    planner_args = sys.argv[1:]
+    # to be kept equal to equivalent constants in ResultPerspective.java
+    ROOT_DIR = sys.argv[1]
+    SRC_DIR = path.join(ROOT_DIR, 'pddl_files')
+    DEST_DIR = path.join(ROOT_DIR, 'plans_found')
+    DEST_FILE = path.join(DEST_DIR, 'alignment_')
+
+    planner_args = sys.argv[PLANNER_MANAGER_ARGS_NUM:]
 
     for domain in glob.glob(path.join(SRC_DIR, DOMAIN_FILE_PATTERN)):
         # extract trace number
@@ -76,6 +80,6 @@ if __name__ == '__main__':
 
     try:
         # cleanup
-        remove(path.join(ROOT, 'output.sas'))
+        remove(path.join(ROOT_DIR, 'output.sas'))
     except OSError:
         pass

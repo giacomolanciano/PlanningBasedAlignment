@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,10 +45,6 @@ import org.processmining.plugins.DataConformance.framework.VariableMatchCosts;
  */
 public class PlanningBasedAlignment {
 	
-	protected static final String WINDOWS = "windows";
-	protected static final String PYTHON_WIN_DIR = "python27/";
-	protected static final String PYTHON_WIN_AMD64_DIR = "python27amd64/";
-	protected static final String FAST_DOWNWARD_DIR = "fast-downward/";
 	protected static final String PLANS_FOUND_DIR = "plans_found/";
 	protected static final String PDDL_FILES_DIR = "pddl_files/";
 	protected static final String PDDL_EXT = ".pddl";
@@ -56,7 +54,7 @@ public class PlanningBasedAlignment {
 	protected static final String SEARCH_TIME_ENTRY_PREFIX = "; searchtime = ";
 	protected static final String COMMAND_ARG_PLACEHOLDER = "+";
 	protected static final String PLANNER_MANAGER_SCRIPT = "planner_manager.py";
-	protected static final String FAST_DOWNWARD_SCRIPT = "fast-downward.py";
+	protected static final String FAST_DOWNWARD_SCRIPT = "fast-downward/fast-downward.py";
 	protected static final String CASE_PREFIX = "Case ";
 	protected static final int INITIAL_EXECUTION_TRACE_CAPACITY = 10;
 	protected static final int EMPTY_TRACE_ID = 0;
@@ -136,35 +134,40 @@ public class PlanningBasedAlignment {
 	 * 
 	 * @return an array of Strings containing the arguments.
 	 * @throws IOException 
+	 * @throws URISyntaxException 
 	 */
-	protected String[] buildFastDownardCommandArgs(PlanningBasedAlignmentParameters parameters) throws IOException {
+	protected String[] buildFastDownardCommandArgs(PlanningBasedAlignmentParameters parameters)
+			throws IOException, URISyntaxException {
+		
 		ArrayList<String> commandComponents = new ArrayList<>();
 
-		// determine which python interpreter must be used
+		// Python 2.7 is assumed to be installed as default version on the user machine
 		String pythonInterpreter = "python";
 		
-		String osName = System.getProperty("os.name").toLowerCase();
-		if (osName.contains(WINDOWS)) {
-			if (OSUtils.is64bitsOS()) {
-				pythonInterpreter = PYTHON_WIN_AMD64_DIR + pythonInterpreter;
-			} else {
-				pythonInterpreter = PYTHON_WIN_DIR + pythonInterpreter;
-			}
-		}
-
+		// since this class is never directly instantiated, access the superclass to get the correct package
+		String packageName = this.getClass().getSuperclass().getPackage().getName();
+		packageName = packageName.replaceAll("\\.", "/") + "/";
+		
+		
 		/* begin of command args for planner manager */
-
 		commandComponents.add(pythonInterpreter);
-
-		File plannerManagerScript = new File(PLANNER_MANAGER_SCRIPT);
+		
+		// the path to the planner manager script
+		URL plannerManagerURL = getClass().getClassLoader().getResource(packageName + PLANNER_MANAGER_SCRIPT);
+		File plannerManagerScript = new File(plannerManagerURL.toURI());
 		commandComponents.add(plannerManagerScript.getCanonicalPath());
-
+		
+		// the path of the current working directory, where planner inputs and outputs are saved
+		File workingDir = new File(".");
+		commandComponents.add(workingDir.getCanonicalPath());
+		
 
 		/* begin of command args for Fast-Downward */
-
 		commandComponents.add(pythonInterpreter);
 
-		File fdScript = new File(FAST_DOWNWARD_DIR + FAST_DOWNWARD_SCRIPT);
+		// the path to the fast-downward launcher script
+		URL fdScriptURL = getClass().getClassLoader().getResource(packageName + FAST_DOWNWARD_SCRIPT);
+		File fdScript = new File(fdScriptURL.toURI());
 		commandComponents.add(fdScript.getCanonicalPath());
 
 		// Fast-Downward is assumed to be built in advance both for 32 and 64 bits OS (being them Windows or Unix-like).
@@ -193,6 +196,7 @@ public class PlanningBasedAlignment {
 			commandComponents.add("lazy_greedy([hhmax], preferred=[hhmax])");
 		}
 
+		// return the arguments list as an array of strings
 		String[] commandArguments = commandComponents.toArray(new String[0]);
 		return commandArguments;
 	}
@@ -259,11 +263,12 @@ public class PlanningBasedAlignment {
 	 * @param plansFoundDir 
 	 * @throws InterruptedException
 	 * @throws IOException
+	 * @throws URISyntaxException 
 	 */
 	protected void invokePlanner(PluginContext context, PlanningBasedAlignmentParameters parameters,
-			File alignmentsDirectory) throws InterruptedException, IOException {
+			File alignmentsDirectory) throws InterruptedException, IOException, URISyntaxException {
 		String[] commandArgs = buildFastDownardCommandArgs(parameters);
-
+		
 		// execute external planner script and wait for results
 		ProcessBuilder processBuilder = new ProcessBuilder(commandArgs);
 		plannerManagerProcess = processBuilder.start();
