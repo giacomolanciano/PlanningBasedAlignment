@@ -7,6 +7,7 @@ import org.processmining.contexts.uitopia.annotations.UITopiaVariant;
 import org.processmining.datapetrinets.DataPetriNet;
 import org.processmining.framework.connections.ConnectionCannotBeObtained;
 import org.processmining.framework.plugin.annotations.Plugin;
+import org.processmining.framework.plugin.annotations.PluginCategory;
 import org.processmining.framework.plugin.annotations.PluginVariant;
 import org.processmining.planningbasedalignment.algorithms.PlanningBasedAlignment;
 import org.processmining.planningbasedalignment.connections.PlanningBasedAlignmentConnection;
@@ -27,6 +28,8 @@ import org.processmining.plugins.DataConformance.DataAlignment.PetriNet.ResultRe
 	returnLabels = { "Petri Net Replay Result" },
 	returnTypes = { ResultReplayPetriNetWithData.class },
 	userAccessible = true,
+	categories = PluginCategory.ConformanceChecking,
+	keywords = {"conformance", "alignment", "planning"},
 	help = HelpMessages.PLANNING_BASED_ALIGNMENT_HELP
 )
 public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
