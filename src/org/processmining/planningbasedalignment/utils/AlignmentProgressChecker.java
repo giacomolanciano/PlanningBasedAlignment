@@ -38,6 +38,7 @@ public class AlignmentProgressChecker extends Thread {
 		this.alignmentsDirectory = alignmentsDirectory;
 	}
 
+	@Override
 	public void run() {
 		try {
 			while(true) {

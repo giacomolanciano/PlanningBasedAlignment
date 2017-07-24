@@ -14,6 +14,7 @@ import org.processmining.planningbasedalignment.connections.PlanningBasedAlignme
 import org.processmining.planningbasedalignment.dialogs.ConfigurationUI;
 import org.processmining.planningbasedalignment.help.HelpMessages;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
+import org.processmining.planningbasedalignment.utils.ResourcesUnpacker;
 import org.processmining.plugins.DataConformance.DataAlignment.PetriNet.ResultReplayPetriNetWithData;
 
 /**
@@ -55,6 +56,14 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 		// convert input to DataPetriNet object for visualization purposes
 //		DataPetriNet petrinet = DataPetriNet.Factory.fromPetrinet(petrinetTemp);
 		
+		if (!checkPlannerSources()) {
+			
+			System.out.println("\t\t unpacking resources");
+			
+			unpackerThread = new ResourcesUnpacker(context);
+			unpackerThread.start();
+		}
+		
 	    ConfigurationUI configurationUI = new ConfigurationUI();
 		PlanningBasedAlignmentParameters parameters = configurationUI.getPlanningBasedAlignmentParameters(
 				context, log, petrinet);
@@ -64,8 +73,6 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 			return null;
 		}
 		
-		context.log("replay is performed. All parameters are set.");
-
 		// start algorithm
 		ResultReplayPetriNetWithData res = replayLog(context, log, petrinet, parameters);
 
