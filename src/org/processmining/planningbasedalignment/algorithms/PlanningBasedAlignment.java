@@ -72,9 +72,12 @@ public class PlanningBasedAlignment {
 	/**
 	 * The separated thread that check alignment progress.
 	 */
-	protected AlignmentProgressChecker progressChecker;
+	protected Thread progressChecker;
 	
-	protected Thread unpackerThread;
+	/**
+	 * The separated thread that unpack the planner source code.
+	 */
+	protected Thread resourcesUnpacker;
 
 	/**
 	 * The method that performs the alignment of an event log and a Petri net using Automated Planning.
@@ -127,6 +130,8 @@ public class PlanningBasedAlignment {
 			plannerManagerProcess.destroy();
 		if (progressChecker != null)
 			progressChecker.interrupt();
+		if (resourcesUnpacker != null)
+			resourcesUnpacker.interrupt();
 	}
 	
 	/**
@@ -146,18 +151,15 @@ public class PlanningBasedAlignment {
 		
 		// Python 2.7 is assumed to be installed as default version on the user machine
 		String pythonInterpreter = "python";
-		
-		// since this class is never directly instantiated, access the superclass to get the correct package
-//		String packageName = this.getClass().getSuperclass().getPackage().getName();
-//		packageName = packageName.replaceAll("\\.", "/") + "/";
-		
+
 		
 		/* begin of command args for planner manager */
 		commandComponents.add(pythonInterpreter);
 		
-		if (unpackerThread != null)
+		if (resourcesUnpacker != null) {
 			context.log("Waiting for planner resources to be unpacked.");
-			unpackerThread.join();
+			resourcesUnpacker.join();
+		}
 		
 		// the path to the planner manager script
 		File plannerManagerScript = new File(PLANNER_MANAGER_SCRIPT);
@@ -224,7 +226,7 @@ public class PlanningBasedAlignment {
 		int minTracesLength = traceLengthBounds[0];
 		int maxTracesLength = traceLengthBounds[1];
 
-		pddlEncoder = new StandardPddlEncoder(petrinet, parameters);	//TODO change implementation according to parameters
+		pddlEncoder = new StandardPddlEncoder(petrinet, parameters); //TODO change implementation according to params
 
 		// add empty trace to the collection of trace to be aligned to compute fitness
 		XTrace emptyTrace = new XTraceImpl(new XAttributeMapImpl());
@@ -405,7 +407,8 @@ public class PlanningBasedAlignment {
 		VariableMatchCosts variableCost = VariableMatchCosts.NOCOST;			// dummy
 		Map<String, String> variableMapping = new HashMap<String, String>();	// dummy
 		XEventClassifier eventClassifier = parameters.getTransitionsEventsMapping().getEventClassifier();
-		result = new ResultReplayPetriNetWithData(alignments, variableCost, variableMapping, petrinet, log, eventClassifier);
+		result = new ResultReplayPetriNetWithData(
+				alignments, variableCost, variableMapping, petrinet, log, eventClassifier);
 		return result;
 	}
 	

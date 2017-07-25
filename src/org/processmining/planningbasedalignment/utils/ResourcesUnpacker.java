@@ -1,19 +1,32 @@
 package org.processmining.planningbasedalignment.utils;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.Enumeration;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
-import org.apache.commons.io.FileUtils;
 import org.processmining.contexts.uitopia.UIPluginContext;
 import org.processmining.planningbasedalignment.algorithms.PlanningBasedAlignment;
 
 public class ResourcesUnpacker extends Thread {
 
+	/**
+     * Size of the buffer to read/write data.
+     */
+    private static final int BUFFER_SIZE = 4096;
+    
+    /**
+     * The name of the archive to extract the resources from.
+     */
+    private static final String PLANNING_ARCHIVE = "planning.zip";
+    
+    /**
+     * The context of the UI.
+     */
 	private UIPluginContext context;
 
 	public ResourcesUnpacker(UIPluginContext context) {
@@ -24,72 +37,65 @@ public class ResourcesUnpacker extends Thread {
 	@Override
 	public void run() {
 		try {
-			unpackResourcesJar();
+			unpackResources();
 		} catch (Exception e) {
 			e.printStackTrace();
 			context.getFutureResult(0).cancel(true);
+			Thread.currentThread().interrupt();
 		}
 	}
 
-	private void unpackResourcesJar() throws IOException, URISyntaxException {
-
+	/**
+	 * Unpack the archive in the current working directory.
+	 * 
+	 * @throws IOException
+	 * @throws URISyntaxException
+	 */
+	private void unpackResources() throws IOException, URISyntaxException {
+		
 		Class<PlanningBasedAlignment> planningBasedAlignment = PlanningBasedAlignment.class;
-		File jarFile = new File(planningBasedAlignment.getProtectionDomain().getCodeSource().getLocation().getPath());
-
-		if (jarFile.isFile()) {  // Run with JAR file
-
-			System.out.println("\t\t unpacking jar");
-
-			JarFile jar = new JarFile(jarFile);
-			Enumeration<JarEntry> entries = jar.entries(); //gives ALL entries in jar
-			while(entries.hasMoreElements()) {
-				JarEntry entry = entries.nextElement();
-				String name = entry.getName();
-				File f = new java.io.File(name);
-
-				if (!name.endsWith(".class")) { //filter according to the path
-
-					System.out.println("\t"+name);
-
-					if (entry.isDirectory()) { // if its a directory, create it
-						f.mkdir();
-						continue;
-					}
-					java.io.InputStream is = jar.getInputStream(entry); // get the input stream
-					java.io.FileOutputStream fos = new java.io.FileOutputStream(f);
-					while (is.available() > 0) {  // write contents of 'is' to 'fos'
-						fos.write(is.read());
-					}
-					fos.close();
-					is.close();
-
-				}
+		
+		String packageName = planningBasedAlignment.getPackage().getName();
+		packageName = packageName.replaceAll("\\.", "/") + "/";
+		
+		InputStream planningArchive = planningBasedAlignment.getClassLoader().getResourceAsStream(
+				packageName + PLANNING_ARCHIVE);
+		
+		ZipInputStream zis = new ZipInputStream(planningArchive);
+		ZipEntry entry;
+		while ((entry = zis.getNextEntry()) != null) {
+			
+			//String filePath = destDirectory + File.separator + entry.getName();
+			String filePath = entry.getName();
+			
+			if (!entry.isDirectory()) {
+				// if the entry is a file, extracts it
+				extractFile(zis, filePath);
+			} else {
+				// if the entry is a directory, make the directory
+				File dir = new File(filePath);
+				dir.mkdir();
 			}
-			jar.close();
-
-		} else { // Run with IDE
-
-			System.out.println("\t\t copying resources");
-
-			String packageName = planningBasedAlignment.getPackage().getName();
-			packageName = packageName.replaceAll("\\.", "/") + "/";
-
-			final URL url = planningBasedAlignment.getResource("/" + packageName);
-			if (url != null) {
-				final File apps = new File(url.toURI());
-				for (File app : apps.listFiles()) {
-					if (!app.getName().endsWith(".class")) { //filter according to the path
-
-						System.out.println(app);
-
-						File dest = new File(app.getName());
-						if (app.isDirectory())	// if its a directory, create it
-							FileUtils.copyDirectory(app, dest);
-						else
-							FileUtils.copyFile(app, dest);
-					}
-				}
-			}   
+			
 		}
 	}
+	
+	
+	/**
+     * Extracts a file entry.
+     * 
+     * @param zipIn
+     * @param filePath
+     * @throws IOException
+     */
+    private void extractFile(ZipInputStream zipIn, String filePath) throws IOException {
+        BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(filePath));
+        byte[] bytesIn = new byte[BUFFER_SIZE];
+        int read = 0;
+        while ((read = zipIn.read(bytesIn)) != -1) {
+            bos.write(bytesIn, 0, read);
+        }
+        bos.close();
+    }
+    
 }

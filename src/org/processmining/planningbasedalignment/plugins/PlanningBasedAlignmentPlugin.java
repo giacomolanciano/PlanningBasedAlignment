@@ -52,16 +52,10 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	@PluginVariant(variantLabel = "Planning-based Event Log & Petri Net alignment", requiredParameterLabels = { 0, 1 })
 	public ResultReplayPetriNetWithData runUI(UIPluginContext context, XLog log, DataPetriNet petrinet)
 			throws ConnectionCannotBeObtained {
-		
-		// convert input to DataPetriNet object for visualization purposes
-//		DataPetriNet petrinet = DataPetriNet.Factory.fromPetrinet(petrinetTemp);
-		
-		if (!checkPlannerSources()) {
-			
-			System.out.println("\t\t unpacking resources");
-			
-			unpackerThread = new ResourcesUnpacker(context);
-			unpackerThread.start();
+
+		if (!checkPlannerSources()) {			
+			resourcesUnpacker = new ResourcesUnpacker(context);
+			resourcesUnpacker.start();
 		}
 		
 	    ConfigurationUI configurationUI = new ConfigurationUI();
@@ -70,6 +64,7 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 		
 		if (parameters == null) {
 			context.getFutureResult(0).cancel(true);
+			killSubprocesses();
 			return null;
 		}
 		
