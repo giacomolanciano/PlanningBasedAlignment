@@ -24,7 +24,7 @@ import org.processmining.plugins.DataConformance.DataAlignment.PetriNet.ResultRe
  *
  */
 @Plugin(
-	name = "Planning-based Event Log & Petri Net alignment",
+	name = "Planning-based Alignment of Event Logs and Petri Nets",
 	parameterLabels = { "Event Log", "Petri Net", "Name of your parameters" }, 
 	returnLabels = { "Petri Net Replay Result" },
 	returnTypes = { ResultReplayPetriNetWithData.class },

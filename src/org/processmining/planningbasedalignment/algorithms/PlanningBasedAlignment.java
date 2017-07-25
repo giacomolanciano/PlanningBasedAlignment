@@ -495,6 +495,11 @@ public class PlanningBasedAlignment {
 		return (2 * fitness) - 1 ;
 	}
 	
+	/**
+	 * Check whether the planner source code has already been unpacked.
+	 * 
+	 * @return true if the planner source code has already been unpacked.
+	 */
 	protected static boolean checkPlannerSources() {
 		File plannerManagerScript = new File(PLANNER_MANAGER_SCRIPT);
 		File fdScript = new File(FAST_DOWNWARD_DIR);
