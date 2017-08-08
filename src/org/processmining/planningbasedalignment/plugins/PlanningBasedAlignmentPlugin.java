@@ -9,6 +9,7 @@ import org.processmining.framework.connections.ConnectionCannotBeObtained;
 import org.processmining.framework.plugin.annotations.Plugin;
 import org.processmining.framework.plugin.annotations.PluginCategory;
 import org.processmining.framework.plugin.annotations.PluginVariant;
+import org.processmining.framework.util.ui.widgets.helper.UserCancelledException;
 import org.processmining.planningbasedalignment.algorithms.PlanningBasedAlignment;
 import org.processmining.planningbasedalignment.connections.PlanningBasedAlignmentConnection;
 import org.processmining.planningbasedalignment.dialogs.ConfigurationUI;
@@ -47,11 +48,12 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	 * @param petrinet The Petri net on which the log has to be replayed.
 	 * @return The result of the replay of the event log on the Petri net.
 	 * @throws ConnectionCannotBeObtained
+	 * @throws UserCancelledException 
 	 */
 	@UITopiaVariant(affiliation = AFFILIATION, author = AUTHOR, email = EMAIL)
 	@PluginVariant(variantLabel = "Planning-based Event Log & Petri Net alignment", requiredParameterLabels = { 0, 1 })
 	public ResultReplayPetriNetWithData runUI(UIPluginContext context, XLog log, DataPetriNet petrinet)
-			throws ConnectionCannotBeObtained {
+			throws ConnectionCannotBeObtained, UserCancelledException {
 
 		if (!checkPlannerSources()) {			
 			resourcesUnpacker = new ResourcesUnpacker(context);

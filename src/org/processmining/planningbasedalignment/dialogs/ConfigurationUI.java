@@ -1,7 +1,9 @@
 package org.processmining.planningbasedalignment.dialogs;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -16,9 +18,13 @@ import javax.swing.JScrollPane;
 
 import org.deckfour.uitopia.api.event.TaskListener.InteractionResult;
 import org.deckfour.xes.classification.XEventClass;
+import org.deckfour.xes.classification.XEventClassifier;
+import org.deckfour.xes.extension.std.XConceptExtension;
+import org.deckfour.xes.info.impl.XLogInfoImpl;
 import org.deckfour.xes.model.XLog;
 import org.processmining.contexts.uitopia.UIPluginContext;
 import org.processmining.datapetrinets.DataPetriNet;
+import org.processmining.datapetrinets.ui.ImprovedEvClassLogMappingUI;
 import org.processmining.datapetrinets.utils.MarkingsHelper;
 import org.processmining.framework.connections.Connection;
 import org.processmining.framework.connections.ConnectionCannotBeObtained;
@@ -27,7 +33,7 @@ import org.processmining.framework.plugin.PluginContext;
 import org.processmining.framework.plugin.PluginExecutionResult;
 import org.processmining.framework.plugin.PluginParameterBinding;
 import org.processmining.framework.util.Pair;
-import org.processmining.framework.util.ui.widgets.helper.ProMUIHelper;
+import org.processmining.framework.util.ui.widgets.helper.UserCancelledException;
 import org.processmining.models.connections.petrinets.EvClassLogPetrinetConnection;
 import org.processmining.models.connections.petrinets.behavioral.FinalMarkingConnection;
 import org.processmining.models.connections.petrinets.behavioral.InitialMarkingConnection;
@@ -40,10 +46,8 @@ import org.processmining.plugins.connectionfactories.logpetrinet.TransEvClassMap
 import org.processmining.plugins.utils.ConnectionManagerHelper;
 import org.processmining.plugins.utils.ProvidedObjectHelper;
 
-import com.google.common.base.Throwables;
-
 /**
- * Borrowed from PNetReplayer and DataAwareReplayer.
+ * Borrowed from DataAwareReplayer and PNetReplayer.
  * 
  * The GUI for setting the parameters of the Planning-based Alignment plug-in.
  */
@@ -71,7 +75,6 @@ public class ConfigurationUI {
 	 */
 	private JComponent[] configurationStepsDialogs;
 
-	
 	/**
 	 * Build the configuration parameters for Planning-based Alignment plug-in.
 	 * 
@@ -80,38 +83,34 @@ public class ConfigurationUI {
 	 * @param petrinet The Petri net on which the log has to be replayed.
 	 * @return The configuration parameters for Planning-based Alignment plug-in.
 	 * @throws ConnectionCannotBeObtained
+	 * @throws UserCancelledException 
 	 */
 	public PlanningBasedAlignmentParameters getPlanningBasedAlignmentParameters(
-			UIPluginContext context, XLog log, DataPetriNet petrinet) throws ConnectionCannotBeObtained {
+			UIPluginContext context, XLog log, DataPetriNet petrinet) throws UserCancelledException {
 		
 		// init local parameter
 		PlanningBasedAlignmentParameters parameters = null;
 
+		// set Petri net markings
 		configureInitialMarking(context, petrinet);
 		configureFinalMarking(context, petrinet);
 
-		// check connection in order to determine whether mapping step is needed of not
+		// define event-classes/activities mapping
 		EvClassLogPetrinetConnection conn = null;
+		TransEvClassMapping mapping = null;
 		try {
-			// connection is found, no need for mapping step
-			// connection is not found, another plugin to create such connection is automatically executed
-			conn = context.getConnectionManager().getFirstConnection(EvClassLogPetrinetConnection.class, context,
-					petrinet, log);
-		} catch (Exception e) {
-			ProMUIHelper.showWarningMessage(context,
-					"No mapping can be constructed between the net and the log. Caused by:\n\n"
-					+ Throwables.getStackTraceAsString(e),
-					"Failed creating mapping");
-			return null;
+			// if a connection
+			conn = ConnectionManagerHelper.safeGetFirstConnection(
+					context.getConnectionManager(), EvClassLogPetrinetConnection.class, log, petrinet);
+			mapping = conn.getObjectWithRole(EvClassLogPetrinetConnection.TRANS2EVCLASSMAPPING);
+		} catch(ConnectionCannotBeObtained e) {			
+			mapping = defineNewTransEvClassMapping(context, petrinet, log);
 		}
-
-		// init gui for each step
-		TransEvClassMapping mapping = (TransEvClassMapping) conn.getObjectWithRole(
-				EvClassLogPetrinetConnection.TRANS2EVCLASSMAPPING);
 
 		// check invisible transitions
 		configureInvisibleTransitions(mapping);
 
+		// init gui for each step
 		configurationStepsDialogs = new JComponent[CONFIGURATION_STEPS_NUMBER];
 		configurationStepsDialogs[0] = new PlannerSettingsDialog(log);
 		currentConfigurationStep = 0;
@@ -131,8 +130,59 @@ public class ConfigurationUI {
 		}
 		return parameters;
 	}
-
 	
+	/**
+	 * Prompt the user to define a mapping between the events classes of the given event log and the activities of the 
+	 * given Petri net.
+	 * 
+	 * @param context The context to run in.
+	 * @param log The event log to replay.
+	 * @param petrinet The Petri net on which the log has to be replayed.
+	 * @return The mapping.
+	 * @throws UserCancelledException
+	 */
+	private static TransEvClassMapping defineNewTransEvClassMapping(
+			UIPluginContext context, PetrinetGraph petrinet, XLog log) throws UserCancelledException {
+
+		// list possible classifiers
+		List<XEventClassifier> classList = new ArrayList<>(log.getClassifiers());
+
+		// add default classifiers
+		if (!classList.contains(XLogInfoImpl.RESOURCE_CLASSIFIER)) {
+			classList.add(XLogInfoImpl.RESOURCE_CLASSIFIER);
+		}
+		if (!classList.contains(XLogInfoImpl.STANDARD_CLASSIFIER)) {
+			classList.add(XLogInfoImpl.STANDARD_CLASSIFIER);
+		}
+		if (!classList.contains(XLogInfoImpl.NAME_CLASSIFIER)) {
+			// place Event Name classifier on top of list
+			classList.add(0, XLogInfoImpl.NAME_CLASSIFIER);
+		}
+
+		Object[] availableEventClass = classList.toArray(new Object[classList.size()]);
+
+		ImprovedEvClassLogMappingUI mappingUi = new ImprovedEvClassLogMappingUI(log, petrinet, availableEventClass);
+		InteractionResult result = context.showConfiguration(
+				"Mapping between Events from Log and Transitions of the Data Petri Net", mappingUi);
+
+		if (result == InteractionResult.CANCEL) {
+			throw new UserCancelledException();
+		}
+
+		String logName = XConceptExtension.instance().extractName(log);
+		String label = "Connection between " + petrinet.getLabel() + " and " + (logName != null ? logName : "unnamed log");
+		EvClassLogPetrinetConnection con = new EvClassLogPetrinetConnection(label, petrinet, log,
+				mappingUi.getSelectedClassifier(), mappingUi.getMap());
+		context.addConnection(con);
+
+		return mappingUi.getMap();
+	}
+	
+	/**
+	 * Ask user whether unmapped transitions have to be considered as invisible.
+	 * 
+	 * @param mapping The {@link TransEvClassMapping} between the events classes and the Petri net activities.
+	 */
 	private void configureInvisibleTransitions(TransEvClassMapping mapping) {
 		Set<Transition> unmappedTrans = new HashSet<>();
 		for (Entry<Transition, XEventClass> entry : mapping.entrySet()) {
@@ -164,7 +214,6 @@ public class ConfigurationUI {
 			;
 		}
 	}
-	
 	
 	/**
 	 * Check whether an initial marking for the given Petri net exists. If no, create one.
@@ -208,7 +257,6 @@ public class ConfigurationUI {
 			e.printStackTrace();
 		}
 	}
-
 
 	/**
 	 * Check whether an final marking for the given Petri net exists. If no, create one.
