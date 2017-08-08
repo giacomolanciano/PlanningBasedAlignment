@@ -86,7 +86,7 @@ public class ConfigurationUI {
 	 * @throws UserCancelledException 
 	 */
 	public PlanningBasedAlignmentParameters getPlanningBasedAlignmentParameters(
-			UIPluginContext context, XLog log, DataPetriNet petrinet) throws UserCancelledException {
+			UIPluginContext context, XLog log, DataPetriNet petrinet) {
 		
 		// init local parameter
 		PlanningBasedAlignmentParameters parameters = null;
@@ -99,12 +99,19 @@ public class ConfigurationUI {
 		EvClassLogPetrinetConnection conn = null;
 		TransEvClassMapping mapping = null;
 		try {
-			// if a connection
+			// if a connection between log and Petri net already exists, return the stored mapping
 			conn = ConnectionManagerHelper.safeGetFirstConnection(
 					context.getConnectionManager(), EvClassLogPetrinetConnection.class, log, petrinet);
 			mapping = conn.getObjectWithRole(EvClassLogPetrinetConnection.TRANS2EVCLASSMAPPING);
+			
 		} catch(ConnectionCannotBeObtained e) {			
-			mapping = defineNewTransEvClassMapping(context, petrinet, log);
+			// the connection does not exist, create a new one
+			try {
+				mapping = defineNewTransEvClassMapping(context, petrinet, log);
+			} catch (UserCancelledException e1) {
+				// mapping definition has been interrupted, abort execution
+				return null;
+			}
 		}
 
 		// check invisible transitions
