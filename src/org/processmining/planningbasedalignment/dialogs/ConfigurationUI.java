@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -41,7 +40,6 @@ import org.processmining.models.graphbased.directed.petrinet.PetrinetGraph;
 import org.processmining.models.graphbased.directed.petrinet.elements.Transition;
 import org.processmining.models.semantics.petrinet.Marking;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
-import org.processmining.planningbasedalignment.utils.PlannerSearchStrategy;
 import org.processmining.plugins.connectionfactories.logpetrinet.TransEvClassMapping;
 import org.processmining.plugins.utils.ConnectionManagerHelper;
 import org.processmining.plugins.utils.ProvidedObjectHelper;
@@ -53,13 +51,9 @@ import org.processmining.plugins.utils.ProvidedObjectHelper;
  */
 public class ConfigurationUI {
 
-	public static final int PLANNER_SEARCH_STRATEGY = 0;
-	public static final int TRACES_INTERVAL = PLANNER_SEARCH_STRATEGY + 1;
-	public static final int TRACES_LENGTH_BOUNDS = TRACES_INTERVAL + 1;
-	public static final int MOVES_ON_LOG_COSTS = TRACES_LENGTH_BOUNDS + 1;
-	public static final int MOVES_ON_MODEL_COSTS = MOVES_ON_LOG_COSTS + 1;
-	public static final int SYNCHRONOUS_MOVES_COSTS = MOVES_ON_MODEL_COSTS + 1;
-
+	private static final int NEXT_CONFIGURATION_STEP = 1;
+	private static final int PREVIOUS_CONFIGURATION_STEP = -1;
+	
 	/**
 	 * Number of required configuration steps.
 	 */
@@ -118,22 +112,17 @@ public class ConfigurationUI {
 		configureInvisibleTransitions(mapping);
 
 		// init gui for each step
+		currentConfigurationStep = 0;
 		configurationStepsDialogs = new JComponent[CONFIGURATION_STEPS_NUMBER];
 		configurationStepsDialogs[0] = new PlannerSettingsDialog(log);
-		currentConfigurationStep = 0;
-		Object[] configurationResults = showConfiguration(context, log, petrinet, mapping);
+		configurationStepsDialogs[1] = new AlignmentCostsSettingsDialog(mapping.keySet(), mapping.values());
+		parameters = runConfigurationSteps(context, log, petrinet, mapping);
 		
-		if (configurationResults != null) {
-			parameters = new PlanningBasedAlignmentParameters();
+		if (parameters != null) {			
+			// add missing parameters
 			parameters.setInitialMarking(getInitialMarking(context, petrinet));
 			parameters.setFinalMarking(getFinalMarking(context, petrinet));
 			parameters.setTransitionsEventsMapping(mapping);
-			parameters.setPlannerSearchStrategy((PlannerSearchStrategy) configurationResults[PLANNER_SEARCH_STRATEGY]);
-			parameters.setTracesInterval((int[]) configurationResults[TRACES_INTERVAL]);
-			parameters.setTracesLengthBounds((int[]) configurationResults[TRACES_LENGTH_BOUNDS]);
-			parameters.setMovesOnLogCosts((Map<XEventClass, Integer>) configurationResults[MOVES_ON_LOG_COSTS]);
-			parameters.setMovesOnModelCosts((Map<Transition, Integer>) configurationResults[MOVES_ON_MODEL_COSTS]);
-			parameters.setSynchronousMovesCosts((Map<Transition, Integer>) configurationResults[SYNCHRONOUS_MOVES_COSTS]);
 		}
 		return parameters;
 	}
@@ -200,7 +189,7 @@ public class ConfigurationUI {
 			}
 		}
 		if (!unmappedTrans.isEmpty()) {
-			JList list = new JList(unmappedTrans.toArray());
+			JList<Transition> list = new JList<Transition>((Transition[]) unmappedTrans.toArray());
 			JPanel panel = new JPanel();
 			BoxLayout layout = new BoxLayout(panel, BoxLayout.Y_AXIS);
 			panel.setLayout(layout);
@@ -236,18 +225,18 @@ public class ConfigurationUI {
 			if (((Marking) initCon.getObjectWithRole(InitialMarkingConnection.MARKING)).isEmpty()) {
 				JOptionPane.showMessageDialog(
 						new JPanel(),
-						"The initial marking is an empty marking. If this is not intended, remove the currently existing "
-								+ "InitialMarkingConnection object and then use \"Create Initial Marking\" plugin to create a "
-								+ "non-empty initial marking.",
-								"Empty Initial Marking", JOptionPane.INFORMATION_MESSAGE);
+						"The initial marking is an empty marking. If this is not intended, remove the currently "
+						+ "existing InitialMarkingConnection object and then use \"Create Initial Marking\" plugin "
+						+ "to create a non-empty initial marking.",
+						"Empty Initial Marking", JOptionPane.INFORMATION_MESSAGE);
 			}
 		} catch (ConnectionCannotBeObtained exc) {			
 			Marking guessedInitialMarking = MarkingsHelper.guessInitialMarkingByStructure(petrinet);
 			if (guessedInitialMarking != null) {
 				String[] options = new String[] { "Keep guessed", "Create manually" };
 				int result = JOptionPane.showOptionDialog(context.getGlobalContext().getUI(),
-						"<HTML>No initial marking is found for this model. Based on the net structure the intial marking should be: [<B>"
-						+ guessedInitialMarking.iterator().next()
+						"<HTML>No initial marking is found for this model. Based on the net structure the intial "
+						+ "marking should be: [<B>" + guessedInitialMarking.iterator().next()
 						+ "</B>].<BR/>Do you want to use the guessed marking, or manually create a new one?</HTML>",
 						"No Initial Marking", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options,
 						options[0]);
@@ -268,8 +257,8 @@ public class ConfigurationUI {
 	/**
 	 * Check whether an final marking for the given Petri net exists. If no, create one.
 	 * 
-	 * @param context
-	 * @param petrinet
+	 * @param context The context to run in.
+	 * @param petrinet The Petri net.
 	 */
 	private void configureFinalMarking(UIPluginContext context, DataPetriNet petrinet) {
 		// check existence of final marking
@@ -313,9 +302,11 @@ public class ConfigurationUI {
 	 * @param context The current context.
 	 * @param petrinet The Petri net.
 	 * @param markingType The type of marking to be created.
-	 * @return
+	 * @return true if the {@link Marking} is successfully created (false otherwise).
 	 */
-	private boolean createMarking(UIPluginContext context, PetrinetGraph petrinet, Class<? extends Connection> markingType) {
+	private boolean createMarking(
+			UIPluginContext context, PetrinetGraph petrinet, Class<? extends Connection> markingType) {
+		
 		boolean result = false;
 		Collection<Pair<Integer, PluginParameterBinding>> plugins = context.getPluginManager().find(
 				ConnectionObjectFactory.class, markingType, context.getClass(), true, false, false, petrinet.getClass());
@@ -336,14 +327,15 @@ public class ConfigurationUI {
 	}
 	
 	private void publishInitialMarking(UIPluginContext context, PetrinetGraph petrinet, Marking initialMarking) {
-		ProvidedObjectHelper.publish(context, "Initial Marking of " + petrinet.getLabel(), initialMarking, Marking.class,
-				false);
+		ProvidedObjectHelper.publish(
+				context, "Initial Marking of " + petrinet.getLabel(), initialMarking, Marking.class, false);
 		Connection connection = new InitialMarkingConnection(petrinet, initialMarking);
 		context.getConnectionManager().addConnection(connection);
 	}
 
 	private void publishFinalMarking(UIPluginContext context, PetrinetGraph petrinet, Marking finalMarking) {
-		ProvidedObjectHelper.publish(context, "Final Marking of " + petrinet.getLabel(), finalMarking, Marking.class, false);
+		ProvidedObjectHelper.publish(
+				context, "Final Marking of " + petrinet.getLabel(), finalMarking, Marking.class, false);
 		Connection connection = new FinalMarkingConnection(petrinet, finalMarking);
 		context.getConnectionManager().addConnection(connection);
 	}
@@ -377,19 +369,19 @@ public class ConfigurationUI {
 	}
 
 	/**
-	 * Show the configuration dialogs.
+	 * Run the configuration process.
 	 * 
-	 * @param context
-	 * @param log
-	 * @param net
-	 * @param mapping
-	 * @return
+	 * @param context The context to run in.
+	 * @param log The event log.
+	 * @param net The Petri net.
+	 * @param mapping The {@link TransEvClassMapping} between the events classes and the Petri net activities.
+	 * @return The {@link PlanningBasedAlignmentParameters} needed to align the event log and the Petri net.
 	 */
-	private Object[] showConfiguration(UIPluginContext context, XLog log, PetrinetGraph net,
-			TransEvClassMapping mapping) {
+	private PlanningBasedAlignmentParameters runConfigurationSteps(
+			UIPluginContext context, XLog log, PetrinetGraph net, TransEvClassMapping mapping) {
 		
 		// init result variable
-		InteractionResult result = InteractionResult.NEXT;
+		InteractionResult interactionResult = InteractionResult.NEXT;
 
 		// configure interaction with user
 		while (true) {
@@ -400,28 +392,31 @@ public class ConfigurationUI {
 				currentConfigurationStep = CONFIGURATION_STEPS_NUMBER - 1;
 			}
 
-			result = context.showWizard("Replay in Petri net",
+			interactionResult = context.showWizard("Replay in Petri net",
 					currentConfigurationStep == 0,
 					currentConfigurationStep == CONFIGURATION_STEPS_NUMBER - 1,
 					configurationStepsDialogs[currentConfigurationStep]);
 
-			switch (result) {
+			switch (interactionResult) {
 			case NEXT :
-				move(1, mapping);
+				move(NEXT_CONFIGURATION_STEP);
 				break;
 			case PREV :
-				move(-1, mapping);
+				move(PREVIOUS_CONFIGURATION_STEP);
 				break;
-			case FINISHED :
-				return new Object[] {
-						// the order must match with the constants defined at the beginning of the class
-						((PlannerSettingsDialog) configurationStepsDialogs[0]).getChosenStrategy(),
-						((PlannerSettingsDialog) configurationStepsDialogs[0]).getChosenTracesInterval(),
-						((PlannerSettingsDialog) configurationStepsDialogs[0]).getChosenTracesLengthBounds(),
-						((AlignmentCostsSettingsDialog) configurationStepsDialogs[1]).getMovesOnLogCosts(),
-						((AlignmentCostsSettingsDialog) configurationStepsDialogs[1]).getMovesOnModelCosts(),
-						((AlignmentCostsSettingsDialog) configurationStepsDialogs[1]).getSynchronousMovesCosts()
-				};
+			case FINISHED :				
+				PlannerSettingsDialog plannerSettingsStep = (PlannerSettingsDialog) configurationStepsDialogs[0];
+				AlignmentCostsSettingsDialog alignmentCostsSettingsStep = 
+						(AlignmentCostsSettingsDialog) configurationStepsDialogs[1];
+				
+				PlanningBasedAlignmentParameters result = new PlanningBasedAlignmentParameters();
+				result.setPlannerSearchStrategy(plannerSettingsStep.getChosenStrategy());
+				result.setTracesInterval(plannerSettingsStep.getChosenTracesInterval());
+				result.setTracesLengthBounds(plannerSettingsStep.getChosenTracesLengthBounds());
+				result.setMovesOnLogCosts(alignmentCostsSettingsStep.getMovesOnLogCosts());
+				result.setMovesOnModelCosts(alignmentCostsSettingsStep.getMovesOnModelCosts());
+				result.setSynchronousMovesCosts(alignmentCostsSettingsStep.getSynchronousMovesCosts());
+				return result;
 			default :
 				return null;
 			}
@@ -431,17 +426,14 @@ public class ConfigurationUI {
 	/**
 	 * Move to next/previous step in configuration.
 	 * 
-	 * @param direction
-	 * @param mapping
-	 * @return
+	 * @param direction An int indicating the direction to move toward (+1 next, -1 previous).
+	 * @return The index of the current configuration step.
 	 */
-	private int move(int direction, TransEvClassMapping mapping) {
+	private int move(int direction) {
 		currentConfigurationStep += direction;
 
 		if (currentConfigurationStep == 1) {
-			if (((PlannerSettingsDialog) configurationStepsDialogs[0]).checkSettingsIntegrity())
-				configurationStepsDialogs[1] = new AlignmentCostsSettingsDialog(mapping.keySet(), mapping.values());
-			else {
+			if (!((PlannerSettingsDialog) configurationStepsDialogs[0]).checkSettingsIntegrity()) {
 				JOptionPane.showMessageDialog(new JPanel(),
 						"Invalid traces interval and/or length boundaries inserted. Review settings to continue.",
 						"Invalid settings", JOptionPane.ERROR_MESSAGE);
@@ -452,6 +444,7 @@ public class ConfigurationUI {
 		if ((currentConfigurationStep >= 0) && (currentConfigurationStep < CONFIGURATION_STEPS_NUMBER)) {
 			return currentConfigurationStep;
 		}
+		
 		return 0;
 	}
 

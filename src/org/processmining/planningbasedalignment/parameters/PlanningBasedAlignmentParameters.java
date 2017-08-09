@@ -67,7 +67,7 @@ public class PlanningBasedAlignmentParameters extends PluginParametersImpl {
 		super();
 		setInitialMarking(null);
 		setFinalMarking(null);
-		setPlannerSearchStrategy(PlannerSearchStrategy.BLIND_A_STAR);
+		setPlannerSearchStrategy(null);
 		setTransitionsEventsMapping(null);
 		setMovesOnLogCosts(null);
 		setMovesOnModelCosts(null);
