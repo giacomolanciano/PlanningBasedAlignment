@@ -16,28 +16,29 @@ public class StreamAsyncReader extends Thread {
 	/**
 	 * The {@link InputStream} to be handled.
 	 */
-	InputStream is;
+	InputStream inputStream;
 	
 	/**
 	 * The tag to be associated to each prints.
 	 */
 	String type;
 
-	public StreamAsyncReader(InputStream is, String type) {
-		this.is = is;
+	public StreamAsyncReader(InputStream inputStream, String type) {
+		this.inputStream = inputStream;
 		this.type = type;
 	}
 
 	@Override
 	public void run() {
 		try {
-			InputStreamReader isr = new InputStreamReader(is);
-			BufferedReader br = new BufferedReader(isr);
-			String line=null;
-			while ( (line = br.readLine()) != null)
-				System.out.println(type + ">" + line);    
-		} catch (IOException ioe) {
-			ioe.printStackTrace();  
+			InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+			BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+			String line = null;
+			while ((line = bufferedReader.readLine()) != null)
+				System.out.println(type + ">" + line);
+			
+		} catch (IOException e) {
+			e.printStackTrace();  
 		}
 	}
 }

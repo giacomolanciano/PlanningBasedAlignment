@@ -426,7 +426,8 @@ public class ConfigurationUI {
 	/**
 	 * Move to next/previous step in configuration.
 	 * 
-	 * @param direction An int indicating the direction to move toward (+1 next, -1 previous).
+	 * @param direction An int indicating the direction to move toward (either {@link NEXT_CONFIGURATION_STEP} or 
+	 * {@link PREVIOUS_CONFIGURATION_STEP}).
 	 * @return The index of the current configuration step.
 	 */
 	private int move(int direction) {
