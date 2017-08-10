@@ -33,9 +33,14 @@ public abstract class AbstractPddlEncoder {
 	protected PlanningBasedAlignmentParameters parameters;
 	
 	/**
-	 * The mapping between Petri net invisible transitions and related PDDL ids.
+	 * The mapping between PDDL ids and their occurrences.
 	 */
-	protected Map<Transition, String> transitionToPddlIdMapping = new HashMap<Transition, String>();
+	protected Map<String, Integer> pddlIdToOccurrencesMapping = new HashMap<String, Integer>();
+	
+	/**
+	 * The mapping between Petri net nodes and related PDDL ids.
+	 */
+	protected Map<PetrinetNode, String> petrinetNodeToPddlIdMapping = new HashMap<PetrinetNode, String>();
 	
 	/**
 	 * The mapping between PDDL ids and related Petri net nodes.
@@ -74,15 +79,10 @@ public abstract class AbstractPddlEncoder {
 	 */
 	protected void buildMappings() {
 		
-		// The mapping between PDDL ids and their occurrences.
-		Map<String, Integer> pddlIdToOccurrencesMapping = new HashMap<String, Integer>();
-		
 		Transition transition;
-		XEventClass eventLabel;
 		String pddlTransitionId;
+		XEventClass eventLabel;
 		String pddlEventLabelId;
-		Integer pddlIdOccurrences;
-		String pddlPlace;
 		int invisibleTransitionsCount = 0;
 		for (Entry<Transition, XEventClass> entry : parameters.getTransitionsEventsMapping().entrySet()) {
 			transition = entry.getKey();
@@ -98,17 +98,11 @@ public abstract class AbstractPddlEncoder {
 				invisibleTransitionsCount++;
 			}
 				
-			// handle VISIBLE transitions aliasing
-			pddlIdOccurrences = pddlIdToOccurrencesMapping.get(pddlTransitionId);
-			if (pddlIdOccurrences != null) {
-				pddlIdToOccurrencesMapping.put(pddlTransitionId, pddlIdOccurrences + 1);
-				pddlTransitionId += "" + pddlIdOccurrences;
-			} else {
-				pddlIdToOccurrencesMapping.put(pddlTransitionId, 1);
-			}
+			// handle VISIBLE transitions aliasing (if needed)
+			pddlTransitionId = getAliasedPddlId(pddlTransitionId);
 			
 			// add a mapping from the transition to the generated id
-			transitionToPddlIdMapping.put(transition, pddlTransitionId);
+			petrinetNodeToPddlIdMapping.put(transition, pddlTransitionId);
 			
 			// add a mapping from the generated id to the transition
 			pddlIdToPetrinetNodeMapping.put(pddlTransitionId, transition);
@@ -120,9 +114,18 @@ public abstract class AbstractPddlEncoder {
 		}
 
 		// get pddl ids for places
+		String pddlPlaceId;
 		for (Place place : petrinet.getPlaces()) {
-			pddlPlace = getCorrectPddlFormat(place.getLabel());
-			pddlIdToPetrinetNodeMapping.put(pddlPlace, place);
+			pddlPlaceId = getCorrectPddlFormat(place.getLabel());
+			
+			// handle places aliasing (if needed)
+			pddlPlaceId = getAliasedPddlId(pddlPlaceId);
+			
+			// add a mapping from the place to the generated id
+			petrinetNodeToPddlIdMapping.put(place, pddlPlaceId);
+			
+			// add a mapping from the generated id to the place
+			pddlIdToPetrinetNodeMapping.put(pddlPlaceId, place);
 		}
 
 	}
@@ -146,6 +149,32 @@ public abstract class AbstractPddlEncoder {
 		string = string.replaceAll("\\-", "_");
 		return string.toLowerCase();
 	}
+	
+	/**
+	 * Create an alias for the given PDDL id if it has been already taken by another object (otherwise, leave it
+	 * unchanged).
+	 * 
+	 * @param pddlId The PDDL id to be aliased.
+	 * @return The (possibly) aliased PDDL id.
+	 */
+	protected String getAliasedPddlId(String pddlId) {		
+		Integer pddlIdOccurrences = pddlIdToOccurrencesMapping.get(pddlId);
+		if (pddlIdOccurrences != null) {
+			// update occurrences
+			pddlIdToOccurrencesMapping.put(pddlId, pddlIdOccurrences + 1);
+			
+			// create alias
+			String newPddlId = pddlId + "_" + pddlIdOccurrences;
+			
+			// insert new aliased id to avoid new conflicts
+			pddlIdToOccurrencesMapping.put(newPddlId, 1);
+			
+			return newPddlId;
+		}
+		
+		pddlIdToOccurrencesMapping.put(pddlId, 1);
+		return pddlId;
+	}
 
 	/**
 	 * Return a valid PDDL id for the given transition.
@@ -154,7 +183,7 @@ public abstract class AbstractPddlEncoder {
 	 * @return
 	 */
 	public String encode(Transition transition) {
-		return transitionToPddlIdMapping.get(transition);
+		return petrinetNodeToPddlIdMapping.get(transition);
 	}
 
 	/**
@@ -164,7 +193,7 @@ public abstract class AbstractPddlEncoder {
 	 * @return
 	 */
 	public String encode(Place place) {
-		return getCorrectPddlFormat(place.getLabel());
+		return petrinetNodeToPddlIdMapping.get(place);
 	}
 
 	/**
