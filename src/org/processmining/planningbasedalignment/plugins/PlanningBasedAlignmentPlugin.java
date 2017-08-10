@@ -70,7 +70,10 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 			JOptionPane.showMessageDialog(
 					new JPanel(),
 					"The plug-in is not able to find and call Python 2.7+ on your machine. Please, install it "
-					+ "and make sure it is visible in the PATH.",
+					+ "and make sure it is visible in the PATH.\n"
+					+ "If you are using another version of Python, you just need to create a virtualenv with the "
+					+ "latest version of Python 2 installed\n"
+					+ "and start ProM from there.",
 					"Python not found", JOptionPane.ERROR_MESSAGE);
 			abortExecution(context);
 			return null;
