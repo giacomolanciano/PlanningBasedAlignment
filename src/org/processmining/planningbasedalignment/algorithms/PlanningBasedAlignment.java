@@ -88,8 +88,8 @@ public class PlanningBasedAlignment {
 	 * @param parameters The parameters to use.
 	 * @return The result of the replay of the event log on the Petri net.
 	 */
-	protected ResultReplayPetriNetWithData apply(PluginContext context, XLog log, DataPetriNet petrinet,
-			PlanningBasedAlignmentParameters parameters) {
+	protected ResultReplayPetriNetWithData apply(
+			PluginContext context, XLog log, DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) {
 		  
 		ResultReplayPetriNetWithData output = null;
 		
@@ -272,8 +272,9 @@ public class PlanningBasedAlignment {
 	 * @throws IOException
 	 * @throws URISyntaxException 
 	 */
-	protected void invokePlanner(PluginContext context, PlanningBasedAlignmentParameters parameters,
-			File alignmentsDirectory) throws InterruptedException, IOException, URISyntaxException {
+	protected void invokePlanner(
+			PluginContext context, PlanningBasedAlignmentParameters parameters, File alignmentsDirectory)
+					throws InterruptedException, IOException, URISyntaxException {
 		
 		String[] commandArgs = buildFastDownardCommandArgs(context, parameters);
 		
@@ -288,7 +289,9 @@ public class PlanningBasedAlignment {
 		outputGobbler.start();
 		
 		// start thread to show progress to the user
-		progressChecker = new AlignmentProgressChecker(context, alignmentsDirectory);
+		int[] traceInterval = parameters.getTracesInterval();
+		int totalAlignmentsNum = traceInterval[1] - traceInterval[0] + 1; 
+		progressChecker = new AlignmentProgressChecker(context, alignmentsDirectory, totalAlignmentsNum);
 		progressChecker.start();
 
 		// wait for the process to return to read the generated outputs
@@ -302,8 +305,9 @@ public class PlanningBasedAlignment {
 	 * @param log
 	 * @throws IOException
 	 */
-	protected ResultReplayPetriNetWithData processPlannerOutput(XLog log, DataPetriNet petrinet,
-			PlanningBasedAlignmentParameters parameters, File plansFoundDir) throws IOException {
+	protected ResultReplayPetriNetWithData processPlannerOutput(
+			XLog log, DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters, File plansFoundDir)
+					throws IOException {
 				
 		Pattern decimalNumberRegexPattern = Pattern.compile("\\d+(,\\d{3})*(\\.\\d+)*");
 		
@@ -463,8 +467,8 @@ public class PlanningBasedAlignment {
 	 * @param parameters The parameters of the plug-in.
 	 * @return a float representing the fitness of the trace.
 	 */
-	protected float computeFitness(XTrace trace, float alignmentCost, float emptyTraceCost,
-			PlanningBasedAlignmentParameters parameters) {
+	protected float computeFitness(
+			XTrace trace, float alignmentCost, float emptyTraceCost, PlanningBasedAlignmentParameters parameters) {
 		
 		XEventClassifier eventClassifier = parameters.getTransitionsEventsMapping().getEventClassifier();
 		

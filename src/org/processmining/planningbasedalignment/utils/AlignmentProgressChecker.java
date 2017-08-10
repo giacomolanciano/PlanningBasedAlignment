@@ -20,22 +20,28 @@ public class AlignmentProgressChecker extends Thread {
 	/**
 	 * The context where the plug-in runs.
 	 */
-	PluginContext context;
+	private PluginContext context;
 	
 	/**
 	 * The directory where the alignments are saved by the planner.
 	 */
-	File alignmentsDirectory;
+	private File alignmentsDirectory;
+	
+	/**
+	 * The total number of alignments to be computed. 
+	 */
+	private int totalAlignmentsNum;
 	
 	/**
 	 * 
 	 * @param context The context where the plug-in runs.
 	 * @param alignmentsDirectory The directory where the alignments are saved by the planner.
 	 */
-	public AlignmentProgressChecker(PluginContext context, File alignmentsDirectory) {
+	public AlignmentProgressChecker(PluginContext context, File alignmentsDirectory, int totalAlignmentsNum) {
 		super();
 		this.context = context;
 		this.alignmentsDirectory = alignmentsDirectory;
+		this.totalAlignmentsNum = totalAlignmentsNum;
 	}
 
 	@Override
@@ -43,7 +49,7 @@ public class AlignmentProgressChecker extends Thread {
 		try {
 			while(true) {
 				int filesNum = alignmentsDirectory.listFiles().length;
-				context.log(filesNum + " alignments processed so far.");				
+				context.log(filesNum + "/" + totalAlignmentsNum + " alignments processed so far.");				
 				Thread.sleep(DELAY_MILLISECS);
 			}
 		} catch (InterruptedException e) {
