@@ -51,11 +51,14 @@ public class PlanningBasedAlignment {
 	protected static final String PDDL_PROBLEM_FILE_PREFIX = PDDL_FILES_DIR + "problem";
 	protected static final String COST_ENTRY_PREFIX = "; cost = ";
 	protected static final String SEARCH_TIME_ENTRY_PREFIX = "; searchtime = ";
+	protected static final String EXPANDED_STATES_ENTRY_PREFIX = "; expandedstates = ";
+	protected static final String GENERATED_STATES_ENTRY_PREFIX = "; generatedstates = ";
 	protected static final String COMMAND_ARG_PLACEHOLDER = "+";
 	protected static final String PLANNER_MANAGER_SCRIPT = "planner_manager.py";
 	protected static final String FAST_DOWNWARD_DIR = "fast-downward/";
 	protected static final String FAST_DOWNWARD_SCRIPT = FAST_DOWNWARD_DIR + "fast-downward.py";
 	protected static final String CASE_PREFIX = "Case ";
+	protected static final String DEFAULT_TIME_UNIT = " ms";
 	protected static final int INITIAL_EXECUTION_TRACE_CAPACITY = 10;
 	protected static final int EMPTY_TRACE_ID = 0;
 	
@@ -311,8 +314,11 @@ public class PlanningBasedAlignment {
 				
 		Pattern decimalNumberRegexPattern = Pattern.compile("\\d+(,\\d{3})*(\\.\\d+)*");
 		
-		float alignmentCost;
-		float emptyTraceCost = 0;
+		float traceAlignmentCost;
+		float emptyTraceAlignmentCost = 0;
+		float totalAlignmentTime = 0;
+		float averageExpandedStates = 0;
+		float averageGeneratedStates = 0;
 		ExecutionTrace logTrace;
 		ExecutionTrace processTrace;
 		DataAlignmentState dataAlignmentState;
@@ -320,70 +326,79 @@ public class PlanningBasedAlignment {
 		ResultReplayPetriNetWithData result = null;
 		
 		// iterate over planner output files
-		for(final File alignmentFile : plansFoundDir.listFiles()) {
+		File[] alignmentFiles = plansFoundDir.listFiles();
+		for(final File alignmentFile : alignmentFiles) {
 
 			// extract traceId
 			Matcher traceIdMatcher = decimalNumberRegexPattern.matcher(alignmentFile.getName());
 			traceIdMatcher.find();
 			int traceId = Integer.parseInt(traceIdMatcher.group());
 
-			alignmentCost = 0;
+			traceAlignmentCost = 0;
 			logTrace = new GenericTrace(INITIAL_EXECUTION_TRACE_CAPACITY, CASE_PREFIX + traceId);
 			processTrace = new GenericTrace(INITIAL_EXECUTION_TRACE_CAPACITY, CASE_PREFIX + traceId);
 
 			// parse planner output file line by line
-			String traceAlignmentCost = new String();
-//			String traceAlignmentTime = new String();
+			Matcher matcher;
 			BufferedReader processOutputReader = new BufferedReader(new FileReader(alignmentFile));
 			String outputLine = processOutputReader.readLine(); 
 			while (outputLine != null) {
 
+				// parse decimal number in output line
+				matcher = decimalNumberRegexPattern.matcher(outputLine);
+				matcher.find();
+				
 				if(outputLine.startsWith(COST_ENTRY_PREFIX)) {
 					// parse alignment cost
-					Matcher matcher = decimalNumberRegexPattern.matcher(outputLine);
-					matcher.find();
-					traceAlignmentCost = matcher.group();
-					alignmentCost = Float.parseFloat(traceAlignmentCost);
+					traceAlignmentCost = Float.parseFloat(matcher.group());
 					
 					if (traceId == EMPTY_TRACE_ID)
 						// if empty trace, set the cost to compute fitness
-						emptyTraceCost = alignmentCost;
-
-				} else if(outputLine.startsWith(SEARCH_TIME_ENTRY_PREFIX)) {
-					// parse alignment time						
-//					Matcher matcher = decimalNumberRegexPattern.matcher(outputLine);
-//					matcher.find();
-//					traceAlignmentTime = matcher.group();
+						emptyTraceAlignmentCost = traceAlignmentCost;
 
 				} else if (traceId != EMPTY_TRACE_ID) {
-					// if not empty trace, process the alignment move
 					
-					ExecutionStep step = null;
-					String stepName = extractMovePddlId(outputLine);
+					if(outputLine.startsWith(SEARCH_TIME_ENTRY_PREFIX)) {
+						// parse alignment time
+						totalAlignmentTime += Float.parseFloat(matcher.group());
 
-					// check move type
-					if (isSynchronousMove(outputLine)) {							
-						Transition transition = (Transition) pddlEncoder.getPddlIdToPetrinetNodeMapping().get(stepName);
-						step = new ExecutionStep(transition.getLabel(), transition);
-						logTrace.add(step);
-						processTrace.add(step);
-
-					} else if (isModelMove(outputLine)) {
-						Transition transition = (Transition) pddlEncoder.getPddlIdToPetrinetNodeMapping().get(stepName);
-						step = new ExecutionStep(transition.getLabel(), transition);
+					} else if(outputLine.startsWith(EXPANDED_STATES_ENTRY_PREFIX)) {
+						// parse expanded states num
+						averageExpandedStates += Float.parseFloat(matcher.group());
 						
-						if (transition.isInvisible())
-							step.setInvisible(true);
+					} else if(outputLine.startsWith(GENERATED_STATES_ENTRY_PREFIX)) {
+						// parse generated states num
+						averageGeneratedStates += Float.parseFloat(matcher.group());
 						
-						logTrace.add(ExecutionStep.bottomStep);
-						processTrace.add(step);
-
-					} else if (isLogMove(outputLine)) {
-						XEventClass eventClass = pddlEncoder.getPddlIdToEventClassMapping().get(stepName);
-						step = new ExecutionStep(eventClass.getId(), eventClass);
-						logTrace.add(step);
-						processTrace.add(ExecutionStep.bottomStep);
-
+					} else {
+						// parse alignment move
+						ExecutionStep step = null;
+						String stepName = extractMovePddlId(outputLine);
+	
+						// check move type
+						if (isSynchronousMove(outputLine)) {							
+							Transition transition = (Transition) pddlEncoder.getPddlIdToPetrinetNodeMapping().get(stepName);
+							step = new ExecutionStep(transition.getLabel(), transition);
+							logTrace.add(step);
+							processTrace.add(step);
+	
+						} else if (isModelMove(outputLine)) {
+							Transition transition = (Transition) pddlEncoder.getPddlIdToPetrinetNodeMapping().get(stepName);
+							step = new ExecutionStep(transition.getLabel(), transition);
+							
+							if (transition.isInvisible())
+								step.setInvisible(true);
+							
+							logTrace.add(ExecutionStep.bottomStep);
+							processTrace.add(step);
+	
+						} else if (isLogMove(outputLine)) {
+							XEventClass eventClass = pddlEncoder.getPddlIdToEventClassMapping().get(stepName);
+							step = new ExecutionStep(eventClass.getId(), eventClass);
+							logTrace.add(step);
+							processTrace.add(ExecutionStep.bottomStep);
+	
+						}
 					}
 				}
 				outputLine = processOutputReader.readLine();
@@ -394,8 +409,8 @@ public class PlanningBasedAlignment {
 				XTrace trace = log.get(traceId-1);
 				
 				// create alignment object
-				dataAlignmentState = new DataAlignmentState(logTrace, processTrace, alignmentCost);
-				float fitness = computeFitness(trace, alignmentCost, emptyTraceCost, parameters);
+				dataAlignmentState = new DataAlignmentState(logTrace, processTrace, traceAlignmentCost);
+				float fitness = computeFitness(trace, traceAlignmentCost, emptyTraceAlignmentCost, parameters);
 				
 				// since the visualization used by the plug-in takes also into account the data fitness, 
 				// control flow fitness has to be adjusted in order to be shown properly.
@@ -408,6 +423,15 @@ public class PlanningBasedAlignment {
 			}
 		}
 		
+		// print stats
+		int alignedTracesNum = alignmentFiles.length - 1;	// exclude empty trace
+		averageExpandedStates /= alignedTracesNum;
+		averageGeneratedStates /= alignedTracesNum;
+		System.out.println("\tAlignment (actual) Time: " + totalAlignmentTime + DEFAULT_TIME_UNIT);
+		System.out.println("\tAverage Expanded States:  " + averageExpandedStates);
+		System.out.println("\tAverage Generated States: " + averageGeneratedStates);
+		
+		// produce result to be visualized
 		VariableMatchCosts variableCost = VariableMatchCosts.NOCOST;			// dummy
 		Map<String, String> variableMapping = new HashMap<String, String>();	// dummy
 		XEventClassifier eventClassifier = parameters.getTransitionsEventsMapping().getEventClassifier();
