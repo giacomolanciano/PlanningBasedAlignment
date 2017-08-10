@@ -427,7 +427,7 @@ public class PlanningBasedAlignment {
 		int alignedTracesNum = alignmentFiles.length - 1;	// exclude empty trace
 		averageExpandedStates /= alignedTracesNum;
 		averageGeneratedStates /= alignedTracesNum;
-		System.out.println("\tAlignment (actual) Time: " + totalAlignmentTime + DEFAULT_TIME_UNIT);
+		System.out.println("\tAlignment (actual) Time:  " + totalAlignmentTime + DEFAULT_TIME_UNIT);
 		System.out.println("\tAverage Expanded States:  " + averageExpandedStates);
 		System.out.println("\tAverage Generated States: " + averageGeneratedStates);
 		

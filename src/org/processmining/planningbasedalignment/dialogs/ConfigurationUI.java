@@ -189,7 +189,9 @@ public class ConfigurationUI {
 			}
 		}
 		if (!unmappedTrans.isEmpty()) {
-			JList<Transition> list = new JList<Transition>((Transition[]) unmappedTrans.toArray());
+			// specifying the Transition type makes the program crash when there are unmapped transitions
+			JList list = new JList(unmappedTrans.toArray());
+			
 			JPanel panel = new JPanel();
 			BoxLayout layout = new BoxLayout(panel, BoxLayout.Y_AXIS);
 			panel.setLayout(layout);
