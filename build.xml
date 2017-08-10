@@ -14,7 +14,7 @@
 	<property name="organization" value="Sapienza University of Rome" />
 	<property name="description" value="PlanningBasedAlignment" />
 	<property name="license" value="L-GPL" />
-	<property name="logo" value="http://www.promtools.org/prom6/packages/prom_subtitle_hat_300.png" />
+	<property name="logo" value="https://corsidilaurea.uniroma1.it/sites/default/files/logo_rosso_sapienza.png" />
 
 	<property name="ivy.lib.dir" value="ivy" />
 	<property name="ivy.cache.dir" value="/var/lib/hudson/.ivy2/cache/${env.EXECUTOR_NUMBER}" />
