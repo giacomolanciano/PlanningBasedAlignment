@@ -1,9 +1,7 @@
 package org.processmining.planningbasedalignment.dialogs;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -17,13 +15,12 @@ import javax.swing.JScrollPane;
 
 import org.deckfour.uitopia.api.event.TaskListener.InteractionResult;
 import org.deckfour.xes.classification.XEventClass;
-import org.deckfour.xes.classification.XEventClassifier;
-import org.deckfour.xes.extension.std.XConceptExtension;
-import org.deckfour.xes.info.impl.XLogInfoImpl;
+import org.deckfour.xes.info.XLogInfo;
+import org.deckfour.xes.info.XLogInfoFactory;
 import org.deckfour.xes.model.XLog;
 import org.processmining.contexts.uitopia.UIPluginContext;
 import org.processmining.datapetrinets.DataPetriNet;
-import org.processmining.datapetrinets.ui.ImprovedEvClassLogMappingUI;
+import org.processmining.datapetrinets.ui.ConfigurationUIHelper;
 import org.processmining.datapetrinets.utils.MarkingsHelper;
 import org.processmining.framework.connections.Connection;
 import org.processmining.framework.connections.ConnectionCannotBeObtained;
@@ -33,7 +30,6 @@ import org.processmining.framework.plugin.PluginExecutionResult;
 import org.processmining.framework.plugin.PluginParameterBinding;
 import org.processmining.framework.util.Pair;
 import org.processmining.framework.util.ui.widgets.helper.UserCancelledException;
-import org.processmining.models.connections.petrinets.EvClassLogPetrinetConnection;
 import org.processmining.models.connections.petrinets.behavioral.FinalMarkingConnection;
 import org.processmining.models.connections.petrinets.behavioral.InitialMarkingConnection;
 import org.processmining.models.graphbased.directed.petrinet.PetrinetGraph;
@@ -90,32 +86,29 @@ public class ConfigurationUI {
 		configureFinalMarking(context, petrinet);
 
 		// define event-classes/activities mapping
-		EvClassLogPetrinetConnection conn = null;
 		TransEvClassMapping mapping = null;
 		try {
-			// if a connection between log and Petri net already exists, return the stored mapping
-			conn = ConnectionManagerHelper.safeGetFirstConnection(
-					context.getConnectionManager(), EvClassLogPetrinetConnection.class, log, petrinet);
-			mapping = conn.getObjectWithRole(EvClassLogPetrinetConnection.TRANS2EVCLASSMAPPING);
-			
-		} catch(ConnectionCannotBeObtained e) {			
-			// the connection does not exist, create a new one
-			try {
-				mapping = defineNewTransEvClassMapping(context, petrinet, log);
-			} catch (UserCancelledException e1) {
-				// mapping definition has been interrupted, abort execution
-				return null;
-			}
+			mapping = ConfigurationUIHelper.queryActivityEventClassMapping(context, petrinet, log);
+		} catch (UserCancelledException e) {
+			// mapping definition has been interrupted, abort execution
+			return null;
 		}
 
 		// check invisible transitions
 		configureInvisibleTransitions(mapping);
 
-		// init gui for each step
 		currentConfigurationStep = 0;
 		configurationStepsDialogs = new JComponent[CONFIGURATION_STEPS_NUMBER];
+		
+		// init gui for planner settings step
 		configurationStepsDialogs[0] = new PlannerSettingsDialog(log);
-		configurationStepsDialogs[1] = new AlignmentCostsSettingsDialog(mapping.keySet(), mapping.values());
+		
+		// init gui for moves costs step. Notice that event classes must be taken from the log (not from mapping) to 
+		// avoid losing (possibly) unmapped event classes. 
+		XLogInfo logInfo = XLogInfoFactory.createLogInfo(log, mapping.getEventClassifier());
+		configurationStepsDialogs[1] = new AlignmentCostsSettingsDialog(
+				mapping.keySet(), logInfo.getEventClasses().getClasses());
+		
 		parameters = runConfigurationSteps(context, log, petrinet, mapping);
 		
 		if (parameters != null) {			
@@ -125,53 +118,6 @@ public class ConfigurationUI {
 			parameters.setTransitionsEventsMapping(mapping);
 		}
 		return parameters;
-	}
-	
-	/**
-	 * Prompt the user to define a mapping between the events classes of the given event log and the activities of the 
-	 * given Petri net.
-	 * 
-	 * @param context The context to run in.
-	 * @param log The event log to replay.
-	 * @param petrinet The Petri net on which the log has to be replayed.
-	 * @return The mapping.
-	 * @throws UserCancelledException
-	 */
-	private static TransEvClassMapping defineNewTransEvClassMapping(
-			UIPluginContext context, PetrinetGraph petrinet, XLog log) throws UserCancelledException {
-
-		// list possible classifiers
-		List<XEventClassifier> classList = new ArrayList<>(log.getClassifiers());
-
-		// add default classifiers
-		if (!classList.contains(XLogInfoImpl.RESOURCE_CLASSIFIER)) {
-			classList.add(XLogInfoImpl.RESOURCE_CLASSIFIER);
-		}
-		if (!classList.contains(XLogInfoImpl.STANDARD_CLASSIFIER)) {
-			classList.add(XLogInfoImpl.STANDARD_CLASSIFIER);
-		}
-		if (!classList.contains(XLogInfoImpl.NAME_CLASSIFIER)) {
-			// place Event Name classifier on top of list
-			classList.add(0, XLogInfoImpl.NAME_CLASSIFIER);
-		}
-
-		Object[] availableEventClass = classList.toArray(new Object[classList.size()]);
-
-		ImprovedEvClassLogMappingUI mappingUi = new ImprovedEvClassLogMappingUI(log, petrinet, availableEventClass);
-		InteractionResult result = context.showConfiguration(
-				"Mapping between Events from Log and Transitions of the Data Petri Net", mappingUi);
-
-		if (result == InteractionResult.CANCEL) {
-			throw new UserCancelledException();
-		}
-
-		String logName = XConceptExtension.instance().extractName(log);
-		String label = "Connection between " + petrinet.getLabel() + " and " + (logName != null ? logName : "unnamed log");
-		EvClassLogPetrinetConnection con = new EvClassLogPetrinetConnection(label, petrinet, log,
-				mappingUi.getSelectedClassifier(), mappingUi.getMap());
-		context.addConnection(con);
-
-		return mappingUi.getMap();
 	}
 	
 	/**

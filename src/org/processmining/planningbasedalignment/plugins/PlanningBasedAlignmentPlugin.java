@@ -63,7 +63,8 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	 * @throws UserCancelledException 
 	 */
 	@UITopiaVariant(affiliation = AFFILIATION, author = AUTHOR, email = EMAIL)
-	@PluginVariant(variantLabel = "Planning-based Event Log & Petri Net alignment", requiredParameterLabels = { 0, 1 })
+	@PluginVariant(variantLabel = "Planning-based Alignment of Event Logs and Petri Nets",
+	requiredParameterLabels = { 0, 1 })
 	public ResultReplayPetriNetWithData runUI(UIPluginContext context, XLog log, DataPetriNet petrinet) {
 
 		if (!isPython27Installed()) {			
