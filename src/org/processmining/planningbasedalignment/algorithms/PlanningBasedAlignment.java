@@ -108,7 +108,7 @@ public class PlanningBasedAlignment {
 			OSUtils.cleanFolder(pddlFilesDir);
 
 			/* PLANNER INPUTS BUILDING */
-			buildPlannerInput(log, petrinet, parameters);
+			buildPlannerInput(context, log, petrinet, parameters);
 
 			/* PLANNER INVOCATION */
 			invokePlanner(context, parameters, plansFoundDir);
@@ -219,7 +219,10 @@ public class PlanningBasedAlignment {
 	 * @param petrinet
 	 * @param parameters
 	 */
-	protected void buildPlannerInput(XLog log, DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) {
+	protected void buildPlannerInput(
+			PluginContext context, XLog log, DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) {
+		
+		context.log("Creating PDDL encodings for trace alignment problem instances...");
 		
 		int[] traceInterval = parameters.getTracesInterval();
 		int traceIdToCheckFrom = traceInterval[0];
@@ -279,6 +282,8 @@ public class PlanningBasedAlignment {
 	protected void invokePlanner(
 			PluginContext context, PlanningBasedAlignmentParameters parameters, File alignmentsDirectory)
 					throws InterruptedException, IOException, URISyntaxException {
+		
+		context.log("Invoking planner...");
 		
 		String[] commandArgs = buildFastDownardCommandArgs(context, parameters);
 		
