@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.deckfour.xes.classification.XEventClass;
 import org.deckfour.xes.classification.XEventClassifier;
 import org.deckfour.xes.model.XEvent;
@@ -313,17 +314,18 @@ public class PlanningBasedAlignment {
 					throws IOException {
 				
 		Pattern decimalNumberRegexPattern = Pattern.compile("\\d+(,\\d{3})*(\\.\\d+)*");
-		
-		float traceAlignmentCost;
-		float emptyTraceAlignmentCost = 0;
-		float totalAlignmentTime = 0;
-		float averageExpandedStates = 0;
-		float averageGeneratedStates = 0;
 		ExecutionTrace logTrace;
 		ExecutionTrace processTrace;
 		DataAlignmentState dataAlignmentState;
 		ArrayList<DataAlignmentState> alignments = new ArrayList<DataAlignmentState>();
-		ResultReplayPetriNetWithData result = null;
+		ResultReplayPetriNetWithData result = null;		
+		float traceAlignmentCost;
+		float emptyTraceAlignmentCost = 0;
+		
+		// initialize stats summaries
+		SummaryStatistics alignmentTimeSummary =new SummaryStatistics();
+		SummaryStatistics expandedStatesSummary =new SummaryStatistics();
+		SummaryStatistics generatedStatesSummary =new SummaryStatistics();
 		
 		// iterate over planner output files
 		File[] alignmentFiles = plansFoundDir.listFiles();
@@ -359,16 +361,13 @@ public class PlanningBasedAlignment {
 				} else if (traceId != EMPTY_TRACE_ID) {
 					
 					if(outputLine.startsWith(SEARCH_TIME_ENTRY_PREFIX)) {
-						// parse alignment time
-						totalAlignmentTime += Float.parseFloat(matcher.group());
+						alignmentTimeSummary.addValue(Double.parseDouble(matcher.group()));
 
 					} else if(outputLine.startsWith(EXPANDED_STATES_ENTRY_PREFIX)) {
-						// parse expanded states num
-						averageExpandedStates += Float.parseFloat(matcher.group());
+						expandedStatesSummary.addValue(Double.parseDouble(matcher.group()));
 						
 					} else if(outputLine.startsWith(GENERATED_STATES_ENTRY_PREFIX)) {
-						// parse generated states num
-						averageGeneratedStates += Float.parseFloat(matcher.group());
+						generatedStatesSummary.addValue(Double.parseDouble(matcher.group()));
 						
 					} else {
 						// parse alignment move
@@ -424,12 +423,20 @@ public class PlanningBasedAlignment {
 		}
 		
 		// print stats
-		int alignedTracesNum = alignmentFiles.length - 1;	// exclude empty trace
-		averageExpandedStates /= alignedTracesNum;
-		averageGeneratedStates /= alignedTracesNum;
-		System.out.println("\tAlignment (actual) Time:  " + totalAlignmentTime + DEFAULT_TIME_UNIT);
-		System.out.println("\tAverage Expanded States:  " + averageExpandedStates);
-		System.out.println("\tAverage Generated States: " + averageGeneratedStates);
+		System.out.println("\tAverage (actual) Time: " + alignmentTimeSummary.getMean() + DEFAULT_TIME_UNIT);
+		System.out.println("\tMaximum (actual) Time: " + alignmentTimeSummary.getMax() + DEFAULT_TIME_UNIT);
+		System.out.println("\tMinimum (actual) Time: " + alignmentTimeSummary.getMin() + DEFAULT_TIME_UNIT);
+		System.out.println("\tStandard deviation:    " + alignmentTimeSummary.getStandardDeviation() + DEFAULT_TIME_UNIT);
+		System.out.println();
+		System.out.println("\tAverage Expanded States: " + expandedStatesSummary.getMean());
+		System.out.println("\tMaximum Expanded States: " + expandedStatesSummary.getMax());
+		System.out.println("\tMinimum Expanded States: " + expandedStatesSummary.getMin());
+		System.out.println("\tStandard deviation:      " + expandedStatesSummary.getStandardDeviation());
+		System.out.println();
+		System.out.println("\tAverage Generated States: " + generatedStatesSummary.getMean());
+		System.out.println("\tMaximum Generated States: " + generatedStatesSummary.getMax());
+		System.out.println("\tMinimum Generated States: " + generatedStatesSummary.getMin());
+		System.out.println("\tStandard deviation:       " + generatedStatesSummary.getStandardDeviation());
 		
 		// produce result to be visualized
 		VariableMatchCosts variableCost = VariableMatchCosts.NOCOST;			// dummy
