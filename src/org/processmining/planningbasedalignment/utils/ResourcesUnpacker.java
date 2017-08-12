@@ -25,6 +25,11 @@ public class ResourcesUnpacker extends Thread {
     private static final String PLANNING_ARCHIVE = "planning.zip";
     
     /**
+     * The name of the archive to extract the resources from.
+     */
+    private static final String PYTHON_EXT = ".py";
+    
+    /**
      * The context of the UI.
      */
 	private UIPluginContext context;
@@ -89,7 +94,14 @@ public class ResourcesUnpacker extends Thread {
      * @throws IOException
      */
     private void extractFile(ZipInputStream zipIn, String filePath) throws IOException {
-        BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(filePath));
+    	File file = new File(filePath);
+    	
+    	// if the file has to be executed, set the related property
+    	if (filePath.endsWith(PYTHON_EXT)) {
+    		file.setExecutable(true);
+    	}
+    	
+        BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file));
         byte[] bytesIn = new byte[BUFFER_SIZE];
         int read = 0;
         while ((read = zipIn.read(bytesIn)) != -1) {
