@@ -25,7 +25,7 @@ public class ResourcesUnpacker extends Thread {
     private static final String PLANNING_ARCHIVE = "planning.zip";
     
     /**
-     * The name of the archive to extract the resources from.
+     * The extension of Python files.
      */
     private static final String PYTHON_EXT = ".py";
     
@@ -89,8 +89,8 @@ public class ResourcesUnpacker extends Thread {
 	/**
      * Extracts a file entry.
      * 
-     * @param zipIn
-     * @param filePath
+     * @param zipIn The input stream of the .zip archive entry.
+     * @param filePath The path of the file to be created.
      * @throws IOException
      */
     private void extractFile(ZipInputStream zipIn, String filePath) throws IOException {
