@@ -25,16 +25,6 @@ public class ResourcesUnpacker extends Thread {
     private static final String PLANNING_ARCHIVE = "planning.zip";
     
     /**
-     * The extension of Python files.
-     */
-    private static final String PYTHON_EXT = ".py";
-    
-    /**
-     * The extension of Python files.
-     */
-    private static final String FAST_DOWNWARD_BUILD = "downward";
-    
-    /**
      * The context of the UI.
      */
 	private UIPluginContext context;
@@ -110,12 +100,11 @@ public class ResourcesUnpacker extends Thread {
         bos.close();
         
         /*
-         *  if the file has to be executed, set the related flag (for every user).
+         *  set the executable flag (for every user) to prevent issues when running on Unix-like OSs.
          *  It has to be done AFTER the file has been written.
          */
-        if (filePath.endsWith(PYTHON_EXT) || filePath.endsWith(FAST_DOWNWARD_BUILD)) {
-        	file.setExecutable(true, false);
-        }
+        
+        file.setExecutable(true, false);
     }
     
 }
