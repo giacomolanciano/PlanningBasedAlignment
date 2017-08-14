@@ -10,17 +10,15 @@ import org.processmining.contexts.uitopia.annotations.UITopiaVariant;
 import org.processmining.framework.plugin.annotations.Plugin;
 import org.processmining.framework.plugin.annotations.PluginCategory;
 import org.processmining.framework.plugin.annotations.PluginVariant;
-import org.processmining.planningbasedalignment.help.HelpMessages;
-import org.processmining.plugins.DataConformance.DataAlignment.PetriNet.ResultReplayPetriNetWithData;
 
 /**
- * The ProM plug-in for Planning-based Alignment of an event log and a Petri net.
+ * The ProM plug-in for removing traces of length 1 from an event log.
  * 
  * @author Giacomo Lanciano
  *
  */
 @Plugin(
-	name = "Remove Length-1 Traces From Event Log",
+	name = "Remove length-1 Traces from Event Log",
 	parameterLabels = { "Event Log" }, 
 	returnLabels = { "Filtered Event Log" },
 	returnTypes = { XLog.class },
@@ -34,12 +32,14 @@ public class RemoveLength1TracesPlugin {
 	private static final String EMAIL = "lanciano.1487019@studenti.uniroma1.it";
 	
 	@UITopiaVariant(affiliation = AFFILIATION, author = AUTHOR, email = EMAIL)
-	@PluginVariant(variantLabel = "Remove Length-1 Traces From Event Log",
+	@PluginVariant(variantLabel = "Remove length-1 Traces from Event Log",
 	requiredParameterLabels = { 0 })
-	public XLog runUI(UIPluginContext context, XLog log) {
+	public XLog run(UIPluginContext context, XLog log) {
 
+		context.log("Copying source log...");
 		XLog result = (XLog) log.clone();
 		
+		context.log("Removing traces...");
 		Iterator<XTrace> it = result.listIterator();
 		XTrace trace;
 		while (it.hasNext()) {
