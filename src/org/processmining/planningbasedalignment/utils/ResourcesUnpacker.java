@@ -30,6 +30,11 @@ public class ResourcesUnpacker extends Thread {
     private static final String PYTHON_EXT = ".py";
     
     /**
+     * The extension of Python files.
+     */
+    private static final String FAST_DOWNWARD_BUILD = "downward";
+    
+    /**
      * The context of the UI.
      */
 	private UIPluginContext context;
@@ -96,11 +101,6 @@ public class ResourcesUnpacker extends Thread {
     private void extractFile(ZipInputStream zipIn, String filePath) throws IOException {
     	File file = new File(filePath);
     	
-    	// if the file has to be executed, set the related property
-    	if (filePath.endsWith(PYTHON_EXT)) {
-    		file.setExecutable(true);
-    	}
-    	
         BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file));
         byte[] bytesIn = new byte[BUFFER_SIZE];
         int read = 0;
@@ -108,6 +108,14 @@ public class ResourcesUnpacker extends Thread {
             bos.write(bytesIn, 0, read);
         }
         bos.close();
+        
+        /*
+         *  if the file has to be executed, set the related flag (for every user).
+         *  It has to be done AFTER the file has been written.
+         */
+        if (filePath.endsWith(PYTHON_EXT) || filePath.endsWith(FAST_DOWNWARD_BUILD)) {
+        	file.setExecutable(true, false);
+        }
     }
     
 }
