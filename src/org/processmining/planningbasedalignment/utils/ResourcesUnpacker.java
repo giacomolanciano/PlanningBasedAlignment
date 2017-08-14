@@ -103,7 +103,6 @@ public class ResourcesUnpacker extends Thread {
          *  set the executable flag (for every user) to prevent issues when running on Unix-like OSs.
          *  It has to be done AFTER the file has been written.
          */
-        
         file.setExecutable(true, false);
     }
     
