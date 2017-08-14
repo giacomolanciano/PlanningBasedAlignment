@@ -14,8 +14,6 @@ import org.processmining.models.graphbased.directed.petrinet.elements.Place;
 import org.processmining.models.graphbased.directed.petrinet.elements.Transition;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 
-import weka.core.pmml.jaxbbindings.EventValues;
-
 /**
  * Abstract class that can be extended to provide different ways of encoding an alignment-based conformance checking
  * problem in PDDL.
