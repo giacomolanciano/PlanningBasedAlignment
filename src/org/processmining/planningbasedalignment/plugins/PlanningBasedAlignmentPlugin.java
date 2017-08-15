@@ -52,8 +52,12 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	private static final String EMAIL = "lanciano.1487019@studenti.uniroma1.it";
 	private static final int PYTHON_2_MIN_VERSION = 7;
 	
+	public PlanningBasedAlignmentPlugin() {
+		super();
+	}
+	
 	/**
-	 * The plug-in variant that runs in a UI context and uses a dialog to get the parameters.
+	 * The plug-in variant that runs in a UI context and prompt the user to get the parameters.
 	 * 
 	 * @param context The context to run in.
 	 * @param log The event log to replay.
@@ -66,7 +70,7 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	@PluginVariant(variantLabel = "Planning-based Alignment of Event Logs and Petri Nets",
 	requiredParameterLabels = { 0, 1 })
 	public ResultReplayPetriNetWithData runUI(UIPluginContext context, XLog log, DataPetriNet petrinet) {
-
+		
 		if (!isPython27Installed()) {			
 			JOptionPane.showMessageDialog(
 					new JPanel(),
@@ -95,7 +99,7 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 		}
 		
 		// start algorithm
-		ResultReplayPetriNetWithData result = replayLog(context, log, petrinet, parameters);
+		ResultReplayPetriNetWithData result = runAlgorithm(context, log, petrinet, parameters);
 
 		context.getFutureResult(0).setLabel(
 				"Replay result - log " + XConceptExtension.instance().extractName(log) + " on " + petrinet.getLabel()
@@ -108,15 +112,16 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	 * Invokes the algorithm to compute replay result.
 	 * 
 	 * @param context The context to run in.
+	 * @param algorithm 
 	 * @param log The event log to replay.
 	 * @param petrinet The Petri net on which the log has to be replayed.
 	 * @param parameters The parameters to be used by the alignment algorithm.
 	 * @return The result of the replay of the event log on the Petri net.
 	 */
-	private ResultReplayPetriNetWithData replayLog(UIPluginContext context, XLog log, DataPetriNet petrinet,
-			PlanningBasedAlignmentParameters parameters) {
+	private ResultReplayPetriNetWithData runAlgorithm(
+			UIPluginContext context, XLog log, DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) {
 			
-		ResultReplayPetriNetWithData replayRes =  apply(context, log, petrinet, parameters);
+		ResultReplayPetriNetWithData replayRes = align(context, log, petrinet, parameters);
 		
 		// add connection if result is found
 		if (replayRes != null) {			
@@ -188,8 +193,8 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	 * @return true if the planner source code has already been unpacked.
 	 */
 	private static boolean checkPlannerSources() {
-		File plannerManagerScript = new File(PLANNER_MANAGER_SCRIPT);
-		File fdScript = new File(FAST_DOWNWARD_DIR);
+		File plannerManagerScript = new File(PlanningBasedAlignment.PLANNER_MANAGER_SCRIPT);
+		File fdScript = new File(PlanningBasedAlignment.FAST_DOWNWARD_DIR);
 		return plannerManagerScript.exists() && fdScript.exists();
 	}
 	

@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import org.apache.commons.io.FileUtils;
+
 /**
  * Utility functions to deal with OS-related stuff.
  * 
@@ -13,50 +15,48 @@ import java.io.IOException;
 public class OSUtils {
 
 	/**
-	 * Create a file with the given name and write the given contents on it. If the file name contains a path, the
-	 * parent directories are automatically created.
+	 * Create a file with the given name and write the given (textual) contents on it. If the file name consists in a
+	 * path, the parent directories are automatically created.
 	 * 
 	 * @param fileName The name of the file to be created (possibly a path).
-	 * @param buffer The contents to be written.
-	 * @return The newly create file.
+	 * @param contents The contents to be written.
+	 * @return The newly created file.
 	 */
-	public static File writeFile(String fileName, StringBuffer buffer) {
-		File file = null;
-		FileWriter fileWriter = null;
+	public static File writeTextualFile(String fileName, String contents) {
+		File file = new File(fileName);
+		file.getParentFile().mkdirs();
 
 		try {
-			file = new File(fileName);
-			file.setExecutable(true);
-			file.getParentFile().mkdirs();
-			fileWriter = new FileWriter(file);
-			fileWriter.write(buffer.toString());
+			FileWriter fileWriter = new FileWriter(file);
+			fileWriter.write(contents);
 			fileWriter.close();
-			return file;
 		}
 		catch(IOException e) {
 			e.printStackTrace();
+			return null;
 		}
-		return null;
+		
+		// it has to be done AFTER the file has been written.
+		file.setExecutable(true, false);
+		return file;
 	}
 	
 	/**
 	 * Delete all contents from the given directory or create it if not existing.
 	 * 
-	 * @param folder The File object representing the folder.
+	 * @param directory The File object representing the directory.
 	 */
-	public static void cleanFolder(File folder) {
-		File[] files = folder.listFiles();
-		if(files!=null) { 
-			for(File file : files) {
-				if(file.isDirectory()) {
-					cleanFolder(file);
-				} else {
-					file.delete();
-				}
+	public static void cleanDirectory(File directory) {
+		if (!directory.exists()) {
+			directory.mkdir();
+			
+        } else {
+			try {
+				FileUtils.cleanDirectory(directory);
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-		} else {
-			folder.mkdir();
-		}
+        }
 	}
 	
 	/**
