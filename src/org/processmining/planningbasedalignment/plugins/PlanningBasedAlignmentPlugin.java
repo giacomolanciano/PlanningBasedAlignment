@@ -42,7 +42,7 @@ import org.processmining.plugins.DataConformance.DataAlignment.PetriNet.ResultRe
 	returnTypes = { ResultReplayPetriNetWithData.class },
 	userAccessible = true,
 	categories = PluginCategory.ConformanceChecking,
-	keywords = {"conformance", "alignment", "planning"},
+	keywords = {"conformance", "alignment", "planning", "PDDL"},
 	help = HelpMessages.PLANNING_BASED_ALIGNMENT_HELP
 )
 public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
@@ -51,10 +51,6 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	private static final String AUTHOR = "Giacomo Lanciano";
 	private static final String EMAIL = "lanciano.1487019@studenti.uniroma1.it";
 	private static final int PYTHON_2_MIN_VERSION = 7;
-	
-	public PlanningBasedAlignmentPlugin() {
-		super();
-	}
 	
 	/**
 	 * The plug-in variant that runs in a UI context and prompt the user to get the parameters.
@@ -124,7 +120,7 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 		ResultReplayPetriNetWithData replayRes = align(context, log, petrinet, parameters);
 		
 		// add connection if result is found
-		if (replayRes != null) {			
+		if (replayRes != null) {
 			context.getConnectionManager().addConnection(
 					new PlanningBasedAlignmentConnection(log, petrinet, parameters, replayRes));
 		}

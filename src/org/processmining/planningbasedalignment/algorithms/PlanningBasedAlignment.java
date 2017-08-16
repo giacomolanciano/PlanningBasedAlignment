@@ -2,6 +2,7 @@ package org.processmining.planningbasedalignment.algorithms;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -18,14 +19,11 @@ import org.deckfour.xes.classification.XEventClassifier;
 import org.deckfour.xes.model.XEvent;
 import org.deckfour.xes.model.XLog;
 import org.deckfour.xes.model.XTrace;
-import org.deckfour.xes.model.impl.XAttributeMapImpl;
-import org.deckfour.xes.model.impl.XTraceImpl;
 import org.processmining.datapetrinets.DataPetriNet;
 import org.processmining.framework.plugin.PluginContext;
 import org.processmining.models.graphbased.directed.petrinet.elements.Transition;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 import org.processmining.planningbasedalignment.pddl.AbstractPddlEncoder;
-import org.processmining.planningbasedalignment.pddl.StandardPddlEncoder;
 import org.processmining.planningbasedalignment.utils.AlignmentProgressChecker;
 import org.processmining.planningbasedalignment.utils.OSUtils;
 import org.processmining.planningbasedalignment.utils.PlannerSearchStrategy;
@@ -43,17 +41,12 @@ import org.processmining.plugins.DataConformance.framework.VariableMatchCosts;
  * @author Giacomo Lanciano
  *
  */
-public class PlanningBasedAlignment {
+public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 	
-	public static final String PLANNER_MANAGER_SCRIPT = "planner_manager.py";
-	public static final String FAST_DOWNWARD_DIR = "fast-downward/";
-	
+	protected static final String PLANNER_MANAGER_SCRIPT = "planner_manager.py";
+	protected static final String FAST_DOWNWARD_DIR = "fast-downward/";
 	protected static final String FAST_DOWNWARD_SCRIPT = FAST_DOWNWARD_DIR + "fast-downward.py";
-	protected static final String PDDL_FILES_DIR_PREFIX = "pddl_files_";
 	protected static final String PLANS_FOUND_DIR_PREFIX = "plans_found_";
-	protected static final String PDDL_EXT = ".pddl";
-	protected static final String PDDL_DOMAIN_FILE_PREFIX = "domain";
-	protected static final String PDDL_PROBLEM_FILE_PREFIX = "problem";
 	protected static final String COST_ENTRY_PREFIX = "; cost = ";
 	protected static final String SEARCH_TIME_ENTRY_PREFIX = "; searchtime = ";
 	protected static final String EXPANDED_STATES_ENTRY_PREFIX = "; expandedstates = ";
@@ -62,12 +55,6 @@ public class PlanningBasedAlignment {
 	protected static final String CASE_PREFIX = "Case ";
 	protected static final String DEFAULT_TIME_UNIT = " ms";
 	protected static final int INITIAL_EXECUTION_TRACE_CAPACITY = 10;
-	protected static final int EMPTY_TRACE_ID = 0;
-	
-	/**
-	 * The object used to generate the PDDL encodings.
-	 */
-	protected AbstractPddlEncoder pddlEncoder;
 	
 	/**
 	 * The separated process in which the planner is executed.
@@ -85,22 +72,10 @@ public class PlanningBasedAlignment {
 	protected Thread resourcesUnpacker;
 	
 	/**
-	 * The input directory for the planner.
-	 */
-	protected File pddlFilesDir;
-	
-	/**
 	 * The output directory for the planner.
 	 */
 	protected File plansFoundDir;
-	
-	/**
-	 * The timestamp of the execution start.
-	 */
-	protected long startTime;
-
-	public PlanningBasedAlignment() {}
-	
+		
 	/**
 	 * The method that performs the alignment of an event log and a Petri net using Automated Planning.
 	 * 
@@ -110,28 +85,15 @@ public class PlanningBasedAlignment {
 	 * @param parameters The parameters to use.
 	 * @return The result of the replay of the event log on the Petri net.
 	 */
-	public ResultReplayPetriNetWithData align(
+	protected ResultReplayPetriNetWithData align(
 			PluginContext context, XLog log, DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) {
 		  
 		ResultReplayPetriNetWithData output = null;
 		
-		startTime = System.currentTimeMillis();
-		
 		try {
-			// cleanup folders
-			pddlFilesDir = new File(PDDL_FILES_DIR_PREFIX + startTime);
-			plansFoundDir = new File(PLANS_FOUND_DIR_PREFIX + startTime);
-			OSUtils.cleanDirectory(pddlFilesDir);
-			OSUtils.cleanDirectory(plansFoundDir);
-
-			/* PLANNER INPUTS BUILDING */
-			buildPlannerInput(context, log, petrinet, parameters);
-
-			/* PLANNER INVOCATION */
-			invokePlanner(context, parameters);
-			
-			/* PLANNER OUTPUTS PROCESSING */
-			output = processPlannerOutput(log, petrinet, parameters);
+			buildPlannerInput(null, context, log, petrinet, parameters);
+			invokePlanner(context, parameters);			
+			output = parsePlannerOutput(log, petrinet, parameters);
 			
 		} catch (InterruptedException e) {
 			killSubprocesses();
@@ -146,13 +108,61 @@ public class PlanningBasedAlignment {
 	 * Shut down all active computations.
 	 * 
 	 */
-	public void killSubprocesses() {
+	protected void killSubprocesses() {
 		if (plannerManagerProcess != null)
 			plannerManagerProcess.destroy();
 		if (progressChecker != null)
 			progressChecker.interrupt();
 		if (resourcesUnpacker != null)
 			resourcesUnpacker.interrupt();
+	}
+	
+	/**
+	 * Starts the execution of the planner for all the produced pairs domain/problem.
+	 * 
+	 * @param context
+	 * @param parameters
+	 * @param plansFoundDir
+	 * @throws InterruptedException
+	 * @throws IOException
+	 * @throws URISyntaxException
+	 */
+	private void invokePlanner(
+			PluginContext context, PlanningBasedAlignmentParameters parameters)
+					throws InterruptedException, IOException, URISyntaxException {
+		
+		if (!pddlFilesDir.exists()) {
+			throw new FileNotFoundException("The planner input directory does not exist.");
+		}
+		
+		plansFoundDir = new File(parentDir, PLANS_FOUND_DIR_PREFIX + startTime);
+		OSUtils.cleanDirectory(plansFoundDir);
+		
+		context.log("Invoking planner...");
+		
+		String[] commandArgs = buildFastDownardCommandArgs(context, parameters);
+		
+//		System.out.println("\n" + startTime + "\n" + Arrays.toString(commandArgs));
+		
+		// execute external planner script and wait for results
+		ProcessBuilder processBuilder = new ProcessBuilder(commandArgs);
+		plannerManagerProcess = processBuilder.start();
+
+		// read std out & err in separated thread
+		StreamAsyncReader errorGobbler = new StreamAsyncReader(plannerManagerProcess.getErrorStream(), "ERROR");
+		StreamAsyncReader outputGobbler = new StreamAsyncReader(plannerManagerProcess.getInputStream(), "OUTPUT");
+		errorGobbler.start();
+		outputGobbler.start();
+		
+		// start thread to show progress to the user
+		int[] traceInterval = parameters.getTracesInterval();
+		int totalAlignmentsNum = traceInterval[1] - traceInterval[0] + 1; 
+		progressChecker = new AlignmentProgressChecker(context, plansFoundDir, totalAlignmentsNum);
+		progressChecker.start();
+
+		// wait for the process to return to read the generated outputs
+		plannerManagerProcess.waitFor();
+		progressChecker.interrupt();
 	}
 	
 	/**
@@ -165,7 +175,7 @@ public class PlanningBasedAlignment {
 	 * @throws URISyntaxException 
 	 * @throws InterruptedException 
 	 */
-	protected String[] buildFastDownardCommandArgs(PluginContext context, PlanningBasedAlignmentParameters parameters)
+	private String[] buildFastDownardCommandArgs(PluginContext context, PlanningBasedAlignmentParameters parameters)
 			throws IOException, URISyntaxException, InterruptedException {
 		
 		ArrayList<String> commandComponents = new ArrayList<>();
@@ -236,112 +246,7 @@ public class PlanningBasedAlignment {
 	}
 	
 	/**
-	 * Produces the PDDL input files (representing the instances of the alignment problem) to be fed to the planner.
-	 * 
-	 * @param log
-	 * @param petrinet
-	 * @param parameters
-	 * @throws IOException 
-	 */
-	protected void buildPlannerInput(
-			PluginContext context, XLog log, DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters)
-					throws IOException {
-		
-		context.log("Creating PDDL encodings for trace alignment problem instances...");
-		
-		int[] traceInterval = parameters.getTracesInterval();
-		int traceIdToCheckFrom = traceInterval[0];
-		int traceIdToCheckTo = traceInterval[1];
-
-		// set traces length bounds
-		int[] traceLengthBounds = parameters.getTracesLengthBounds();
-		int minTracesLength = traceLengthBounds[0];
-		int maxTracesLength = traceLengthBounds[1];
-
-		pddlEncoder = new StandardPddlEncoder(petrinet, parameters); //TODO change implementation according to params
-
-		// add empty trace to the collection of trace to be aligned to compute fitness
-		XTrace emptyTrace = new XTraceImpl(new XAttributeMapImpl());
-		writePddlEncodings(emptyTrace, EMPTY_TRACE_ID);
-		
-		// consider only the traces in the chosen interval
-		for(int traceId = traceIdToCheckFrom-1; traceId < traceIdToCheckTo; traceId++) {
-
-			XTrace trace = log.get(traceId);
-			int traceLength = trace.size();						
-
-			// check whether the trace matches the length bounds
-			if(traceLength >= minTracesLength && traceLength <= maxTracesLength)  {
-
-				// create PDDL encodings (domain & problem) for current trace
-				writePddlEncodings(trace, traceId+1);
-			}
-		}
-	}
-	
-	/**
-	 * Write the PDDL files related to the given trace.
-	 * 
-	 * @param trace The trace.
-	 * @param traceId The trace id.
-	 * @throws IOException 
-	 */
-	protected void writePddlEncodings(XTrace trace, int traceId) throws IOException {
-		String sbDomainFileName = new File(
-				pddlFilesDir, PDDL_DOMAIN_FILE_PREFIX + traceId + PDDL_EXT).getCanonicalPath();
-		String sbProblemFileName = new File(
-				pddlFilesDir, PDDL_PROBLEM_FILE_PREFIX + traceId + PDDL_EXT).getCanonicalPath();
-		
-		StringBuffer sbDomain = pddlEncoder.createPropositionalDomain(trace);
-		StringBuffer sbProblem = pddlEncoder.createPropositionalProblem(trace);
-		
-		OSUtils.writeTextualFile(sbDomainFileName, sbDomain.toString());
-		OSUtils.writeTextualFile(sbProblemFileName, sbProblem.toString());
-	}
-	
-	/**
-	 * Starts the execution of the planner for all the produced pairs domain/problem.
-	 * 
-	 * @param context
-	 * @param parameters
-	 * @param plansFoundDir
-	 * @throws InterruptedException
-	 * @throws IOException
-	 * @throws URISyntaxException
-	 */
-	protected void invokePlanner(
-			PluginContext context, PlanningBasedAlignmentParameters parameters)
-					throws InterruptedException, IOException, URISyntaxException {
-		
-		context.log("Invoking planner...");
-		
-		String[] commandArgs = buildFastDownardCommandArgs(context, parameters);
-		
-//		System.out.println("\n" + startTime + "\n" + Arrays.toString(commandArgs));
-		
-		// execute external planner script and wait for results
-		ProcessBuilder processBuilder = new ProcessBuilder(commandArgs);
-		plannerManagerProcess = processBuilder.start();
-
-		// read std out & err in separated thread
-		StreamAsyncReader errorGobbler = new StreamAsyncReader(plannerManagerProcess.getErrorStream(), "ERROR");
-		StreamAsyncReader outputGobbler = new StreamAsyncReader(plannerManagerProcess.getInputStream(), "OUTPUT");
-		errorGobbler.start();
-		outputGobbler.start();
-		
-		// start thread to show progress to the user
-		int[] traceInterval = parameters.getTracesInterval();
-		int totalAlignmentsNum = traceInterval[1] - traceInterval[0] + 1; 
-		progressChecker = new AlignmentProgressChecker(context, plansFoundDir, totalAlignmentsNum);
-		progressChecker.start();
-
-		// wait for the process to return to read the generated outputs
-		plannerManagerProcess.waitFor();
-		progressChecker.interrupt();
-	}
-	
-	/**
-	 * Process planner outputs to build the alignment results.
+	 * Parse planner output to build the alignment results.
 	 * 
 	 * @param log
 	 * @param petrinet
@@ -350,9 +255,13 @@ public class PlanningBasedAlignment {
 	 * @return
 	 * @throws IOException
 	 */
-	protected ResultReplayPetriNetWithData processPlannerOutput(
+	private ResultReplayPetriNetWithData parsePlannerOutput(
 			XLog log, DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) throws IOException {
-				
+		
+		if (!plansFoundDir.exists()) {
+			throw new FileNotFoundException("The planner output directory does not exist.");
+		}
+		
 		Pattern decimalNumberRegexPattern = Pattern.compile("\\d+(,\\d{3})*(\\.\\d+)*");
 		ExecutionTrace logTrace;
 		ExecutionTrace processTrace;
@@ -493,7 +402,7 @@ public class PlanningBasedAlignment {
 	 * @param outputLine A String representing the output file line.
 	 * @return true if the output file line is related to a synchronous move.
 	 */
-	protected boolean isSynchronousMove(String outputLine) {
+	private boolean isSynchronousMove(String outputLine) {
 		return outputLine.startsWith("(" + AbstractPddlEncoder.SYNCH_MOVE_PREFIX);
 	}
 	
@@ -503,7 +412,7 @@ public class PlanningBasedAlignment {
 	 * @param outputLine A String representing the output file line.
 	 * @return true if the output file line is related to a model move.
 	 */
-	protected boolean isModelMove(String outputLine) {
+	private boolean isModelMove(String outputLine) {
 		return outputLine.startsWith("(" + AbstractPddlEncoder.MODEL_MOVE_PREFIX);
 	}
 	
@@ -513,7 +422,7 @@ public class PlanningBasedAlignment {
 	 * @param outputLine A String representing the output file line.
 	 * @return true if the output file line is related to a log move.
 	 */
-	protected boolean isLogMove(String outputLine) {
+	private boolean isLogMove(String outputLine) {
 		return outputLine.startsWith("(" + AbstractPddlEncoder.LOG_MOVE_PREFIX);
 	}
 	
@@ -524,7 +433,7 @@ public class PlanningBasedAlignment {
 	 * @param outputLine A String representing the output file line.
 	 * @return true if the output file line is related to a log move.
 	 */
-	protected String extractMovePddlId(String outputLine) {
+	private String extractMovePddlId(String outputLine) {
 		String[] tokens = outputLine.split("#");
 		return tokens[1].replaceAll("\\)", "").trim();
 	}
@@ -538,7 +447,7 @@ public class PlanningBasedAlignment {
 	 * @param parameters The parameters of the plug-in.
 	 * @return a float representing the fitness of the trace.
 	 */
-	protected float computeFitness(
+	private float computeFitness(
 			XTrace trace, float alignmentCost, float emptyTraceCost, PlanningBasedAlignmentParameters parameters) {
 		
 		XEventClassifier eventClassifier = parameters.getTransitionsEventsMapping().getEventClassifier();
@@ -566,19 +475,8 @@ public class PlanningBasedAlignment {
 	 * @param fitness The float representing the fitness value.
 	 * @return The adjusted value.
 	 */
-	protected float adjustFitness(float fitness) {
+	private float adjustFitness(float fitness) {
 		return (2 * fitness) - 1 ;
-	}
-
-
-	/* GETTERS & SETTERS */
-	
-	public Thread getResourcesUnpacker() {
-		return resourcesUnpacker;
-	}
-
-	public void setResourcesUnpacker(Thread resourcesUnpacker) {
-		this.resourcesUnpacker = resourcesUnpacker;
 	}
 	
 }
