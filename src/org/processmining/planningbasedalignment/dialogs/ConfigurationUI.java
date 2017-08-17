@@ -126,37 +126,36 @@ public class ConfigurationUI {
 	 * @param mapping The {@link TransEvClassMapping} between the events classes and the Petri net activities.
 	 */
 	private void configureInvisibleTransitions(TransEvClassMapping mapping) {
-		Set<Transition> unmappedTrans = new HashSet<>();
+		Set<Transition> unmappedTransitions = new HashSet<>();
 		for (Entry<Transition, XEventClass> entry : mapping.entrySet()) {
 			if (entry.getValue().equals(mapping.getDummyEventClass())) {
 				if (!entry.getKey().isInvisible()) {
-					unmappedTrans.add(entry.getKey());
+					unmappedTransitions.add(entry.getKey());
 				}
 			}
 		}
-		if (!unmappedTrans.isEmpty()) {
+		if (!unmappedTransitions.isEmpty()) {
 			// specifying the Transition type makes the program crash when there are unmapped transitions
 			@SuppressWarnings({ "unchecked", "rawtypes" })
-			JList list = new JList(unmappedTrans.toArray());
+			JList list = new JList(unmappedTransitions.toArray());
 			
 			JPanel panel = new JPanel();
 			BoxLayout layout = new BoxLayout(panel, BoxLayout.Y_AXIS);
 			panel.setLayout(layout);
 			panel.add(new JLabel("The following transitions are not mapped to any event class:"));
 
-			JScrollPane sp = new JScrollPane(list);
-			panel.add(sp);
+			JScrollPane scrollPanel = new JScrollPane(list);
+			panel.add(scrollPanel);
 			panel.add(new JLabel("Do you want to consider these transitions as invisible (unlogged activities)?"));
 
 			Object[] options = { "Yes, set them to invisible", "No, keep them as they are" };
 
 			if (0 == JOptionPane.showOptionDialog(null, panel, "Configure transition visibility",
 					JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0])) {
-				for (Transition t : unmappedTrans) {
-					t.setInvisible(true);
+				for (Transition transition : unmappedTransitions) {
+					transition.setInvisible(true);
 				}
 			}
-			;
 		}
 	}
 	
@@ -259,18 +258,18 @@ public class ConfigurationUI {
 		boolean result = false;
 		Collection<Pair<Integer, PluginParameterBinding>> plugins = context.getPluginManager().find(
 				ConnectionObjectFactory.class, markingType, context.getClass(), true, false, false, petrinet.getClass());
-		PluginContext c2 = context.createChildContext("Creating connection of Type " + markingType);
+		PluginContext childContext = context.createChildContext("Creating connection of Type " + markingType);
 		Pair<Integer, PluginParameterBinding> pair = plugins.iterator().next();
 		PluginParameterBinding binding = pair.getSecond();
 		try {
-			PluginExecutionResult pluginResult = binding.invoke(c2, petrinet);
+			PluginExecutionResult pluginResult = binding.invoke(childContext, petrinet);
 			pluginResult.synchronize();
-			context.getProvidedObjectManager().createProvidedObjects(c2); // push the objects to main context
+			context.getProvidedObjectManager().createProvidedObjects(childContext); // push the objects to main context
 			result = true;
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
-			c2.getParentContext().deleteChild(c2);
+			childContext.getParentContext().deleteChild(childContext);
 		}
 		return result;
 	}
