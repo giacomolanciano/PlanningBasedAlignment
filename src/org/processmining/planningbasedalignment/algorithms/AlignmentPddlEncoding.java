@@ -15,6 +15,8 @@ import org.processmining.planningbasedalignment.pddl.StandardPddlEncoder;
 import org.processmining.planningbasedalignment.utils.OSUtils;
 
 /**
+ * The implementation of the algorithm for generating the PDDL encoding of an alignment problem instance.
+ * 
  * @author Giacomo Lanciano
  *
  */

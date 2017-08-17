@@ -16,6 +16,7 @@ import org.processmining.framework.plugin.annotations.PluginVariant;
 import org.processmining.planningbasedalignment.algorithms.AlignmentPddlEncoding;
 import org.processmining.planningbasedalignment.dialogs.ConfigurationUI;
 import org.processmining.planningbasedalignment.dialogs.DestinationDirectoryChooser;
+import org.processmining.planningbasedalignment.help.HelpMessages;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 
 /**
@@ -31,7 +32,8 @@ import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmen
 	returnTypes = { Void.class },
 	userAccessible = true,
 	categories = PluginCategory.ConformanceChecking,
-	keywords = {"conformance", "alignment", "planning", "PDDL"}
+	keywords = {"conformance", "alignment", "planning", "PDDL"},
+	help = HelpMessages.ALIGNMENT_PDDL_ENCODING_HELP
 )
 public class AlignmentPddlEncodingPlugin extends AlignmentPddlEncoding {
 
@@ -82,18 +84,13 @@ public class AlignmentPddlEncodingPlugin extends AlignmentPddlEncoding {
 		} catch (IOException e) {
 			e.printStackTrace();
 			JOptionPane.showMessageDialog(
-					new JPanel(), "The program failed unexpectedly while writing the files on disk.",
+					new JPanel(), "The program failed unexpectedly while writing the PDDL files on disk.",
 					"Error", JOptionPane.ERROR_MESSAGE);
 			abortExecution(context);
 			return;
 		}		
 		
-		JOptionPane.showMessageDialog(
-			new JPanel(), 
-			"The PDDL files have been successfully written on disk. Notice that each file refers to the event\n"
-			+ "log trace whose id is indicated in the file name. Besides, \"domain0.pddl\" and \"problem0.pddl\"\n"
-			+ "refer to the alignment of the empty trace, whose cost is needed to compute fitness.",
-			"Success", JOptionPane.INFORMATION_MESSAGE);
+		context.log("The PDDL files have been successfully written on disk.");
 	}
 	
 	/**
