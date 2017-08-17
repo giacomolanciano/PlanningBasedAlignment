@@ -12,6 +12,7 @@ import org.processmining.framework.plugin.PluginContext;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 import org.processmining.planningbasedalignment.pddl.AbstractPddlEncoder;
 import org.processmining.planningbasedalignment.pddl.StandardPddlEncoder;
+import org.processmining.planningbasedalignment.utils.FilesWritingProgressChecker;
 import org.processmining.planningbasedalignment.utils.OSUtils;
 
 /**
@@ -27,6 +28,7 @@ public class AlignmentPddlEncoding {
 	protected static final String PDDL_DOMAIN_FILE_PREFIX = "domain";
 	protected static final String PDDL_PROBLEM_FILE_PREFIX = "problem";
 	protected static final int EMPTY_TRACE_ID = 0;
+	protected static final int PDDL_FILES_PER_TRACE = 2;
 	
 	/**
 	 * The object used to generate the PDDL encodings.
@@ -49,6 +51,11 @@ public class AlignmentPddlEncoding {
 	protected long startTime;
 	
 	/**
+	 * The separated thread that check PDDL encoding progress.
+	 */
+	protected Thread pddlEncodingProgressChecker;
+	
+	/**
 	 * Produces the PDDL input files (representing the instances of the alignment problem) to be fed to the planner.
 	 * 
 	 * @param log
@@ -57,7 +64,8 @@ public class AlignmentPddlEncoding {
 	 * @throws IOException 
 	 */
 	protected void buildPlannerInput(
-			File parentDir, PluginContext context, XLog log, DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters)
+			File parentDir, PluginContext context, XLog log, DataPetriNet petrinet,
+			PlanningBasedAlignmentParameters parameters)
 					throws IOException {
 		
 		startTime = System.currentTimeMillis();
@@ -91,6 +99,12 @@ public class AlignmentPddlEncoding {
 		XTrace emptyTrace = new XTraceImpl(new XAttributeMapImpl());
 		writePddlEncodings(emptyTrace, EMPTY_TRACE_ID);
 		
+		// start progress checker
+		int totalPddlFilesNum =  (traceIdToCheckTo - traceIdToCheckFrom + 1) * PDDL_FILES_PER_TRACE;
+		pddlEncodingProgressChecker = new FilesWritingProgressChecker(
+				context, pddlFilesDir, totalPddlFilesNum, " PDDL files written so far.", 1000);
+		pddlEncodingProgressChecker.start();
+		
 		// consider only the traces in the chosen interval
 		for(int traceId = traceIdToCheckFrom-1; traceId < traceIdToCheckTo; traceId++) {
 
@@ -104,6 +118,16 @@ public class AlignmentPddlEncoding {
 				writePddlEncodings(trace, traceId+1);
 			}
 		}
+		
+		pddlEncodingProgressChecker.interrupt();
+	}
+	
+	/**
+	 * Shut down all active computations.
+	 */
+	protected void killSubprocesses() {
+		if (pddlEncodingProgressChecker != null)
+			pddlEncodingProgressChecker.interrupt();
 	}
 	
 	/**
@@ -124,5 +148,5 @@ public class AlignmentPddlEncoding {
 		OSUtils.writeTextualFile(sbDomainFileName, sbDomain.toString());
 		OSUtils.writeTextualFile(sbProblemFileName, sbProblem.toString());
 	}
-	
+
 }

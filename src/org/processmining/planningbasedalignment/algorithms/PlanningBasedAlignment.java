@@ -24,7 +24,7 @@ import org.processmining.framework.plugin.PluginContext;
 import org.processmining.models.graphbased.directed.petrinet.elements.Transition;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 import org.processmining.planningbasedalignment.pddl.AbstractPddlEncoder;
-import org.processmining.planningbasedalignment.utils.AlignmentProgressChecker;
+import org.processmining.planningbasedalignment.utils.FilesWritingProgressChecker;
 import org.processmining.planningbasedalignment.utils.OSUtils;
 import org.processmining.planningbasedalignment.utils.PlannerSearchStrategy;
 import org.processmining.planningbasedalignment.utils.StreamAsyncReader;
@@ -64,7 +64,7 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 	/**
 	 * The separated thread that check alignment progress.
 	 */
-	protected Thread progressChecker;
+	protected Thread alignmentProgressChecker;
 	
 	/**
 	 * The separated thread that unpack the planner source code.
@@ -106,13 +106,13 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 
 	/**
 	 * Shut down all active computations.
-	 * 
 	 */
 	protected void killSubprocesses() {
+		super.killSubprocesses();
 		if (plannerManagerProcess != null)
 			plannerManagerProcess.destroy();
-		if (progressChecker != null)
-			progressChecker.interrupt();
+		if (alignmentProgressChecker != null)
+			alignmentProgressChecker.interrupt();
 		if (resourcesUnpacker != null)
 			resourcesUnpacker.interrupt();
 	}
@@ -156,13 +156,14 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 		
 		// start thread to show progress to the user
 		int[] traceInterval = parameters.getTracesInterval();
-		int totalAlignmentsNum = traceInterval[1] - traceInterval[0] + 1; 
-		progressChecker = new AlignmentProgressChecker(context, plansFoundDir, totalAlignmentsNum);
-		progressChecker.start();
+		int totalAlignmentsNum = traceInterval[1] - traceInterval[0] + 1;
+		alignmentProgressChecker = new FilesWritingProgressChecker(
+				context, plansFoundDir, totalAlignmentsNum, " alignments processed so far.");
+		alignmentProgressChecker.start();
 
 		// wait for the process to return to read the generated outputs
 		plannerManagerProcess.waitFor();
-		progressChecker.interrupt();
+		alignmentProgressChecker.interrupt();
 	}
 	
 	/**

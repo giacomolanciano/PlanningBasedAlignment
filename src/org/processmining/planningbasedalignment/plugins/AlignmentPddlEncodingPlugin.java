@@ -100,6 +100,7 @@ public class AlignmentPddlEncodingPlugin extends AlignmentPddlEncoding {
 	 */
 	private void abortExecution(UIPluginContext context) {
 		context.getFutureResult(0).cancel(true);
+		killSubprocesses();
 	}
 
 }

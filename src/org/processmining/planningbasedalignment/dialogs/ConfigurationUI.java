@@ -136,6 +136,7 @@ public class ConfigurationUI {
 		}
 		if (!unmappedTrans.isEmpty()) {
 			// specifying the Transition type makes the program crash when there are unmapped transitions
+			@SuppressWarnings({ "unchecked", "rawtypes" })
 			JList list = new JList(unmappedTrans.toArray());
 			
 			JPanel panel = new JPanel();
