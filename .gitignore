@@ -5,6 +5,13 @@
 /classes
 /doc
 /*.class
+/python27*
+/pddl_files*
+/plans_found*
+/fast-downward*
+/planner_manager.py
+/output.sas
+/*~
 
 # /tests/
 /tests/bin
@@ -16,14 +23,3 @@
 /tests/bin-test-instrument
 /tests/cover-html
 /tests/*.class
-
-#################################
-
-# git local
-/python27*
-/pddl_files*
-/plans_found*
-/fast-downward*
-/planner_manager.py
-/output.sas
-/*~
