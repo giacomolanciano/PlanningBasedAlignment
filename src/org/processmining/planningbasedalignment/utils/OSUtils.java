@@ -35,30 +35,33 @@ public class OSUtils {
 			e.printStackTrace();
 			return null;
 		}
-		
+
 		// it has to be done AFTER the file has been written.
 		file.setExecutable(true, false);
 		return file;
 	}
-	
+
 	/**
 	 * Delete all contents from the given directory or create it if not existing.
 	 * 
 	 * @param directory The File object representing the directory.
 	 */
 	public static void cleanDirectory(File directory) {
-		if (!directory.exists()) {
-			directory.mkdir();
-			
-        } else {
+		if (directory.exists()) {			
 			try {
 				FileUtils.cleanDirectory(directory);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-        }
+
+		} else {
+			directory.mkdir();
+		}
+
+		// it has to be done AFTER the directory has been created.
+		directory.setWritable(true, false);
 	}
-	
+
 	/**
 	 * Check whether the OS is 64 bits.
 	 * 
@@ -68,10 +71,10 @@ public class OSUtils {
 		String osArch = System.getProperty("os.arch");
 		String winArch = System.getenv("PROCESSOR_ARCHITECTURE");
 		String wow64Arch = System.getenv("PROCESSOR_ARCHITEW6432");
-		
+
 		return osArch != null && osArch.endsWith("64")
 				|| winArch != null && winArch.endsWith("64")
 				|| wow64Arch != null && wow64Arch.endsWith("64");
 	}
-	
+
 }
