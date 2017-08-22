@@ -29,9 +29,8 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 		super(petrinet, parameters);
 	}
 
-
 	@Override
-	public StringBuffer createPropositionalDomain(XTrace trace) {
+	public String createPropositionalDomain(XTrace trace) {
 
 		StringBuffer pddlDomainBuffer = new StringBuffer();
 		
@@ -186,12 +185,11 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 		}
 
 		pddlDomainBuffer.append(")");
-		return pddlDomainBuffer;
+		return pddlDomainBuffer.toString();
 	}
 
-	
 	@Override
-	public StringBuffer createPropositionalProblem(XTrace trace) {
+	public String createPropositionalProblem(XTrace trace) {
 
 		StringBuffer pddlObjectsBuffer = new StringBuffer();	
 		StringBuffer pddlInitBuffer = new StringBuffer();
@@ -256,7 +254,7 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 		pddlProblemBuffer.append(pddlGoalBuffer);	
 		pddlProblemBuffer.append(")");	
 
-		return pddlProblemBuffer;
+		return pddlProblemBuffer.toString();
 	}
 	
 }

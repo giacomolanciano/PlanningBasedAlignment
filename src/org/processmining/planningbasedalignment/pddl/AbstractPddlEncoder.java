@@ -62,17 +62,17 @@ public abstract class AbstractPddlEncoder {
 	 * Create PDDL Domain for the given log trace.
 	 * 
 	 * @param trace The log trace.
-	 * @return A {@link StringBuffer} containing the PDDL Domain.
+	 * @return A {@link String} containing the PDDL Domain.
 	 */
-	abstract public StringBuffer createPropositionalDomain(XTrace trace);
+	abstract public String createPropositionalDomain(XTrace trace);
 
 	/**
 	 * Create PDDL Domain for the given log trace.
 	 * 
 	 * @param trace The log trace.
-	 * @return A {@link StringBuffer} containing the PDDL Problem.
+	 * @return A {@link String} containing the PDDL Problem.
 	 */
-	abstract public StringBuffer createPropositionalProblem(XTrace trace);
+	abstract public String createPropositionalProblem(XTrace trace);
 
 	/**
 	 * Populate the mappings that relate Petri net nodes and events class with their PDDL identifiers.
@@ -182,7 +182,7 @@ public abstract class AbstractPddlEncoder {
 	 * @param transition
 	 * @return
 	 */
-	public String encode(Transition transition) {
+	protected String encode(Transition transition) {
 		return petrinetNodeToPddlIdMapping.get(transition);
 	}
 
@@ -192,7 +192,7 @@ public abstract class AbstractPddlEncoder {
 	 * @param place
 	 * @return
 	 */
-	public String encode(Place place) {
+	protected String encode(Place place) {
 		return petrinetNodeToPddlIdMapping.get(place);
 	}
 
@@ -202,7 +202,7 @@ public abstract class AbstractPddlEncoder {
 	 * @param eventLabel
 	 * @return
 	 */
-	public String encode(XEventClass eventLabel) {
+	protected String encode(XEventClass eventLabel) {
 		return getCorrectPddlFormat(eventLabel.toString());
 	}
 	
@@ -213,7 +213,7 @@ public abstract class AbstractPddlEncoder {
 	 * @param event
 	 * @return
 	 */
-	public String encode(XEvent event) {
+	protected String encode(XEvent event) {
 		XEventClassifier eventClassifier = parameters.getTransitionsEventsMapping().getEventClassifier();
 		return getCorrectPddlFormat(eventClassifier.getClassIdentity(event));
 	}
@@ -224,7 +224,7 @@ public abstract class AbstractPddlEncoder {
 	 * @param transition The {@link Transition} to be checked.
 	 * @return true if the Petri net transition is invisible.
 	 */
-	public boolean isInvisibleTransition(Transition transition) {
+	private boolean isInvisibleTransition(Transition transition) {
 		String transitionLabel = transition.getLabel();
 		boolean isInvisible = transition.isInvisible() || isEmptyLabel(transitionLabel);
 		if (isInvisible)
@@ -245,6 +245,8 @@ public abstract class AbstractPddlEncoder {
 				|| transitionLabel.equalsIgnoreCase("\"");
 	}
 
+	/* GETTERS & SETTERS */
+	
 	/**
 	 * @return the pddlIdToPetrinetNodeMapping
 	 */
@@ -253,24 +255,10 @@ public abstract class AbstractPddlEncoder {
 	}
 
 	/**
-	 * @param pddlIdToPetrinetNodeMapping the pddlIdToPetrinetNodeMapping to set
-	 */
-	public void setPddlIdToPetrinetNodeMapping(Map<String, PetrinetNode> pddlIdToPetrinetNodeMapping) {
-		this.pddlIdToPetrinetNodeMapping = pddlIdToPetrinetNodeMapping;
-	}
-
-	/**
 	 * @return the pddlIdToEventClassMapping
 	 */
 	public Map<String, XEventClass> getPddlIdToEventClassMapping() {
 		return pddlIdToEventClassMapping;
-	}
-
-	/**
-	 * @param pddlIdToEventClassMapping the pddlIdToEventClassMapping to set
-	 */
-	public void setPddlIdToEventClassMapping(Map<String, XEventClass> pddlIdToEventClassMapping) {
-		this.pddlIdToEventClassMapping = pddlIdToEventClassMapping;
 	}
 
 }

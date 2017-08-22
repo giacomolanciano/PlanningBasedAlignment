@@ -141,12 +141,9 @@ public class AlignmentPddlEncoding {
 		String pddlFileSuffix = traceId + PDDL_EXT;
 		String sbDomainFileName = new File(pddlFilesDir, PDDL_DOMAIN_FILE_PREFIX + pddlFileSuffix).getCanonicalPath();
 		String sbProblemFileName = new File(pddlFilesDir, PDDL_PROBLEM_FILE_PREFIX + pddlFileSuffix).getCanonicalPath();
-		
-		StringBuffer sbDomain = pddlEncoder.createPropositionalDomain(trace);
-		StringBuffer sbProblem = pddlEncoder.createPropositionalProblem(trace);
-		
-		OSUtils.writeTextualFile(sbDomainFileName, sbDomain.toString());
-		OSUtils.writeTextualFile(sbProblemFileName, sbProblem.toString());
+
+		OSUtils.writeTextualFile(sbDomainFileName, pddlEncoder.createPropositionalDomain(trace));
+		OSUtils.writeTextualFile(sbProblemFileName, pddlEncoder.createPropositionalProblem(trace));
 	}
 
 }
