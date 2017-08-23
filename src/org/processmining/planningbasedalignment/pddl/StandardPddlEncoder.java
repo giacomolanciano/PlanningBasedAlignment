@@ -24,20 +24,78 @@ import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmen
  */
 public class StandardPddlEncoder extends AbstractPddlEncoder {
 
+	/**
+	 * The encoding of the moves on model that is independent from the traces in the event log.   
+	 */
+	protected StringBuffer movesOnModelBuffer;
 	
 	public StandardPddlEncoder(DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) {
 		super(petrinet, parameters);
+		movesOnModelBuffer = getMovesOnModelEncoding();
 	}
 
+	/**
+	 * Compute the PDDL encoding of the moves on model.
+	 * 
+	 * @return A {@link StringBuffer} containing the PDDL encoding of the moves on model.
+	 */
+	protected StringBuffer getMovesOnModelEncoding() {
+		
+		StringBuffer result = new StringBuffer();
+		Map<Transition, Integer> movesOnModelCosts = parameters.getMovesOnModelCosts();
+		
+		for(Transition transition : petrinet.getTransitions()) {
+
+			String transitionName = encode(transition);
+			Collection<PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode>> transitionInEdgesCollection = petrinet.getInEdges(transition);
+			Collection<PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode>> transitionOutEdgesCollection = petrinet.getOutEdges(transition);
+			
+			/* Move in the Model */
+			result.append("(:action " + MODEL_MOVE_PREFIX + SEPARATOR + transitionName + "\n");
+			result.append(":precondition");
+
+			if(transitionInEdgesCollection.size() > 1)
+				result.append(" (and");
+
+			for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionInEdgesCollection) {
+				Place place = (Place) inEdge.getSource();
+				result.append(" (token " + encode(place) + ")");
+			}
+
+			if(transitionInEdgesCollection.size() > 1)
+				result.append(")\n");
+			else
+				result.append("\n");
+
+			result.append(":effect (and (not (allowed))");
+
+			for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionInEdgesCollection) {
+				Place place = (Place) inEdge.getSource();
+				result.append(" (not (token " + encode(place) + "))");
+			}
+			for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionOutEdgesCollection) {
+				Place place = (Place) inEdge.getTarget();
+				result.append(" (token " + encode(place) + ")");
+			}				
+
+			result.append(" (increase (total-cost) ");
+			result.append(movesOnModelCosts.get(transition) + ")\n");
+
+			result.append(")\n");
+			result.append(")\n\n");
+		}
+		
+		return result;
+	}
+	
 	@Override
 	public String createPropositionalDomain(XTrace trace) {
 
+		int traceLength = trace.size();
 		StringBuffer syncMovesBuffer = new StringBuffer();
-		StringBuffer movesOnModelBuffer = new StringBuffer();
 		StringBuffer movesOnLogBuffer = new StringBuffer();
 		StringBuffer pddlDomainBuffer = new StringBuffer();
 		
-		Map<Transition, Integer> movesOnModelCosts = parameters.getMovesOnModelCosts();
 		Map<XEventClass, Integer> movesOnLogCosts = parameters.getMovesOnLogCosts();
 
 		// define domain and objects types
@@ -56,102 +114,72 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 		pddlDomainBuffer.append("(:functions\n");	
 		pddlDomainBuffer.append("(total-cost)\n");			
 		pddlDomainBuffer.append(")\n\n");
-
-		for(Transition transition : petrinet.getTransitions()) {
-
-			String transitionName = encode(transition);
-			Collection<PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode>> transitionInEdgesCollection = petrinet.getInEdges(transition);
-			Collection<PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode>> transitionOutEdgesCollection = petrinet.getOutEdges(transition);
+		
+		/* Sync Moves */
+		if (traceLength > 0) {
 			
-			if (!transition.isInvisible()) {
-				
-				/* Move Sync */			
-				int i = 0;
-				String mappedEventClass = encode(parameters.getTransitionsEventsMapping().get(transition));
-				for(XEvent event : trace) {
-	
-					int currentEventIndex = i + 1;
-					int nextEventIndex = currentEventIndex + 1;
-					String currentEventLabel = "ev" + currentEventIndex;				
-					String eventName = encode(event);
-	
-					if(eventName.equalsIgnoreCase(mappedEventClass)) {
-						
-						syncMovesBuffer.append("(:action " + SYNCH_MOVE_PREFIX + SEPARATOR + transitionName + SEPARATOR + currentEventLabel + "\n");
-						syncMovesBuffer.append(":precondition (and");
-						
-						for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionInEdgesCollection) {
-							Place place = (Place) inEdge.getSource();
-							syncMovesBuffer.append(" (token " + encode(place) + ")");
+			for (Transition transition : petrinet.getTransitions()) {
+
+				String transitionName = encode(transition);
+				Collection<PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode>> transitionInEdgesCollection = petrinet
+						.getInEdges(transition);
+				Collection<PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode>> transitionOutEdgesCollection = petrinet
+						.getOutEdges(transition);
+
+				if (!transition.isInvisible()) {
+
+					int i = 0;
+					String mappedEventClass = encode(parameters.getTransitionsEventsMapping().get(transition));
+					for (XEvent event : trace) {
+
+						int currentEventIndex = i + 1;
+						int nextEventIndex = currentEventIndex + 1;
+						String currentEventLabel = "ev" + currentEventIndex;
+						String eventName = encode(event);
+
+						if (eventName.equalsIgnoreCase(mappedEventClass)) {
+
+							syncMovesBuffer.append("(:action " + SYNCH_MOVE_PREFIX + SEPARATOR + transitionName
+									+ SEPARATOR + currentEventLabel + "\n");
+							syncMovesBuffer.append(":precondition (and");
+
+							for (PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionInEdgesCollection) {
+								Place place = (Place) inEdge.getSource();
+								syncMovesBuffer.append(" (token " + encode(place) + ")");
+							}
+
+							syncMovesBuffer.append(" (tracePointer " + currentEventLabel + ")");
+							syncMovesBuffer.append(")\n");
+
+							syncMovesBuffer.append(":effect (and (allowed)");
+							for (PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionInEdgesCollection) {
+								Place place = (Place) inEdge.getSource();
+								syncMovesBuffer.append(" (not (token " + encode(place) + "))");
+							}
+							for (PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> outEdge : transitionOutEdgesCollection) {
+								Place place = (Place) outEdge.getTarget();
+								syncMovesBuffer.append(" (token " + encode(place) + ")");
+							}
+
+							String nextEventLabel;
+							if (currentEventIndex == traceLength)
+								nextEventLabel = "evEND";
+							else
+								nextEventLabel = "ev" + nextEventIndex;
+
+							syncMovesBuffer.append(" (not (tracePointer " + currentEventLabel + ")) (tracePointer "
+									+ nextEventLabel + ")");
+							syncMovesBuffer.append(")\n");
+							syncMovesBuffer.append(")\n\n");
 						}
-						
-						syncMovesBuffer.append(" (tracePointer "+ currentEventLabel + ")");
-						syncMovesBuffer.append(")\n");
-	
-						syncMovesBuffer.append(":effect (and (allowed)");
-						for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionInEdgesCollection) {
-							Place place = (Place) inEdge.getSource();
-							syncMovesBuffer.append(" (not (token " + encode(place) + "))");
-						}
-						for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> outEdge : transitionOutEdgesCollection) {
-							Place place = (Place) outEdge.getTarget();
-							syncMovesBuffer.append(" (token " + encode(place) + ")");
-						}
-	
-						String nextEventLabel;
-						if(currentEventIndex == trace.size())
-							nextEventLabel = "evEND";
-						else
-							nextEventLabel = "ev" + nextEventIndex;
-	
-						syncMovesBuffer.append(" (not (tracePointer "+ currentEventLabel + ")) (tracePointer "+ nextEventLabel + ")");
-						syncMovesBuffer.append(")\n");
-						syncMovesBuffer.append(")\n\n");
+
+						i++;
 					}
-					
-					i++;
 				}
-				
-			}
-
-
-			/* Move in the Model */
-			movesOnModelBuffer.append("(:action " + MODEL_MOVE_PREFIX + SEPARATOR + transitionName + "\n");
-			movesOnModelBuffer.append(":precondition");
-
-			if(transitionInEdgesCollection.size() > 1)
-				movesOnModelBuffer.append(" (and");
-
-			for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionInEdgesCollection) {
-				Place place = (Place) inEdge.getSource();
-				movesOnModelBuffer.append(" (token " + encode(place) + ")");
-			}
-
-			if(transitionInEdgesCollection.size() > 1)
-				movesOnModelBuffer.append(")\n");
-			else
-				movesOnModelBuffer.append("\n");
-
-			movesOnModelBuffer.append(":effect (and (not (allowed))");
-
-			for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionInEdgesCollection) {
-				Place place = (Place) inEdge.getSource();
-				movesOnModelBuffer.append(" (not (token " + encode(place) + "))");
-			}
-			for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionOutEdgesCollection) {
-				Place place = (Place) inEdge.getTarget();
-				movesOnModelBuffer.append(" (token " + encode(place) + ")");
-			}				
-
-			movesOnModelBuffer.append(" (increase (total-cost) ");
-			movesOnModelBuffer.append(movesOnModelCosts.get(transition) + ")\n");
-
-			movesOnModelBuffer.append(")\n");
-			movesOnModelBuffer.append(")\n\n");
+			} 
 		}
 		
-		
-		/* Move in the Log */
+		/* Moves in the Log */
 		int i = 0;
 		for(XEvent event : trace) {
 
@@ -162,13 +190,13 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 			String currentEventLabel = "ev" + currentTraceIndex;
 
 			String nextEventLabel;
-			if(currentTraceIndex == trace.size())
+			if(currentTraceIndex == traceLength)
 				nextEventLabel = "evEND";
 			else
 				nextEventLabel = "ev" + nextTraceIndex;
 
 			movesOnLogBuffer.append("(:action " + LOG_MOVE_PREFIX + SEPARATOR + eventName + SEPARATOR + currentEventLabel + "-" + nextEventLabel + "\n");
-			movesOnLogBuffer.append(":precondition (and (tracePointer " + currentEventLabel  + ") (allowed))\n");
+			movesOnLogBuffer.append(":precondition (and (allowed) (tracePointer " + currentEventLabel  + "))\n");
 			movesOnLogBuffer.append(":effect (and (not (tracePointer " + currentEventLabel  + ")) (tracePointer " + nextEventLabel  + ")");
 			movesOnLogBuffer.append(" (increase (total-cost) ");
 			
@@ -188,8 +216,8 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 		}
 
 		pddlDomainBuffer.append(syncMovesBuffer);
-		pddlDomainBuffer.append(movesOnModelBuffer);
 		pddlDomainBuffer.append(movesOnLogBuffer);
+		pddlDomainBuffer.append(movesOnModelBuffer);
 		pddlDomainBuffer.append(")");
 		return pddlDomainBuffer.toString();
 	}
@@ -236,6 +264,7 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 			pddlObjectsBuffer.append(encode(place) + " - place\n");
 		}
 
+		// create an object for each event in the trace
 		for(int i = 0; i < traceLength; i++) {	
 			int currentEventIndex = i + 1;
 			pddlObjectsBuffer.append("ev" + currentEventIndex + " - event\n");		
@@ -243,7 +272,8 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 			if(currentEventIndex == traceLength) {
 				pddlObjectsBuffer.append("evEND - event\n");					
 			}
-		}	
+		}
+		
 		pddlObjectsBuffer.append(")\n");		
 		pddlCostBuffer.append("(= (total-cost) 0)\n");
 		pddlInitBuffer.append(pddlCostBuffer);
