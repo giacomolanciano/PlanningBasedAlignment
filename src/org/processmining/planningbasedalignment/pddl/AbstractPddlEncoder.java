@@ -26,6 +26,7 @@ public abstract class AbstractPddlEncoder {
 	public static final String SYNCH_MOVE_PREFIX = "movesync";
 	public static final String MODEL_MOVE_PREFIX = "moveinthemodel";
 	public static final String LOG_MOVE_PREFIX = "moveinthelog";
+	public static final String SEPARATOR = "#";
 	protected static final String INVISIBLE_TRANSITION_PREFIX = "generatedinv";
 	protected static final String DUMMY = "DUMMY";
 	

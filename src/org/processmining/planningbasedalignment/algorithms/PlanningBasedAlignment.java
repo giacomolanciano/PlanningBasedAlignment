@@ -435,7 +435,7 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 	 * @return true if the output file line is related to a log move.
 	 */
 	private String extractMovePddlId(String outputLine) {
-		String[] tokens = outputLine.split("#");
+		String[] tokens = outputLine.split(AbstractPddlEncoder.SEPARATOR);
 		return tokens[1].replaceAll("\\)", "").trim();
 	}
 	

@@ -32,6 +32,9 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 	@Override
 	public String createPropositionalDomain(XTrace trace) {
 
+		StringBuffer syncMovesBuffer = new StringBuffer();
+		StringBuffer movesOnModelBuffer = new StringBuffer();
+		StringBuffer movesOnLogBuffer = new StringBuffer();
 		StringBuffer pddlDomainBuffer = new StringBuffer();
 		
 		Map<Transition, Integer> movesOnModelCosts = parameters.getMovesOnModelCosts();
@@ -74,25 +77,25 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 	
 					if(eventName.equalsIgnoreCase(mappedEventClass)) {
 						
-						pddlDomainBuffer.append("(:action " + SYNCH_MOVE_PREFIX + "#" + transitionName + "#" + currentEventLabel + "\n");
-						pddlDomainBuffer.append(":precondition (and");
+						syncMovesBuffer.append("(:action " + SYNCH_MOVE_PREFIX + SEPARATOR + transitionName + SEPARATOR + currentEventLabel + "\n");
+						syncMovesBuffer.append(":precondition (and");
 						
 						for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionInEdgesCollection) {
 							Place place = (Place) inEdge.getSource();
-							pddlDomainBuffer.append(" (token " + encode(place) + ")");
+							syncMovesBuffer.append(" (token " + encode(place) + ")");
 						}
 						
-						pddlDomainBuffer.append(" (tracePointer "+ currentEventLabel + ")");
-						pddlDomainBuffer.append(")\n");
+						syncMovesBuffer.append(" (tracePointer "+ currentEventLabel + ")");
+						syncMovesBuffer.append(")\n");
 	
-						pddlDomainBuffer.append(":effect (and (allowed)");
+						syncMovesBuffer.append(":effect (and (allowed)");
 						for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionInEdgesCollection) {
 							Place place = (Place) inEdge.getSource();
-							pddlDomainBuffer.append(" (not (token " + encode(place) + "))");
+							syncMovesBuffer.append(" (not (token " + encode(place) + "))");
 						}
 						for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> outEdge : transitionOutEdgesCollection) {
 							Place place = (Place) outEdge.getTarget();
-							pddlDomainBuffer.append(" (token " + encode(place) + ")");
+							syncMovesBuffer.append(" (token " + encode(place) + ")");
 						}
 	
 						String nextEventLabel;
@@ -101,9 +104,9 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 						else
 							nextEventLabel = "ev" + nextEventIndex;
 	
-						pddlDomainBuffer.append(" (not (tracePointer "+ currentEventLabel + ")) (tracePointer "+ nextEventLabel + ")");
-						pddlDomainBuffer.append(")\n");
-						pddlDomainBuffer.append(")\n\n");
+						syncMovesBuffer.append(" (not (tracePointer "+ currentEventLabel + ")) (tracePointer "+ nextEventLabel + ")");
+						syncMovesBuffer.append(")\n");
+						syncMovesBuffer.append(")\n\n");
 					}
 					
 					i++;
@@ -113,38 +116,38 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 
 
 			/* Move in the Model */
-			pddlDomainBuffer.append("(:action " + MODEL_MOVE_PREFIX + "#" + transitionName + "\n");
-			pddlDomainBuffer.append(":precondition");
+			movesOnModelBuffer.append("(:action " + MODEL_MOVE_PREFIX + SEPARATOR + transitionName + "\n");
+			movesOnModelBuffer.append(":precondition");
 
 			if(transitionInEdgesCollection.size() > 1)
-				pddlDomainBuffer.append(" (and");
+				movesOnModelBuffer.append(" (and");
 
 			for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionInEdgesCollection) {
 				Place place = (Place) inEdge.getSource();
-				pddlDomainBuffer.append(" (token " + encode(place) + ")");
+				movesOnModelBuffer.append(" (token " + encode(place) + ")");
 			}
 
 			if(transitionInEdgesCollection.size() > 1)
-				pddlDomainBuffer.append(")\n");
+				movesOnModelBuffer.append(")\n");
 			else
-				pddlDomainBuffer.append("\n");
+				movesOnModelBuffer.append("\n");
 
-			pddlDomainBuffer.append(":effect (and (not (allowed))");
+			movesOnModelBuffer.append(":effect (and (not (allowed))");
 
 			for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionInEdgesCollection) {
 				Place place = (Place) inEdge.getSource();
-				pddlDomainBuffer.append(" (not (token " + encode(place) + "))");
+				movesOnModelBuffer.append(" (not (token " + encode(place) + "))");
 			}
 			for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionOutEdgesCollection) {
 				Place place = (Place) inEdge.getTarget();
-				pddlDomainBuffer.append(" (token " + encode(place) + ")");
+				movesOnModelBuffer.append(" (token " + encode(place) + ")");
 			}				
 
-			pddlDomainBuffer.append(" (increase (total-cost) ");
-			pddlDomainBuffer.append(movesOnModelCosts.get(transition) + ")\n");
+			movesOnModelBuffer.append(" (increase (total-cost) ");
+			movesOnModelBuffer.append(movesOnModelCosts.get(transition) + ")\n");
 
-			pddlDomainBuffer.append(")\n");
-			pddlDomainBuffer.append(")\n\n");
+			movesOnModelBuffer.append(")\n");
+			movesOnModelBuffer.append(")\n\n");
 		}
 		
 		
@@ -164,26 +167,29 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 			else
 				nextEventLabel = "ev" + nextTraceIndex;
 
-			pddlDomainBuffer.append("(:action " + LOG_MOVE_PREFIX + "#" + eventName + "#" + currentEventLabel + "-" + nextEventLabel + "\n");
-			pddlDomainBuffer.append(":precondition (and (tracePointer " + currentEventLabel  + ") (allowed))\n");
-			pddlDomainBuffer.append(":effect (and (not (tracePointer " + currentEventLabel  + ")) (tracePointer " + nextEventLabel  + ")");
-			pddlDomainBuffer.append(" (increase (total-cost) ");
+			movesOnLogBuffer.append("(:action " + LOG_MOVE_PREFIX + SEPARATOR + eventName + SEPARATOR + currentEventLabel + "-" + nextEventLabel + "\n");
+			movesOnLogBuffer.append(":precondition (and (tracePointer " + currentEventLabel  + ") (allowed))\n");
+			movesOnLogBuffer.append(":effect (and (not (tracePointer " + currentEventLabel  + ")) (tracePointer " + nextEventLabel  + ")");
+			movesOnLogBuffer.append(" (increase (total-cost) ");
 			
 			// get the cost of the event class
 			for(Entry<XEventClass, Integer> entry : movesOnLogCosts.entrySet()) {
 				String eventClass = encode(entry.getKey());
 				if(eventClass.equalsIgnoreCase(eventName)) {
-					pddlDomainBuffer.append(entry.getValue() + ")\n");
+					movesOnLogBuffer.append(entry.getValue() + ")\n");
 					break;
 				}
 			}
 
-			pddlDomainBuffer.append(")");
-			pddlDomainBuffer.append(")\n\n");
+			movesOnLogBuffer.append(")\n");
+			movesOnLogBuffer.append(")\n\n");
 			
 			i++;
 		}
 
+		pddlDomainBuffer.append(syncMovesBuffer);
+		pddlDomainBuffer.append(movesOnModelBuffer);
+		pddlDomainBuffer.append(movesOnLogBuffer);
 		pddlDomainBuffer.append(")");
 		return pddlDomainBuffer.toString();
 	}
