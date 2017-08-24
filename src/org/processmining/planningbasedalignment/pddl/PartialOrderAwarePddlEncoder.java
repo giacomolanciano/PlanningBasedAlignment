@@ -226,10 +226,10 @@ public class PartialOrderAwarePddlEncoder extends AbstractPddlEncoder {
 			ArrayList<XEvent> previousIsochronousGroup = getPreviousIsochronousGroup(event);
 			if (previousIsochronousGroup != null) {
 				for (XEvent precEvent : previousIsochronousGroup) {
-					syncMovesBuffer.append(" (aligned " + eventToLabelMapping.get(precEvent) + ")");
+					movesOnLogBuffer.append(" (aligned " + eventToLabelMapping.get(precEvent) + ")");
 				}
 			}
-			syncMovesBuffer.append(")\n");
+			movesOnLogBuffer.append(")\n");
 			
 			/* add action post-conditions */
 			movesOnLogBuffer.append(":effect (and (aligned " + currentEventLabel  + ")");
