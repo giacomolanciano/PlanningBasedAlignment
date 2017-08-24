@@ -364,6 +364,7 @@ public class ConfigurationUI {
 				result.setMovesOnLogCosts(alignmentCostsSettingsStep.getMovesOnLogCosts());
 				result.setMovesOnModelCosts(alignmentCostsSettingsStep.getMovesOnModelCosts());
 				result.setSynchronousMovesCosts(alignmentCostsSettingsStep.getSynchronousMovesCosts());
+				result.setPartiallyOrderedEvents(alignmentCostsSettingsStep.isUsePartialOrderedEvents());
 				return result;
 			default :
 				return null;

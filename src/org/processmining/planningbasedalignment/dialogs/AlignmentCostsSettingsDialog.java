@@ -81,8 +81,8 @@ public class AlignmentCostsSettingsDialog extends JComponent {
 		setTitle(slickerFactoryInstance,
 				"<html><h1>Set parameters</h1><p>Double click costs on table to change their values. Use only non-negative integers.</p></html>");
 
+		setupPOCheckbox(slickerFactoryInstance, 1);
 		setupUI(transCol, evClassCol, defMoveModelCost, defSyncCost, defMoveLogCost, slickerFactoryInstance, 2);
-		setupPOCheckbox(slickerFactoryInstance, 8);
 
 	}
 

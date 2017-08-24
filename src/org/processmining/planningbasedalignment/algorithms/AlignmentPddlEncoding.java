@@ -11,6 +11,7 @@ import org.processmining.datapetrinets.DataPetriNet;
 import org.processmining.framework.plugin.PluginContext;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 import org.processmining.planningbasedalignment.pddl.AbstractPddlEncoder;
+import org.processmining.planningbasedalignment.pddl.PartialOrderAwarePddlEncoder;
 import org.processmining.planningbasedalignment.pddl.StandardPddlEncoder;
 import org.processmining.planningbasedalignment.utils.FilesWritingProgressChecker;
 import org.processmining.planningbasedalignment.utils.OSUtils;
@@ -93,7 +94,10 @@ public class AlignmentPddlEncoding {
 		int minTracesLength = traceLengthBounds[0];
 		int maxTracesLength = traceLengthBounds[1];
 
-		pddlEncoder = new StandardPddlEncoder(petrinet, parameters); //TODO change implementation according to params
+		if (parameters.isPartiallyOrderedEvents())
+			pddlEncoder = new PartialOrderAwarePddlEncoder(petrinet, parameters);
+		else
+			pddlEncoder = new StandardPddlEncoder(petrinet, parameters);
 
 		// add empty trace to the collection of trace to be aligned to compute fitness
 		XTrace emptyTrace = new XTraceImpl(new XAttributeMapImpl());

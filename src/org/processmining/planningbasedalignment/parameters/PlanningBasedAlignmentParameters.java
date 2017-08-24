@@ -63,6 +63,11 @@ public class PlanningBasedAlignmentParameters extends PluginParametersImpl {
 	 */
 	private int[] tracesLengthBounds;
 	
+	/**
+	 * The flag stating whether events with same timestamp have to be treated as partially ordered.
+	 */
+	private boolean partiallyOrderedEvents;
+	
 	public PlanningBasedAlignmentParameters() {
 		super();
 		setInitialMarking(null);
@@ -74,6 +79,7 @@ public class PlanningBasedAlignmentParameters extends PluginParametersImpl {
 		setSynchronousMovesCosts(null);
 		setTracesInterval(null);
 		setTracesLengthBounds(null);
+		setPartiallyOrderedEvents(false);
 	}
 
 	public PlanningBasedAlignmentParameters(PlanningBasedAlignmentParameters parameters) {
@@ -87,6 +93,7 @@ public class PlanningBasedAlignmentParameters extends PluginParametersImpl {
 		setSynchronousMovesCosts(parameters.getSynchronousMovesCosts());
 		setTracesInterval(parameters.getTracesInterval());
 		setTracesLengthBounds(parameters.getTracesLengthBounds());
+		setPartiallyOrderedEvents(parameters.isPartiallyOrderedEvents());
 	}
 
 	/* GETTERS & SETTERS */
@@ -163,13 +170,22 @@ public class PlanningBasedAlignmentParameters extends PluginParametersImpl {
 		this.tracesLengthBounds = tracesLengthBounds;
 	}
 
+	public boolean isPartiallyOrderedEvents() {
+		return partiallyOrderedEvents;
+	}
+
+	public void setPartiallyOrderedEvents(boolean partiallyOrderedEvents) {
+		this.partiallyOrderedEvents = partiallyOrderedEvents;
+	}
+
 	@Override
 	public String toString() {
 		return "PlanningBasedAlignmentParameters [initialMarking=" + initialMarking + ", finalMarking=" + finalMarking
 				+ ", plannerSearchStrategy=" + plannerSearchStrategy + ", transitionsEventsMapping="
 				+ transitionsEventsMapping + ", movesOnLogCosts=" + movesOnLogCosts + ", movesOnModelCosts="
 				+ movesOnModelCosts + ", synchronousMovesCosts=" + synchronousMovesCosts + ", tracesInterval="
-				+ Arrays.toString(tracesInterval) + ", tracesLengthBounds=" + Arrays.toString(tracesLengthBounds) + "]";
+				+ Arrays.toString(tracesInterval) + ", tracesLengthBounds=" + Arrays.toString(tracesLengthBounds)
+				+ ", partiallyOrderedEvents=" + partiallyOrderedEvents + "]";
 	}
-	
+
 }
