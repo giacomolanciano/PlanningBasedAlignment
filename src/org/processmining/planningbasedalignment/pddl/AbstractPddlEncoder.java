@@ -1,5 +1,6 @@
 package org.processmining.planningbasedalignment.pddl;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -9,6 +10,7 @@ import org.deckfour.xes.classification.XEventClassifier;
 import org.deckfour.xes.model.XEvent;
 import org.deckfour.xes.model.XTrace;
 import org.processmining.datapetrinets.DataPetriNet;
+import org.processmining.models.graphbased.directed.petrinet.PetrinetEdge;
 import org.processmining.models.graphbased.directed.petrinet.PetrinetNode;
 import org.processmining.models.graphbased.directed.petrinet.elements.Place;
 import org.processmining.models.graphbased.directed.petrinet.elements.Transition;
@@ -53,27 +55,47 @@ public abstract class AbstractPddlEncoder {
 	 */
 	protected Map<String, XEventClass> pddlIdToEventClassMapping = new HashMap<String, XEventClass>();
 	
+	/**
+	 * The encoding of the moves on model that is independent from the traces in the event log.   
+	 */
+	protected StringBuffer movesOnModelBuffer;
+	
 	protected AbstractPddlEncoder(DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) {
 		this.petrinet = petrinet;
 		this.parameters = parameters;
+		
+		// build the structures needed to properly encode the problem instances.
 		buildMappings();
+		
+		// compute the part of the encoding that only depends on the model. 
+		this.movesOnModelBuffer = getMovesOnModelEncoding();
 	}
 
 	/**
+	 * Return the encoding of the alignment problem for the given trace in PDDL. 
+	 * 
+	 * @param trace The event log trace whose alignment has to be encoded.
+	 * @return An array of Strings containing respectively the planning Domain and the planning Problem.
+	 */
+	public String[] getPddlEncoding(XTrace trace) {
+		return new String[] {createPropositionalDomain(trace), createPropositionalProblem(trace)};
+	}
+	
+	/**
 	 * Create PDDL Domain for the given log trace.
 	 * 
-	 * @param trace The log trace.
+	 * @param trace The event log trace whose alignment has to be encoded.
 	 * @return A {@link String} containing the PDDL Domain.
 	 */
-	abstract public String createPropositionalDomain(XTrace trace);
+	abstract protected String createPropositionalDomain(XTrace trace);
 
 	/**
 	 * Create PDDL Domain for the given log trace.
 	 * 
-	 * @param trace The log trace.
+	 * @param trace The event log trace whose alignment has to be encoded.
 	 * @return A {@link String} containing the PDDL Problem.
 	 */
-	abstract public String createPropositionalProblem(XTrace trace);
+	abstract protected String createPropositionalProblem(XTrace trace);
 
 	/**
 	 * Populate the mappings that relate Petri net nodes and events class with their PDDL identifiers.
@@ -128,7 +150,6 @@ public abstract class AbstractPddlEncoder {
 			// add a mapping from the generated id to the place
 			pddlIdToPetrinetNodeMapping.put(pddlPlaceId, place);
 		}
-
 	}
 
 	/**
@@ -217,6 +238,60 @@ public abstract class AbstractPddlEncoder {
 	protected String encode(XEvent event) {
 		XEventClassifier eventClassifier = parameters.getTransitionsEventsMapping().getEventClassifier();
 		return getCorrectPddlFormat(eventClassifier.getClassIdentity(event));
+	}
+	
+	/**
+	 * Compute the PDDL encoding of the moves on model.
+	 * 
+	 * @return A {@link StringBuffer} containing the PDDL encoding of the moves on model.
+	 */
+	protected StringBuffer getMovesOnModelEncoding() {
+		
+		StringBuffer result = new StringBuffer();
+		Map<Transition, Integer> movesOnModelCosts = parameters.getMovesOnModelCosts();
+		
+		for(Transition transition : petrinet.getTransitions()) {
+
+			String transitionName = encode(transition);
+			Collection<PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode>> transitionInEdgesCollection = petrinet.getInEdges(transition);
+			Collection<PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode>> transitionOutEdgesCollection = petrinet.getOutEdges(transition);
+			
+			/* Move in the Model */
+			result.append("(:action " + MODEL_MOVE_PREFIX + SEPARATOR + transitionName + "\n");
+			result.append(":precondition");
+
+			if(transitionInEdgesCollection.size() > 1)
+				result.append(" (and");
+
+			for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionInEdgesCollection) {
+				Place place = (Place) inEdge.getSource();
+				result.append(" (token " + encode(place) + ")");
+			}
+
+			if(transitionInEdgesCollection.size() > 1)
+				result.append(")\n");
+			else
+				result.append("\n");
+
+			result.append(":effect (and (not (allowed))");
+
+			for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionInEdgesCollection) {
+				Place place = (Place) inEdge.getSource();
+				result.append(" (not (token " + encode(place) + "))");
+			}
+			for(PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionOutEdgesCollection) {
+				Place place = (Place) inEdge.getTarget();
+				result.append(" (token " + encode(place) + ")");
+			}				
+
+			result.append(" (increase (total-cost) ");
+			result.append(movesOnModelCosts.get(transition) + ")\n");
+
+			result.append(")\n");
+			result.append(")\n\n");
+		}
+		
+		return result;
 	}
 	
 	/**

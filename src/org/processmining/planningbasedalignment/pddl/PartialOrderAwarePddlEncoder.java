@@ -1,10 +1,14 @@
 package org.processmining.planningbasedalignment.pddl;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.deckfour.xes.classification.XEventClass;
+import org.deckfour.xes.model.XAttribute;
 import org.deckfour.xes.model.XEvent;
 import org.deckfour.xes.model.XTrace;
 import org.processmining.datapetrinets.DataPetriNet;
@@ -16,16 +20,91 @@ import org.processmining.models.semantics.petrinet.Marking;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 
 /**
- * A standard implementation of the PDDL encoder that does NOT take into account a possible partial ordering in the
- * event log to be replayed on the Petri net.
- * 
  * @author Giacomo Lanciano
  *
  */
-public class StandardPddlEncoder extends AbstractPddlEncoder {
+public class PartialOrderAwarePddlEncoder extends AbstractPddlEncoder {
+
+	/**
+	 * The mapping between the events in the trace and their (positional, unique) labels, used to refer to them in the
+	 * PDDL encding.
+	 */
+	Map<XEvent, String> eventToLabelMapping;
 	
-	public StandardPddlEncoder(DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) {
+	/**
+	 * The mapping between isochronous groups timestamps (that are the unique timestamps in the trace) and their ids.
+	 * 
+	 * NOTE:
+	 * Since the ids reflect their chronological order, it is easy to access the "previous" group, given the timestamp 
+	 * of an event. 
+	 */
+	Map<String, Integer> timestampToGroupIdMapping;
+	
+	/**
+	 * The mapping between isochronous groups ids and the related events.
+	 */
+	Map<Integer, ArrayList<XEvent>> groupIdToEventsMapping;
+	
+	public PartialOrderAwarePddlEncoder(DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) {
 		super(petrinet, parameters);
+	}
+	
+	@Override
+	public String[] getPddlEncoding(XTrace trace) {
+		// force isochronous groups to be built before computing the encoding
+		buildIsochronousGroups(trace);
+		return super.getPddlEncoding(trace);
+	}
+	
+	/**
+	 * Initialize the data structures needed for dealing with partially ordered events.
+	 * 
+	 * @param trace The event log trace whose alignment has to be encoded.
+	 */
+	protected void buildIsochronousGroups(XTrace trace) {
+		
+		eventToLabelMapping = new HashMap<XEvent, String>();
+		timestampToGroupIdMapping = new HashMap<String, Integer>();
+		groupIdToEventsMapping = new HashMap<Integer, ArrayList<XEvent>>();
+		
+		int eventIndex = 0;
+		for (XEvent event : trace) {
+			// store the event label
+			String eventLabel = "ev" + ++eventIndex;
+			eventToLabelMapping.put(event, eventLabel);
+			
+			// store the (unique) timestamps
+			String timestamp = extractSafeEventTimestamp(event);
+			timestampToGroupIdMapping.put(timestamp, 0);
+		}
+
+		// get sorted (unique) timestamps
+		String[] timestamps = timestampToGroupIdMapping.keySet().toArray(new String[] {});
+		Arrays.sort(timestamps);
+		
+		// update timestamp to group id mapping with chronologically sorted ids
+		int groupIndex = 0;
+		for (String timestamp : timestamps) {
+			timestampToGroupIdMapping.put(timestamp, groupIndex++);
+		}
+		
+		// put each event in its isochronous group
+		for (XEvent event : trace) {
+			String timestamp = extractSafeEventTimestamp(event);
+			Integer groupId = timestampToGroupIdMapping.get(timestamp);
+			
+			if (groupId == null)
+				throw new RuntimeException("Unable to find a group associated with timestamp " + timestamp);
+			
+			ArrayList<XEvent> isochronousGroup = groupIdToEventsMapping.get(groupId);
+			if (isochronousGroup != null) {
+				isochronousGroup.add(event);
+			} else {
+				isochronousGroup = new ArrayList<XEvent>();
+				isochronousGroup.add(event);
+				groupIdToEventsMapping.put(groupId, isochronousGroup);
+			}
+		}
 	}
 	
 	@Override
@@ -45,7 +124,7 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 		// define predicates
 		pddlDomainBuffer.append("(:predicates\n");
 		pddlDomainBuffer.append("(token ?p - place)\n");
-		pddlDomainBuffer.append("(tracePointer ?e - event)\n");
+		pddlDomainBuffer.append("(aligned ?e - event)\n");
 		pddlDomainBuffer.append("(allowed)\n");
 		pddlDomainBuffer.append(")\n\n");
 
@@ -53,7 +132,8 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 		pddlDomainBuffer.append("(:functions\n");
 		pddlDomainBuffer.append("(total-cost)\n");
 		pddlDomainBuffer.append(")\n\n");
-
+		
+		
 		/* Sync Moves */
 		if (traceLength > 0) {
 			
@@ -67,30 +147,38 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 
 				if (!transition.isInvisible()) {
 
-					int i = 0;
 					String mappedEventClass = encode(parameters.getTransitionsEventsMapping().get(transition));
 					for (XEvent event : trace) {
 
-						int currentEventIndex = i + 1;
-						int nextEventIndex = currentEventIndex + 1;
-						String currentEventLabel = "ev" + currentEventIndex;
 						String eventPddlId = encode(event);
-
 						if (eventPddlId.equalsIgnoreCase(mappedEventClass)) {
-
+							
+							String eventLabel = eventToLabelMapping.get(event);
 							syncMovesBuffer.append("(:action " + SYNCH_MOVE_PREFIX + SEPARATOR + transitionName
-									+ SEPARATOR + currentEventLabel + "\n");
+									+ SEPARATOR + eventLabel + "\n");
+							
+							/* add action pre-conditions */
 							syncMovesBuffer.append(":precondition (and");
 
+							// add firing rules constraint
 							for (PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionInEdgesCollection) {
 								Place place = (Place) inEdge.getSource();
 								syncMovesBuffer.append(" (token " + encode(place) + ")");
 							}
 
-							syncMovesBuffer.append(" (tracePointer " + currentEventLabel + ")");
+							// add "aligned" constraint
+							ArrayList<XEvent> previousIsochronousGroup = getPreviousIsochronousGroup(event);
+							if (previousIsochronousGroup != null) {
+								for (XEvent precEvent : previousIsochronousGroup) {
+									syncMovesBuffer.append(" (aligned " + eventToLabelMapping.get(precEvent) + ")");
+								}
+							}
 							syncMovesBuffer.append(")\n");
 
+							/* add action post-conditions */
 							syncMovesBuffer.append(":effect (and (allowed)");
+							
+							// add firing rules effect
 							for (PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionInEdgesCollection) {
 								Place place = (Place) inEdge.getSource();
 								syncMovesBuffer.append(" (not (token " + encode(place) + "))");
@@ -99,52 +187,52 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 								Place place = (Place) outEdge.getTarget();
 								syncMovesBuffer.append(" (token " + encode(place) + ")");
 							}
-
-							String nextEventLabel;
-							if (currentEventIndex == traceLength)
-								nextEventLabel = "evEND";
-							else
-								nextEventLabel = "ev" + nextEventIndex;
-
-							syncMovesBuffer.append(" (not (tracePointer " + currentEventLabel + ")) "
-									+ "(tracePointer " + nextEventLabel + ")");
 							
+							// add "aligned" effect
+							syncMovesBuffer.append(" (aligned " + eventLabel + ")");							
 							syncMovesBuffer.append(")\n");
 							syncMovesBuffer.append(")\n\n");
 						}
-
-						i++;
 					}
 				}
 			} 
 		}
 		
+		
 		/* Moves in the Log */
-		int i = 0;
+		int eventIndex = 0;
 		for(XEvent event : trace) {
 
 			String eventName = encode(event);
 			
-			int currentTraceIndex = i + 1;
-			int nextTraceIndex = currentTraceIndex + 1;
-			String currentEventLabel = "ev" + currentTraceIndex;
+			int currentEventIndex = ++eventIndex;
+			int nextEventIndex = currentEventIndex + 1;
+			String currentEventLabel = "ev" + currentEventIndex;
 
 			String nextEventLabel;
-			if(currentTraceIndex == traceLength)
+			if(currentEventIndex == traceLength)
 				nextEventLabel = "evEND";
 			else
-				nextEventLabel = "ev" + nextTraceIndex;
+				nextEventLabel = "ev" + nextEventIndex;
 
 			movesOnLogBuffer.append(
 					"(:action " + LOG_MOVE_PREFIX + SEPARATOR + eventName + SEPARATOR 
 					+ currentEventLabel + "-" + nextEventLabel + "\n");
 			
-			movesOnLogBuffer.append(":precondition (and (allowed) (tracePointer " + currentEventLabel  + "))\n");
+			/* add action pre-conditions */
+			movesOnLogBuffer.append(":precondition (and (allowed)");
 			
-			movesOnLogBuffer.append(
-					":effect (and (not (tracePointer " + currentEventLabel  + ")) "
-					+ "(tracePointer " + nextEventLabel  + ")");
+			// add "aligned" constraint
+			ArrayList<XEvent> previousIsochronousGroup = getPreviousIsochronousGroup(event);
+			if (previousIsochronousGroup != null) {
+				for (XEvent precEvent : previousIsochronousGroup) {
+					syncMovesBuffer.append(" (aligned " + eventToLabelMapping.get(precEvent) + ")");
+				}
+			}
+			syncMovesBuffer.append(")\n");
 			
+			/* add action post-conditions */
+			movesOnLogBuffer.append(":effect (and (aligned " + currentEventLabel  + ")");
 			movesOnLogBuffer.append(" (increase (total-cost) ");
 			
 			// get the cost of the event class
@@ -155,11 +243,9 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 					break;
 				}
 			}
-
+			
 			movesOnLogBuffer.append(")\n");
 			movesOnLogBuffer.append(")\n\n");
-			
-			i++;
 		}
 
 		pddlDomainBuffer.append(syncMovesBuffer);
@@ -176,7 +262,6 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 		StringBuffer pddlInitBuffer = new StringBuffer();
 		StringBuffer pddlGoalBuffer = new StringBuffer();
 		StringBuffer pddlProblemBuffer = new StringBuffer();
-		int traceLength = trace.size();
 		Collection<Place> places = petrinet.getPlaces();
 		
 		/* add objects to PDDL problem */
@@ -187,24 +272,14 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 		}
 
 		// create an object for each event in the trace
-		for(int i = 0; i < traceLength; i++) {	
-			int currentEventIndex = i + 1;
-			pddlObjectsBuffer.append("ev" + currentEventIndex + " - event\n");		
-
-			if(currentEventIndex == traceLength) {
-				pddlObjectsBuffer.append("evEND - event\n");					
-			}
+		for(Entry<XEvent, String> entry : eventToLabelMapping.entrySet()) {
+			pddlObjectsBuffer.append(entry.getValue() + " - event\n");
 		}
 		
 		pddlObjectsBuffer.append(")\n");
 		
 		/* add init and goal conditions to PDDL problem */
-		pddlInitBuffer.append("(:init\n");
-		
-		if (traceLength > 0)
-			// if trace is non-empty, set trace pointer in init condition
-			pddlInitBuffer.append("(tracePointer ev1)\n");
-		
+		pddlInitBuffer.append("(:init\n");		
 		pddlInitBuffer.append("(allowed)\n");
 		
 		pddlGoalBuffer.append("(:goal\n");
@@ -227,10 +302,10 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 		pddlInitBuffer.append("(= (total-cost) 0)\n");
 		pddlInitBuffer.append(")\n");
 		
-		if (traceLength > 0)
-			// if trace is non-empty, set trace pointer in goal condition
-			pddlGoalBuffer.append("(tracePointer evEND)\n");
-		
+		// create an object for each event in the trace
+		for(Entry<XEvent, String> entry : eventToLabelMapping.entrySet()) {
+			pddlGoalBuffer.append("(aligned " + entry.getValue() + ")\n");
+		}
 		pddlGoalBuffer.append("))\n");
 		
 		// add objective function to PDDL problem
@@ -244,4 +319,36 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 		return pddlProblemBuffer.toString();
 	}
 	
+	/**
+	 * Get the {@link String} representing the timestamp of the event in a format such that lexicographical and 
+	 * chronological orders coincide.
+	 * 
+	 * @param event The event.
+	 * @return The {@link String} representing the timestamp of the event.
+	 */
+	private static String extractSafeEventTimestamp(XEvent event) {
+		XAttribute timestampAttribute = event.getAttributes().get("time:timestamp");
+		String timestamp = timestampAttribute.toString();
+		
+		// TODO check whether the format is ambiguous
+		return timestamp;
+	}
+	
+	/**
+	 * Get the isochronous group that is right before the group of the given event in chronological order.
+	 * 
+	 * @param event The event.
+	 * @return The isochronous group that is right before the group of the given event in chronological order, or null
+	 * if it does not exist.
+	 */
+	private ArrayList<XEvent> getPreviousIsochronousGroup(XEvent event) {
+		String timestamp = extractSafeEventTimestamp(event);
+		Integer groupId = timestampToGroupIdMapping.get(timestamp);  // cannot be null
+		
+		if (groupId == null)
+			throw new RuntimeException("Unable to find a group associated with timestamp " + timestamp);
+		
+		return groupIdToEventsMapping.get(groupId - 1);
+	}
+
 }
