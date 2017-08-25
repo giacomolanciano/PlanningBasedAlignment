@@ -1,4 +1,4 @@
-package org.processmining.planningbasedalignment.dialogs;
+package org.processmining.planningbasedalignment.ui;
 
 import java.util.Collection;
 import java.util.HashSet;

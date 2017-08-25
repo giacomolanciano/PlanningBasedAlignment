@@ -23,9 +23,9 @@ import org.processmining.framework.plugin.annotations.PluginVariant;
 import org.processmining.framework.util.ui.widgets.helper.UserCancelledException;
 import org.processmining.planningbasedalignment.algorithms.PlanningBasedAlignment;
 import org.processmining.planningbasedalignment.connections.PlanningBasedAlignmentConnection;
-import org.processmining.planningbasedalignment.dialogs.ConfigurationUI;
 import org.processmining.planningbasedalignment.help.HelpMessages;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
+import org.processmining.planningbasedalignment.ui.ConfigurationUI;
 import org.processmining.planningbasedalignment.utils.ResourcesUnpacker;
 import org.processmining.plugins.DataConformance.DataAlignment.PetriNet.ResultReplayPetriNetWithData;
 

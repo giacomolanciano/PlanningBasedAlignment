@@ -14,10 +14,10 @@ import org.processmining.framework.plugin.annotations.Plugin;
 import org.processmining.framework.plugin.annotations.PluginCategory;
 import org.processmining.framework.plugin.annotations.PluginVariant;
 import org.processmining.planningbasedalignment.algorithms.AlignmentPddlEncoding;
-import org.processmining.planningbasedalignment.dialogs.ConfigurationUI;
-import org.processmining.planningbasedalignment.dialogs.DestinationDirectoryChooser;
 import org.processmining.planningbasedalignment.help.HelpMessages;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
+import org.processmining.planningbasedalignment.ui.ConfigurationUI;
+import org.processmining.planningbasedalignment.ui.DestinationDirectoryChooser;
 
 /**
  * The ProM plug-in for generating PDDL encodings for Planning-based Alignment.
