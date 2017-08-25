@@ -133,7 +133,6 @@ public class PartialOrderAwarePddlEncoder extends AbstractPddlEncoder {
 		pddlDomainBuffer.append("(total-cost)\n");
 		pddlDomainBuffer.append(")\n\n");
 		
-		
 		/* Sync Moves */
 		if (traceLength > 0) {
 			
@@ -197,7 +196,6 @@ public class PartialOrderAwarePddlEncoder extends AbstractPddlEncoder {
 				}
 			} 
 		}
-		
 		
 		/* Moves in the Log */
 		int eventIndex = 0;

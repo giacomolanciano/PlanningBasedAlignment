@@ -80,17 +80,24 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 
 							syncMovesBuffer.append("(:action " + SYNCH_MOVE_PREFIX + SEPARATOR + transitionName
 									+ SEPARATOR + currentEventLabel + "\n");
+							
+							/* add action pre-conditions */
 							syncMovesBuffer.append(":precondition (and");
 
+							// add firing rules constraint
 							for (PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionInEdgesCollection) {
 								Place place = (Place) inEdge.getSource();
 								syncMovesBuffer.append(" (token " + encode(place) + ")");
 							}
 
+							// add "tracepointer" constraint
 							syncMovesBuffer.append(" (tracePointer " + currentEventLabel + ")");
 							syncMovesBuffer.append(")\n");
 
+							/* add action post-conditions */
 							syncMovesBuffer.append(":effect (and (allowed)");
+							
+							// add firing rules effect
 							for (PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode> inEdge : transitionInEdgesCollection) {
 								Place place = (Place) inEdge.getSource();
 								syncMovesBuffer.append(" (not (token " + encode(place) + "))");
@@ -100,6 +107,7 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 								syncMovesBuffer.append(" (token " + encode(place) + ")");
 							}
 
+							// add "tracepointer" effect
 							String nextEventLabel;
 							if (currentEventIndex == traceLength)
 								nextEventLabel = "evEND";
@@ -139,8 +147,10 @@ public class StandardPddlEncoder extends AbstractPddlEncoder {
 					"(:action " + LOG_MOVE_PREFIX + SEPARATOR + eventName + SEPARATOR 
 					+ currentEventLabel + "-" + nextEventLabel + "\n");
 			
+			/* add action pre-conditions */
 			movesOnLogBuffer.append(":precondition (and (allowed) (tracePointer " + currentEventLabel  + "))\n");
 			
+			/* add action post-conditions */
 			movesOnLogBuffer.append(
 					":effect (and (not (tracePointer " + currentEventLabel  + ")) "
 					+ "(tracePointer " + nextEventLabel  + ")");

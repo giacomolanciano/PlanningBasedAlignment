@@ -94,6 +94,7 @@ public class AlignmentPddlEncoding {
 		int minTracesLength = traceLengthBounds[0];
 		int maxTracesLength = traceLengthBounds[1];
 
+		// select the PDDL encoder implementation according to the assumption on events ordering
 		if (parameters.isPartiallyOrderedEvents())
 			pddlEncoder = new PartialOrderAwarePddlEncoder(petrinet, parameters);
 		else
@@ -101,7 +102,7 @@ public class AlignmentPddlEncoding {
 
 		// add empty trace to the collection of trace to be aligned to compute fitness
 		XTrace emptyTrace = new XTraceImpl(new XAttributeMapImpl());
-		writePddlEncodings(emptyTrace, EMPTY_TRACE_ID);
+		writePddlEncoding(emptyTrace, EMPTY_TRACE_ID);
 		
 		// start progress checker
 		int totalPddlFilesNum =  (traceIdToCheckTo - traceIdToCheckFrom + 1) * PDDL_FILES_PER_TRACE;
@@ -119,7 +120,7 @@ public class AlignmentPddlEncoding {
 			if(traceLength >= minTracesLength && traceLength <= maxTracesLength)  {
 
 				// create PDDL encodings (domain & problem) for current trace
-				writePddlEncodings(trace, traceId+1);
+				writePddlEncoding(trace, traceId+1);
 			}
 		}
 		
@@ -141,7 +142,7 @@ public class AlignmentPddlEncoding {
 	 * @param traceId The trace id.
 	 * @throws IOException 
 	 */
-	private void writePddlEncodings(XTrace trace, int traceId) throws IOException {
+	private void writePddlEncoding(XTrace trace, int traceId) throws IOException {
 		String pddlFileSuffix = traceId + PDDL_EXT;
 		String sbDomainFileName = new File(pddlFilesDir, PDDL_DOMAIN_FILE_PREFIX + pddlFileSuffix).getCanonicalPath();
 		String sbProblemFileName = new File(pddlFilesDir, PDDL_PROBLEM_FILE_PREFIX + pddlFileSuffix).getCanonicalPath();
