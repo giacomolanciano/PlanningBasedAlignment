@@ -1,14 +1,17 @@
 package org.processmining.planningbasedalignment.pddl;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.deckfour.xes.classification.XEventClass;
-import org.deckfour.xes.model.XAttribute;
+import org.deckfour.xes.extension.std.XTimeExtension;
 import org.deckfour.xes.model.XEvent;
 import org.deckfour.xes.model.XTrace;
 import org.processmining.datapetrinets.DataPetriNet;
@@ -324,11 +327,10 @@ public class PartialOrderAwarePddlEncoder extends AbstractPddlEncoder {
 	 * @param event The event.
 	 * @return The {@link String} representing the timestamp of the event.
 	 */
-	private static String extractSafeEventTimestamp(XEvent event) {
-		XAttribute timestampAttribute = event.getAttributes().get("time:timestamp");
-		String timestamp = timestampAttribute.toString();
-		
-		// TODO check whether the format is ambiguous
+	private static String extractSafeEventTimestamp(XEvent event) {		
+		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+		Date date = XTimeExtension.instance().extractTimestamp(event);
+		String timestamp = dateFormat.format(date);		
 		return timestamp;
 	}
 	
