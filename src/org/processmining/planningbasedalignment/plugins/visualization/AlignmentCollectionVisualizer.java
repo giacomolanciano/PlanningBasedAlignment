@@ -37,7 +37,7 @@ import com.google.common.collect.Iterables;
 @Visualizer
 public class AlignmentCollectionVisualizer {
 
-	private StrippedDownAlignmentView dataAlignmentView;
+	private StrippedDownAlignmentView alignmentView;
 
 	@PluginVariant(requiredParameterLabels = { 0 })
 	public JComponent visualize(PluginContext context, AlignmentCollection alignments) {
@@ -94,9 +94,9 @@ public class AlignmentCollectionVisualizer {
 	public JComponent doVisualize(PluginContext context, final XTraceResolver traceResolver,
 			Iterable<XAlignment> alignments) {
 		Map<String, Color> activityColorMap = ColorTheme.createColorMap(alignments);
-		dataAlignmentView = new StrippedDownAlignmentView(Layout.TWOCOLUMN, context, traceResolver, activityColorMap);
-		dataAlignmentView.getListView().addAll(alignments);
-		return dataAlignmentView;
+		alignmentView = new StrippedDownAlignmentView(Layout.TWOCOLUMN, context, traceResolver, activityColorMap);
+		alignmentView.getListView().addAll(alignments);
+		return alignmentView;
 	}
 
 	private Map<String, XTrace> buildTraceMap(ResultReplay logReplayResult) {

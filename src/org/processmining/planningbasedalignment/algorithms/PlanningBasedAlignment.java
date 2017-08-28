@@ -265,7 +265,7 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 		
 		Pattern decimalNumberRegexPattern = Pattern.compile("\\d+(,\\d{3})*(\\.\\d+)*");
 		ExecutionTrace logTrace;
-		ExecutionTrace processTrace;
+		ExecutionTrace modelTrace;
 		DataAlignmentState dataAlignmentState;
 		ArrayList<DataAlignmentState> alignments = new ArrayList<DataAlignmentState>();
 		ResultReplayPetriNetWithData result = null;		
@@ -288,7 +288,7 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 
 			traceAlignmentCost = 0;
 			logTrace = new GenericTrace(INITIAL_EXECUTION_TRACE_CAPACITY, CASE_PREFIX + traceId);
-			processTrace = new GenericTrace(INITIAL_EXECUTION_TRACE_CAPACITY, CASE_PREFIX + traceId);
+			modelTrace = new GenericTrace(INITIAL_EXECUTION_TRACE_CAPACITY, CASE_PREFIX + traceId);
 
 			// parse planner output file line by line
 			Matcher matcher;
@@ -329,7 +329,7 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 							Transition transition = (Transition) pddlEncoder.getPddlIdToPetrinetNodeMapping().get(stepName);
 							step = new ExecutionStep(transition.getLabel(), transition);
 							logTrace.add(step);
-							processTrace.add(step);
+							modelTrace.add(step);
 	
 						} else if (isModelMove(outputLine)) {
 							Transition transition = (Transition) pddlEncoder.getPddlIdToPetrinetNodeMapping().get(stepName);
@@ -339,13 +339,13 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 								step.setInvisible(true);
 							
 							logTrace.add(ExecutionStep.bottomStep);
-							processTrace.add(step);
+							modelTrace.add(step);
 	
 						} else if (isLogMove(outputLine)) {
 							XEventClass eventClass = pddlEncoder.getPddlIdToEventClassMapping().get(stepName);
 							step = new ExecutionStep(eventClass.getId(), eventClass);
 							logTrace.add(step);
-							processTrace.add(ExecutionStep.bottomStep);
+							modelTrace.add(ExecutionStep.bottomStep);
 	
 						}
 					}
@@ -358,7 +358,7 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 				XTrace trace = log.get(traceId-1);
 				
 				// create alignment object
-				dataAlignmentState = new DataAlignmentState(logTrace, processTrace, traceAlignmentCost);
+				dataAlignmentState = new DataAlignmentState(logTrace, modelTrace, traceAlignmentCost);
 				float fitness = computeFitness(trace, traceAlignmentCost, emptyTraceAlignmentCost, parameters);
 				
 				// since the visualization used by the plug-in takes also into account the data fitness, 

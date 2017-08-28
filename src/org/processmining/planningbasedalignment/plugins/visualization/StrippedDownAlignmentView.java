@@ -120,7 +120,6 @@ public class StrippedDownAlignmentView extends JPanel implements DetailView<XAli
 	private Comparator<XAlignment> currentOrder = XAlignmentOrdering.FITNESS_DESC;
 
 	private final AlignmentListView listView;
-//	private AttributesComparisonPanel variableComparisonPanel;
 	private DefaultTableModel statisticsModel;
 
 	public StrippedDownAlignmentView(Layout layout, PluginContext context, XTraceResolver traceMap,
