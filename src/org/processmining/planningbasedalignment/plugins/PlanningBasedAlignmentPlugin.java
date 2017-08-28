@@ -108,7 +108,6 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	 * Invokes the algorithm to compute replay result.
 	 * 
 	 * @param context The context to run in.
-	 * @param algorithm 
 	 * @param log The event log to replay.
 	 * @param petrinet The Petri net on which the log has to be replayed.
 	 * @param parameters The parameters to be used by the alignment algorithm.

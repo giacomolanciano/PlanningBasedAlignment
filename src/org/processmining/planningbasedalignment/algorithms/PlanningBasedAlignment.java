@@ -80,8 +80,8 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 	 * The method that performs the alignment of an event log and a Petri net using Automated Planning.
 	 * 
 	 * @param context The context where to run in.
-	 * @param log The event log.
-	 * @param petrinet The Petri net.
+	 * @param log The event log to replay.
+	 * @param petrinet The Petri net on which the log has to be replayed.
 	 * @param parameters The parameters to use.
 	 * @return The result of the replay of the event log on the Petri net.
 	 */
@@ -120,9 +120,8 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 	/**
 	 * Starts the execution of the planner for all the produced pairs domain/problem.
 	 * 
-	 * @param context
-	 * @param parameters
-	 * @param plansFoundDir
+	 * @param context The context where to run in.
+	 * @param parameters The parameters to be used by the encoding algorithm.
 	 * @throws InterruptedException
 	 * @throws IOException
 	 * @throws URISyntaxException
@@ -171,6 +170,8 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 	 * Notice that the output, the domain and problem files are defined by the planner manager module once that PDDL
 	 * encodings are generated.
 	 * 
+	 * @param context The context where to run in.
+	 * @param parameters The parameters to be used by the encoding algorithm.
 	 * @return an array of Strings containing the arguments.
 	 * @throws IOException 
 	 * @throws URISyntaxException 
@@ -249,18 +250,17 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 	/**
 	 * Parse planner output to build the alignment results.
 	 * 
-	 * @param log
-	 * @param petrinet
-	 * @param parameters
-	 * @param plansFoundDir
-	 * @return
+	 * @param log The event log to replay.
+	 * @param petrinet The Petri net on which the log has to be replayed.
+	 * @param parameters The parameters to be used by the encoding algorithm.
+	 * @return The alignment of the event log and the Petri net.
 	 * @throws IOException
 	 */
 	private ResultReplayPetriNetWithData parsePlannerOutput(
 			XLog log, DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) throws IOException {
 		
 		if (!plansFoundDir.exists()) {
-			throw new FileNotFoundException("The planner output directory does not exist.");
+			throw new RuntimeException("The planner output directory does not exist.");
 		}
 		
 		Pattern decimalNumberRegexPattern = Pattern.compile("\\d+(,\\d{3})*(\\.\\d+)*");
@@ -281,14 +281,23 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 		File[] alignmentFiles = plansFoundDir.listFiles();
 		for(final File alignmentFile : alignmentFiles) {
 
-			// extract traceId
-			Matcher traceIdMatcher = decimalNumberRegexPattern.matcher(alignmentFile.getName());
-			traceIdMatcher.find();
-			int traceId = Integer.parseInt(traceIdMatcher.group());
-
 			traceAlignmentCost = 0;
-			logTrace = new GenericTrace(INITIAL_EXECUTION_TRACE_CAPACITY, CASE_PREFIX + traceId);
-			modelTrace = new GenericTrace(INITIAL_EXECUTION_TRACE_CAPACITY, CASE_PREFIX + traceId);
+			
+			// extract trace position from file name
+			Matcher tracePosMatcher = decimalNumberRegexPattern.matcher(alignmentFile.getName());
+			tracePosMatcher.find();
+			int tracePos = Integer.parseInt(tracePosMatcher.group());
+			
+			// retrieve case id 
+			String caseId = positionToCaseIdMapping.get(tracePos);
+			
+			if (caseId == null) {
+				throw new RuntimeException("The given position does not match any case id.");
+			}
+			
+			// initialize alignment execution traces
+			logTrace = new GenericTrace(INITIAL_EXECUTION_TRACE_CAPACITY, caseId);
+			modelTrace = new GenericTrace(INITIAL_EXECUTION_TRACE_CAPACITY, caseId);
 
 			// parse planner output file line by line
 			Matcher matcher;
@@ -304,11 +313,11 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 					// parse alignment cost
 					traceAlignmentCost = Float.parseFloat(matcher.group());
 					
-					if (traceId == EMPTY_TRACE_ID)
+					if (tracePos == EMPTY_TRACE_POS)
 						// if empty trace, set the cost to compute fitness
 						emptyTraceAlignmentCost = traceAlignmentCost;
 
-				} else if (traceId != EMPTY_TRACE_ID) {
+				} else if (tracePos != EMPTY_TRACE_POS) {
 					
 					if(outputLine.startsWith(SEARCH_TIME_ENTRY_PREFIX)) {
 						alignmentTimeSummary.addValue(Double.parseDouble(matcher.group()));
@@ -354,8 +363,8 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 			}
 			processOutputReader.close();
 			
-			if (traceId != EMPTY_TRACE_ID) {
-				XTrace trace = log.get(traceId-1);
+			if (tracePos != EMPTY_TRACE_POS) {
+				XTrace trace = log.get(tracePos-1);
 				
 				// create alignment object
 				dataAlignmentState = new DataAlignmentState(logTrace, modelTrace, traceAlignmentCost);

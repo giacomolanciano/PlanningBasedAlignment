@@ -2,7 +2,10 @@ package org.processmining.planningbasedalignment.algorithms;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
+import org.deckfour.xes.extension.std.XConceptExtension;
 import org.deckfour.xes.model.XLog;
 import org.deckfour.xes.model.XTrace;
 import org.deckfour.xes.model.impl.XAttributeMapImpl;
@@ -28,7 +31,7 @@ public class AlignmentPddlEncoding {
 	protected static final String PDDL_FILES_DIR_PREFIX = "pddl_files_";
 	protected static final String PDDL_DOMAIN_FILE_PREFIX = "domain";
 	protected static final String PDDL_PROBLEM_FILE_PREFIX = "problem";
-	protected static final int EMPTY_TRACE_ID = 0;
+	protected static final int EMPTY_TRACE_POS = 0;
 	protected static final int PDDL_FILES_PER_TRACE = 2;
 	
 	/**
@@ -57,11 +60,17 @@ public class AlignmentPddlEncoding {
 	protected Thread pddlEncodingProgressChecker;
 	
 	/**
+	 * The mapping between the position of a trace in a log (starting from 1) and the relate case id. Notice that key
+	 * 0 is reserved for the empty trace.
+	 */
+	protected Map<Integer, String> positionToCaseIdMapping;
+	
+	/**
 	 * Produces the PDDL input files (representing the instances of the alignment problem) to be fed to the planner.
 	 * 
-	 * @param log
-	 * @param petrinet
-	 * @param parameters
+	 * @param log The event log to replay.
+	 * @param petrinet The Petri net on which the log has to be replayed.
+	 * @param parameters The parameters to be used by the encoding algorithm.
 	 * @throws IOException 
 	 */
 	protected void buildPlannerInput(
@@ -71,9 +80,9 @@ public class AlignmentPddlEncoding {
 		
 		startTime = System.currentTimeMillis();
 		
-		if (parentDir != null)
+		if (parentDir != null) {
 			this.parentDir = parentDir;
-		else {
+		} else {
 			// TODO define an appropriate default location for temp files
 			// default is currently set to program working directory (i.e. ".")
 			// this.parentDir = ? ;
@@ -86,8 +95,8 @@ public class AlignmentPddlEncoding {
 		context.log("Creating PDDL encodings for trace alignment problem instances...");
 		
 		int[] traceInterval = parameters.getTracesInterval();
-		int traceIdToCheckFrom = traceInterval[0];
-		int traceIdToCheckTo = traceInterval[1];
+		int tracePosToCheckFrom = traceInterval[0];
+		int tracePosToCheckTo = traceInterval[1];
 
 		// set traces length bounds
 		int[] traceLengthBounds = parameters.getTracesLengthBounds();
@@ -100,27 +109,28 @@ public class AlignmentPddlEncoding {
 		else
 			pddlEncoder = new StandardPddlEncoder(petrinet, parameters);
 
-		// add empty trace to the collection of trace to be aligned to compute fitness
+		// initialize position to case id mapping
+		positionToCaseIdMapping = new HashMap<Integer, String>();
+		
+		// add empty trace to the collection of trace to be aligned (to compute fitness)
 		XTrace emptyTrace = new XTraceImpl(new XAttributeMapImpl());
-		writePddlEncoding(emptyTrace, EMPTY_TRACE_ID);
+		writePddlEncoding(emptyTrace, EMPTY_TRACE_POS);
 		
 		// start progress checker
-		int totalPddlFilesNum =  (traceIdToCheckTo - traceIdToCheckFrom + 1) * PDDL_FILES_PER_TRACE;
+		int totalPddlFilesNum =  (tracePosToCheckTo - tracePosToCheckFrom + 1) * PDDL_FILES_PER_TRACE;
 		pddlEncodingProgressChecker = new FilesWritingProgressChecker(
 				context, pddlFilesDir, totalPddlFilesNum, " PDDL files written so far.", 1000);
 		pddlEncodingProgressChecker.start();
 		
 		// consider only the traces in the chosen interval
-		for(int traceId = traceIdToCheckFrom-1; traceId < traceIdToCheckTo; traceId++) {
-
-			XTrace trace = log.get(traceId);
+		for(int tracePos = tracePosToCheckFrom - 1; tracePos < tracePosToCheckTo; tracePos++) {
+			XTrace trace = log.get(tracePos);
 			int traceLength = trace.size();						
 
 			// check whether the trace matches the length bounds
 			if(traceLength >= minTracesLength && traceLength <= maxTracesLength)  {
-
 				// create PDDL encodings (domain & problem) for current trace
-				writePddlEncoding(trace, traceId+1);
+				writePddlEncoding(trace, tracePos+1);
 			}
 		}
 		
@@ -136,20 +146,38 @@ public class AlignmentPddlEncoding {
 	}
 	
 	/**
-	 * Write the PDDL files related to the given trace.
+	 * Write the PDDL encoding of the alignment problem related to the given trace.
 	 * 
 	 * @param trace The trace.
-	 * @param traceId The trace id.
 	 * @throws IOException 
 	 */
-	private void writePddlEncoding(XTrace trace, int traceId) throws IOException {
-		String pddlFileSuffix = traceId + PDDL_EXT;
+	private void writePddlEncoding(XTrace trace, int tracePos) throws IOException {
+		updatePositionToCaseIdMapping(trace, tracePos);
+		
+		// create files for PDDL encoding
+		String pddlFileSuffix = tracePos + PDDL_EXT;
 		String sbDomainFileName = new File(pddlFilesDir, PDDL_DOMAIN_FILE_PREFIX + pddlFileSuffix).getCanonicalPath();
 		String sbProblemFileName = new File(pddlFilesDir, PDDL_PROBLEM_FILE_PREFIX + pddlFileSuffix).getCanonicalPath();
 
+		// write contents on disk
 		String[] pddlEncoding = pddlEncoder.getPddlEncoding(trace);
 		OSUtils.writeTextualFile(sbDomainFileName, pddlEncoding[0]);
 		OSUtils.writeTextualFile(sbProblemFileName, pddlEncoding[1]);
+	}
+	
+	/**
+	 * Insert a mapping between the position in the event log and the case id of the given trace.
+	 * 
+	 * @param trace The trace.
+	 * @param tracePos The position of the trace in the event log.
+	 */
+	private void updatePositionToCaseIdMapping(XTrace trace, int tracePos) {
+		String caseId = XConceptExtension.instance().extractName(trace);
+		
+		if (caseId == null)
+			caseId = "";
+		
+		positionToCaseIdMapping.put(tracePos, caseId);
 	}
 
 }
