@@ -1,4 +1,4 @@
-package org.processmining.planningbasedalignment.plugins.visualization;
+package org.processmining.planningbasedalignment.plugins.visualization.alignment;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;

@@ -1,4 +1,4 @@
-package org.processmining.planningbasedalignment.plugins.visualization;
+package org.processmining.planningbasedalignment.plugins.visualization.alignment;
 
 import java.awt.Color;
 import java.util.HashMap;
@@ -13,7 +13,7 @@ import org.processmining.framework.plugin.PluginContext;
 import org.processmining.framework.plugin.annotations.Plugin;
 import org.processmining.framework.plugin.annotations.PluginVariant;
 import org.processmining.planningbasedalignment.models.PlanningBasedReplayResult;
-import org.processmining.planningbasedalignment.plugins.visualization.StrippedDownAlignmentView.Layout;
+import org.processmining.planningbasedalignment.plugins.visualization.alignment.StrippedDownAlignmentView.Layout;
 import org.processmining.plugins.DataConformance.Alignment;
 import org.processmining.plugins.DataConformance.ResultReplay;
 import org.processmining.plugins.DataConformance.visualization.alignment.ColorTheme;

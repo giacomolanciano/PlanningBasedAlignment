@@ -1,4 +1,4 @@
-package org.processmining.planningbasedalignment.plugins.visualization;
+package org.processmining.planningbasedalignment.plugins.visualization.alignment;
 
 import java.awt.Color;
 import java.awt.Component;

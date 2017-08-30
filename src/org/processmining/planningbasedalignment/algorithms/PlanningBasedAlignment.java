@@ -401,7 +401,8 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 //		result = new PlanningBasedReplayResult(
 //				alignments, null, variableCost, variableMapping, log, eventClassifier);
 		result = new PlanningBasedReplayResult(
-				alignments, log, eventClassifier, alignmentTimeSummary, expandedStatesSummary, generatedStatesSummary);
+				alignments, eventClassifier, log, petrinet,
+				alignmentTimeSummary, expandedStatesSummary, generatedStatesSummary);
 		return result;
 	}
 	
