@@ -38,11 +38,8 @@ import com.google.common.collect.Iterables;
 @Visualizer
 public class PlanningBasedReplayResultVisualizer {
 
-	private StrippedDownAlignmentView alignmentView;
-
 	@PluginVariant(requiredParameterLabels = { 0 })
 	public JComponent visualize(PluginContext context, PlanningBasedReplayResult alignments) {
-		XAlignmentConverter converter = new XAlignmentConverter();
 		
 		ResultReplay result = (ResultReplay) alignments;
 		final Map<String, XTrace> traceMap = buildTraceMap(result);
@@ -56,9 +53,7 @@ public class PlanningBasedReplayResultVisualizer {
 				return true;
 			}
 		};
-		converter.setClassifier(result.getClassifier()).setVariableMapping(result.getVariableMapping());
-		return doVisualize(context, traceResolver, convertToXAlignment(alignments, traceResolver, converter));
-		
+		return doVisualize(context, traceResolver, alignments);		
 	}
 
 	private Iterable<XAlignment> convertToXAlignment(AlignmentCollection alignments,
@@ -72,9 +67,20 @@ public class PlanningBasedReplayResultVisualizer {
 	}
 
 	public JComponent doVisualize(PluginContext context, final XTraceResolver traceResolver,
-			Iterable<XAlignment> alignments) {
+			PlanningBasedReplayResult replayResult) {
+		
+		// initialize converter
+		XAlignmentConverter converter = new XAlignmentConverter();
+		converter.setClassifier(replayResult.getClassifier()).setVariableMapping(replayResult.getVariableMapping());
+		
+		// convert replay result into XAlignments iterable
+		Iterable<XAlignment> alignments = convertToXAlignment(replayResult, traceResolver, converter);
+		
 		Map<String, Color> activityColorMap = ColorTheme.createColorMap(alignments);
-		alignmentView = new StrippedDownAlignmentView(Layout.TWOCOLUMN, context, traceResolver, activityColorMap);
+		
+		// create alignment view
+		StrippedDownAlignmentView alignmentView = new StrippedDownAlignmentView(
+				Layout.TWOCOLUMN, context, traceResolver, activityColorMap, replayResult);
 		alignmentView.getListView().addAll(alignments);
 		return alignmentView;
 	}

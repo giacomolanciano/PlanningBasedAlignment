@@ -32,6 +32,7 @@ import javax.swing.event.ListDataListener;
 import javax.swing.table.DefaultTableModel;
 
 import org.apache.commons.math3.stat.StatUtils;
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.deckfour.xes.model.XEvent;
 import org.processmining.framework.plugin.PluginContext;
 import org.processmining.framework.util.ui.widgets.ProMTableWithoutPanel;
@@ -45,6 +46,8 @@ import org.processmining.framework.util.ui.widgets.traceview.ProMTraceView.Trace
 import org.processmining.framework.util.ui.widgets.traceview.masterdetail.DetailView;
 import org.processmining.framework.util.ui.widgets.traceview.model.FilteredListModelImpl;
 import org.processmining.framework.util.ui.widgets.traceview.model.FilteredListModelImpl.ListModelFilter;
+import org.processmining.planningbasedalignment.algorithms.PlanningBasedAlignment;
+import org.processmining.planningbasedalignment.models.PlanningBasedReplayResult;
 import org.processmining.plugins.DataConformance.visualization.alignment.AlignmentLegend;
 import org.processmining.plugins.DataConformance.visualization.alignment.AlignmentListView;
 import org.processmining.plugins.DataConformance.visualization.alignment.AlignmentListView.XAlignmentOrdering;
@@ -102,7 +105,8 @@ public class StrippedDownAlignmentView extends JPanel implements DetailView<XAli
 						}
 					});
 				}
-				updateStatistics();
+				// TODO disable stats update after query (for the time being)
+				//updateStatistics();
 			} catch (ParseException e1) {
 				ProMUIHelper.showErrorMessage(searchPanel, e1.getMessage(), "Error parsing query");
 			}
@@ -121,12 +125,16 @@ public class StrippedDownAlignmentView extends JPanel implements DetailView<XAli
 
 	private final AlignmentListView listView;
 	private DefaultTableModel statisticsModel;
+	private PlanningBasedReplayResult replayResult;
 
-	public StrippedDownAlignmentView(Layout layout, PluginContext context, XTraceResolver traceMap,
-			Map<String, Color> activityColorMap) {
+	public StrippedDownAlignmentView(
+			Layout layout, PluginContext context, XTraceResolver traceMap, Map<String, Color> activityColorMap,
+			PlanningBasedReplayResult replayResult) {
+		
 		super();
 		this.traceResolver = traceMap;
 		this.activityColorMap = activityColorMap;
+		this.replayResult = replayResult;
 
 		if (layout == Layout.TWOCOLUMN) {
 
@@ -147,7 +155,8 @@ public class StrippedDownAlignmentView extends JPanel implements DetailView<XAli
 			listView.getListModel().addListDataListener(new ListDataListener() {
 
 				public void intervalRemoved(ListDataEvent e) {
-					updateStatistics();
+					// TODO disable stats update after query (for the time being)
+					//updateStatistics();
 				}
 
 				public void intervalAdded(ListDataEvent e) {
@@ -155,7 +164,8 @@ public class StrippedDownAlignmentView extends JPanel implements DetailView<XAli
 				}
 
 				public void contentsChanged(ListDataEvent e) {
-					updateStatistics();
+					// TODO disable stats update after query (for the time being)
+					//updateStatistics();
 				}
 			});
 
@@ -438,19 +448,52 @@ public class StrippedDownAlignmentView extends JPanel implements DetailView<XAli
 	}
 
 	private void updateStatistics() {
+		NumberFormat integerFormat = NumberFormat.getIntegerInstance();
+		NumberFormat percentageFormat = NumberFormat.getPercentInstance();
+		NumberFormat realFormat = NumberFormat.getNumberInstance();
+		realFormat.setMaximumFractionDigits(2);
+
 		ListModel<XAlignment> model = listView.getListModel();
-		double[] fitness = new double[model.getSize()];
+		int tracesNum = model.getSize();
+		statisticsModel.getDataVector().clear();
+		statisticsModel.addRow(new String[] { "Count Traces", integerFormat.format(tracesNum)});
+		
+		// get fitness values from alignments list
+		double[] fitness = new double[tracesNum];
 		for (int i = 0; i < model.getSize(); i++) {
 			XAlignment alignment = model.getElementAt(i);
 			fitness[i] = alignment.getFitness();
 		}
-		statisticsModel.getDataVector().clear();
-
-		NumberFormat format = NumberFormat.getPercentInstance();
-		statisticsModel
-			.addRow(new String[] { "Count Traces", NumberFormat.getIntegerInstance().format(fitness.length) });
-		statisticsModel.addRow(new String[] { "Average Fitness", format.format(StatUtils.mean(fitness)) });
-		statisticsModel.addRow(new String[] { "Median Fitness", format.format(StatUtils.percentile(fitness, 50)) });
+		statisticsModel.addRow(new String[] { "Average Fitness", percentageFormat.format(StatUtils.mean(fitness))});
+		statisticsModel.addRow(new String[] { "Median Fitness", percentageFormat.format(StatUtils.percentile(fitness, 50))});
+		
+		// time stats
+		SummaryStatistics alignmentTimeSummary = replayResult.getAlignmentTimeSummary();
+		statisticsModel.addRow(new String[] { "", "" });
+		statisticsModel.addRow(new String[] { "Average (actual) Time",
+				realFormat.format(alignmentTimeSummary.getMean()) + PlanningBasedAlignment.DEFAULT_TIME_UNIT});
+		statisticsModel.addRow(new String[] { "Maximum (actual) Time",
+				realFormat.format(alignmentTimeSummary.getMax()) + PlanningBasedAlignment.DEFAULT_TIME_UNIT});
+		statisticsModel.addRow(new String[] { "Minimum (actual) Time",
+				realFormat.format(alignmentTimeSummary.getMin()) + PlanningBasedAlignment.DEFAULT_TIME_UNIT});
+		statisticsModel.addRow(new String[] { "Standard deviation",
+				realFormat.format(alignmentTimeSummary.getStandardDeviation()) + PlanningBasedAlignment.DEFAULT_TIME_UNIT});
+		
+		// expanded states stats
+		SummaryStatistics expandedStatesSummary = replayResult.getExpandedStatesSummary();
+		statisticsModel.addRow(new String[] { "", "" });
+		statisticsModel.addRow(new String[] { "Average Expanded States", realFormat.format(expandedStatesSummary.getMean())});
+		statisticsModel.addRow(new String[] { "Average Expanded States", realFormat.format(expandedStatesSummary.getMax())});
+		statisticsModel.addRow(new String[] { "Minimum Expanded States", realFormat.format(expandedStatesSummary.getMin())});
+		statisticsModel.addRow(new String[] { "Standard deviation", realFormat.format(expandedStatesSummary.getStandardDeviation())});
+		
+		// generate states stats
+		SummaryStatistics generatedStatesSummary = replayResult.getGeneratedStatesSummary();
+		statisticsModel.addRow(new String[] { "", "" });
+		statisticsModel.addRow(new String[] { "Average Generated States", realFormat.format(generatedStatesSummary.getMean())});
+		statisticsModel.addRow(new String[] { "Maximum Generated States", realFormat.format(generatedStatesSummary.getMax())});
+		statisticsModel.addRow(new String[] { "Minimum Generated States", realFormat.format(generatedStatesSummary.getMin())});
+		statisticsModel.addRow(new String[] { "Standard deviation", realFormat.format(generatedStatesSummary.getStandardDeviation())});
 
 		statisticsModel.fireTableDataChanged();
 	}
@@ -470,9 +513,10 @@ public class StrippedDownAlignmentView extends JPanel implements DetailView<XAli
 		final ProMTextField searchQueryField = new ProMTextField();
 		searchQueryField.setHint("Filter by trace/event names or by fitness (fitness>0.5)");
 		searchQueryField.getTextField().setToolTipText(
-				"<html>" + "Supports a simple query language for filtering alignments by names of events and traces or by their fitness value (e.g., fitness>0.5)."
-						+ "<br>Use '~' as 1st character to use a regular expressions, use '%' as 1st character to use a 'contains' query. "
-						+ "</html>");
+				"<html>" 
+				+ "Supports a simple query language for filtering alignments by names of events and traces or by their fitness value (e.g., fitness>0.5)."
+				+ "<br>Use '~' as 1st character to use a regular expressions, use '%' as 1st character to use a 'contains' query. "
+				+ "</html>");
 		searchQueryField.setMaximumSize(new Dimension(200, 30));
 
 		SearchAction searchAction = new SearchAction(searchPanel, searchQueryField);
@@ -517,7 +561,9 @@ public class StrippedDownAlignmentView extends JPanel implements DetailView<XAli
 
 			public void actionPerformed(ActionEvent e) {
 				traceList.filter(filter);
-				updateStatistics();
+				
+				// TODO disable stats update after query (for the time being)
+				//updateStatistics();
 			}
 
 		});

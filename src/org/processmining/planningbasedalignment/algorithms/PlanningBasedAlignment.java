@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
@@ -50,8 +51,9 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 	protected static final String GENERATED_STATES_ENTRY_PREFIX = "; generatedstates = ";
 	protected static final String COMMAND_ARG_PLACEHOLDER = "+";
 	protected static final String CASE_PREFIX = "Case ";
-	protected static final String DEFAULT_TIME_UNIT = " ms";
 	protected static final int INITIAL_EXECUTION_TRACE_CAPACITY = 10;
+
+	public static final String DEFAULT_TIME_UNIT = " ms";
 	
 	/**
 	 * The separated process in which the planner is executed.
@@ -270,9 +272,9 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 		float emptyTraceAlignmentCost = 0;
 		
 		// initialize stats summaries
-		SummaryStatistics alignmentTimeSummary =new SummaryStatistics();
-		SummaryStatistics expandedStatesSummary =new SummaryStatistics();
-		SummaryStatistics generatedStatesSummary =new SummaryStatistics();
+		SummaryStatistics alignmentTimeSummary = new SummaryStatistics();
+		SummaryStatistics expandedStatesSummary = new SummaryStatistics();
+		SummaryStatistics generatedStatesSummary = new SummaryStatistics();
 		
 		// iterate over planner output files
 		File[] alignmentFiles = plansFoundDir.listFiles();
@@ -374,20 +376,22 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 		}
 		
 		// print stats
-		System.out.println("\tAverage (actual) Time: " + alignmentTimeSummary.getMean() + DEFAULT_TIME_UNIT);
-		System.out.println("\tMaximum (actual) Time: " + alignmentTimeSummary.getMax() + DEFAULT_TIME_UNIT);
-		System.out.println("\tMinimum (actual) Time: " + alignmentTimeSummary.getMin() + DEFAULT_TIME_UNIT);
-		System.out.println("\tStandard deviation:    " + alignmentTimeSummary.getStandardDeviation() + DEFAULT_TIME_UNIT);
+		NumberFormat realFormat = NumberFormat.getNumberInstance();
+		realFormat.setMaximumFractionDigits(2);
+		System.out.println("\tAverage (actual) Time: " + realFormat.format(alignmentTimeSummary.getMean()) + DEFAULT_TIME_UNIT);
+		System.out.println("\tMaximum (actual) Time: " + realFormat.format(alignmentTimeSummary.getMax()) + DEFAULT_TIME_UNIT);
+		System.out.println("\tMinimum (actual) Time: " + realFormat.format(alignmentTimeSummary.getMin()) + DEFAULT_TIME_UNIT);
+		System.out.println("\tStandard deviation:    " + realFormat.format(alignmentTimeSummary.getStandardDeviation()) + DEFAULT_TIME_UNIT);
 		System.out.println();
-		System.out.println("\tAverage Expanded States: " + expandedStatesSummary.getMean());
-		System.out.println("\tMaximum Expanded States: " + expandedStatesSummary.getMax());
-		System.out.println("\tMinimum Expanded States: " + expandedStatesSummary.getMin());
-		System.out.println("\tStandard deviation:      " + expandedStatesSummary.getStandardDeviation());
+		System.out.println("\tAverage Expanded States: " + realFormat.format(expandedStatesSummary.getMean()));
+		System.out.println("\tMaximum Expanded States: " + realFormat.format(expandedStatesSummary.getMax()));
+		System.out.println("\tMinimum Expanded States: " + realFormat.format(expandedStatesSummary.getMin()));
+		System.out.println("\tStandard deviation:      " + realFormat.format(expandedStatesSummary.getStandardDeviation()));
 		System.out.println();
-		System.out.println("\tAverage Generated States: " + generatedStatesSummary.getMean());
-		System.out.println("\tMaximum Generated States: " + generatedStatesSummary.getMax());
-		System.out.println("\tMinimum Generated States: " + generatedStatesSummary.getMin());
-		System.out.println("\tStandard deviation:       " + generatedStatesSummary.getStandardDeviation());
+		System.out.println("\tAverage Generated States: " + realFormat.format(generatedStatesSummary.getMean()));
+		System.out.println("\tMaximum Generated States: " + realFormat.format(generatedStatesSummary.getMax()));
+		System.out.println("\tMinimum Generated States: " + realFormat.format(generatedStatesSummary.getMin()));
+		System.out.println("\tStandard deviation:       " + realFormat.format(generatedStatesSummary.getStandardDeviation()));
 		
 		// produce result to be visualized
 		XEventClassifier eventClassifier = parameters.getTransitionsEventsMapping().getEventClassifier();
