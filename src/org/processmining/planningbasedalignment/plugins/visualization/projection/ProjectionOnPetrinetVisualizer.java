@@ -25,7 +25,8 @@ import weka.gui.GenericObjectEditor;
 @Plugin(
 	name = "00 Projection on the Petri net",
 	returnLabels = { "Projection of the Planning-based Alignment onto the Petri Net" },
-	returnTypes = { JComponent.class }, parameterLabels = { "Matching Instances" },
+	returnTypes = { JComponent.class },
+	parameterLabels = { "Matching Instances" },
 	userAccessible = true
 )
 @Visualizer
@@ -46,32 +47,24 @@ public class ProjectionOnPetrinetVisualizer {
 			else {
 				float actArray[] = replayResult.actArray.get(node.getLabel());
 				if (actArray!=null) {
+					float syncMoves = actArray[0] + actArray[1];
+					float logMoves = actArray[2];
+					float modelMoves = actArray[3];
+					float controlFlowDeviation = syncMoves / (syncMoves + logMoves + modelMoves);
 					
-					
-//					float value;
-//					if (actArray[0]+actArray[1]==0 || ((PNWDTransition)node).getWriteOperations().size()==0)
-//						value=(actArray[0]+actArray[1])/(actArray[0]+actArray[1]+actArray[2]+actArray[3]);
-//					else {
-//						float dataFlowValue=actArray[0]/(actArray[0]+actArray[1]);
-//						float controlFlowValue=(actArray[0]+actArray[1])/(actArray[0]+actArray[1]+actArray[2]+actArray[3]);
-//						value=2*dataFlowValue*controlFlowValue/(dataFlowValue+controlFlowValue);
-//					}
-//					Color fillColor=getColorForValue(value);
-					
-					
-					float controlFlowValue=(actArray[0]+actArray[1])/(actArray[0]+actArray[1]+actArray[2]+actArray[3]);
-					Color fillColor=getColorForValue(controlFlowValue);
+					// add coloring
+					Color fillColor=getColorForValue(controlFlowDeviation);
 					Color textColor=new Color(255-fillColor.getRed(),255-fillColor.getGreen(),255-fillColor.getBlue());
 					node.getAttributeMap().put(AttributeMap.FILLCOLOR, fillColor);
 					node.getAttributeMap().put(AttributeMap.LABELCOLOR, textColor);
-					StringBuffer tooltip=new StringBuffer("<html><table><tr><td><b>Number moves in both without incorrect write operations:</b> ");
-					tooltip.append((int)actArray[0]);
-					tooltip.append("</td></tr><tr><td><b>Number moves in both with incorrect write operations:</b> ");
-					tooltip.append((int)actArray[1]);
-					tooltip.append("</td></tr><tr><td><b>Number moves in log:</b> ");
-					tooltip.append((int)actArray[2]);
-					tooltip.append("</td></tr><tr><td><b>Number moves in model:</b> ");
-					tooltip.append((int)actArray[3]);
+					
+					// add activity tooltip
+					StringBuffer tooltip=new StringBuffer("<html><table><tr><td><b>Number of synchronous moves:</b> ");
+					tooltip.append((int) syncMoves);
+					tooltip.append("</td></tr><tr><td><b>Number of moves in log:</b> ");
+					tooltip.append((int) logMoves);
+					tooltip.append("</td></tr><tr><td><b>Number of moves in model:</b> ");
+					tooltip.append((int) modelMoves);
 					tooltip.append("</td></tr></table></html>");
 					node.getAttributeMap().put(AttributeMap.TOOLTIP,tooltip.toString());
 				}
@@ -80,13 +73,11 @@ public class ProjectionOnPetrinetVisualizer {
 
 		// Load Weka on a separate thread as this takes quite some time
 		Executors.newSingleThreadExecutor().execute(new Runnable() {
-
 			public void run() {
 				try {
 					GenericObjectEditor.class.newInstance();
-				} catch (InstantiationException e) {
-				} catch (IllegalAccessException e) {
-				}					
+				} catch (InstantiationException | IllegalAccessException e) {
+				}				
 			}
 		});
 
