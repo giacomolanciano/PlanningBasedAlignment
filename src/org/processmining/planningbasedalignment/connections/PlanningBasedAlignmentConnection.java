@@ -1,8 +1,8 @@
 package org.processmining.planningbasedalignment.connections;
 
 import org.deckfour.xes.model.XLog;
-import org.processmining.datapetrinets.DataPetriNet;
 import org.processmining.framework.connections.impl.AbstractConnection;
+import org.processmining.models.graphbased.directed.petrinet.Petrinet;
 import org.processmining.planningbasedalignment.models.PlanningBasedReplayResult;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 
@@ -43,7 +43,7 @@ public class PlanningBasedAlignmentConnection extends AbstractConnection {
 	 * @param parameters The parameters to use.
 	 */
 	public PlanningBasedAlignmentConnection(
-			XLog log, DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters,
+			XLog log, Petrinet petrinet, PlanningBasedAlignmentParameters parameters,
 			PlanningBasedReplayResult output) {
 		
 		super("Planning-based Alignment connection");

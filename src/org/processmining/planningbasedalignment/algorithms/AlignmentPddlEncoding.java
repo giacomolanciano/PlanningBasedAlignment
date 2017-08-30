@@ -10,8 +10,8 @@ import org.deckfour.xes.model.XLog;
 import org.deckfour.xes.model.XTrace;
 import org.deckfour.xes.model.impl.XAttributeMapImpl;
 import org.deckfour.xes.model.impl.XTraceImpl;
-import org.processmining.datapetrinets.DataPetriNet;
 import org.processmining.framework.plugin.PluginContext;
+import org.processmining.models.graphbased.directed.petrinet.Petrinet;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 import org.processmining.planningbasedalignment.pddl.AbstractPddlEncoder;
 import org.processmining.planningbasedalignment.pddl.PartialOrderAwarePddlEncoder;
@@ -74,7 +74,7 @@ public class AlignmentPddlEncoding {
 	 * @throws IOException 
 	 */
 	protected void buildPlannerInput(
-			File parentDir, PluginContext context, XLog log, DataPetriNet petrinet,
+			File parentDir, PluginContext context, XLog log, Petrinet petrinet,
 			PlanningBasedAlignmentParameters parameters)
 					throws IOException {
 		

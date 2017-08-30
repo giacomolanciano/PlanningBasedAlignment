@@ -14,7 +14,7 @@ import org.deckfour.xes.classification.XEventClass;
 import org.deckfour.xes.extension.std.XTimeExtension;
 import org.deckfour.xes.model.XEvent;
 import org.deckfour.xes.model.XTrace;
-import org.processmining.datapetrinets.DataPetriNet;
+import org.processmining.models.graphbased.directed.petrinet.Petrinet;
 import org.processmining.models.graphbased.directed.petrinet.PetrinetEdge;
 import org.processmining.models.graphbased.directed.petrinet.PetrinetNode;
 import org.processmining.models.graphbased.directed.petrinet.elements.Place;
@@ -48,7 +48,7 @@ public class PartialOrderAwarePddlEncoder extends AbstractPddlEncoder {
 	 */
 	Map<Integer, ArrayList<XEvent>> groupIdToEventsMapping;
 	
-	public PartialOrderAwarePddlEncoder(DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) {
+	public PartialOrderAwarePddlEncoder(Petrinet petrinet, PlanningBasedAlignmentParameters parameters) {
 		super(petrinet, parameters);
 	}
 	

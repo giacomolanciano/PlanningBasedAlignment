@@ -15,12 +15,12 @@ import org.deckfour.xes.extension.std.XConceptExtension;
 import org.deckfour.xes.model.XLog;
 import org.processmining.contexts.uitopia.UIPluginContext;
 import org.processmining.contexts.uitopia.annotations.UITopiaVariant;
-import org.processmining.datapetrinets.DataPetriNet;
 import org.processmining.framework.connections.ConnectionCannotBeObtained;
 import org.processmining.framework.plugin.annotations.Plugin;
 import org.processmining.framework.plugin.annotations.PluginCategory;
 import org.processmining.framework.plugin.annotations.PluginVariant;
 import org.processmining.framework.util.ui.widgets.helper.UserCancelledException;
+import org.processmining.models.graphbased.directed.petrinet.Petrinet;
 import org.processmining.planningbasedalignment.algorithms.PlanningBasedAlignment;
 import org.processmining.planningbasedalignment.connections.PlanningBasedAlignmentConnection;
 import org.processmining.planningbasedalignment.help.HelpMessages;
@@ -65,7 +65,7 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	@UITopiaVariant(affiliation = AFFILIATION, author = AUTHOR, email = EMAIL)
 	@PluginVariant(variantLabel = "Planning-based Alignment of Event Logs and Petri Nets",
 	requiredParameterLabels = { 0, 1 })
-	public PlanningBasedReplayResult runUI(UIPluginContext context, XLog log, DataPetriNet petrinet) {
+	public PlanningBasedReplayResult runUI(UIPluginContext context, XLog log, Petrinet petrinet) {
 		
 		if (!isPython27Installed()) {			
 			JOptionPane.showMessageDialog(
@@ -114,7 +114,7 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	 * @return The result of the replay of the event log on the Petri net.
 	 */
 	private PlanningBasedReplayResult runAlgorithm(
-			UIPluginContext context, XLog log, DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) {
+			UIPluginContext context, XLog log, Petrinet petrinet, PlanningBasedAlignmentParameters parameters) {
 			
 		PlanningBasedReplayResult replayRes = align(context, log, petrinet, parameters);
 		

@@ -19,7 +19,6 @@ import org.deckfour.xes.info.XLogInfo;
 import org.deckfour.xes.info.XLogInfoFactory;
 import org.deckfour.xes.model.XLog;
 import org.processmining.contexts.uitopia.UIPluginContext;
-import org.processmining.datapetrinets.DataPetriNet;
 import org.processmining.datapetrinets.ui.ConfigurationUIHelper;
 import org.processmining.datapetrinets.utils.MarkingsHelper;
 import org.processmining.framework.connections.Connection;
@@ -32,6 +31,7 @@ import org.processmining.framework.util.Pair;
 import org.processmining.framework.util.ui.widgets.helper.UserCancelledException;
 import org.processmining.models.connections.petrinets.behavioral.FinalMarkingConnection;
 import org.processmining.models.connections.petrinets.behavioral.InitialMarkingConnection;
+import org.processmining.models.graphbased.directed.petrinet.Petrinet;
 import org.processmining.models.graphbased.directed.petrinet.PetrinetGraph;
 import org.processmining.models.graphbased.directed.petrinet.elements.Transition;
 import org.processmining.models.semantics.petrinet.Marking;
@@ -76,7 +76,7 @@ public class ConfigurationUI {
 	 * @throws UserCancelledException 
 	 */
 	public PlanningBasedAlignmentParameters getPlanningBasedAlignmentParameters(
-			UIPluginContext context, XLog log, DataPetriNet petrinet) {
+			UIPluginContext context, XLog log, Petrinet petrinet) {
 		
 		// init local parameter
 		PlanningBasedAlignmentParameters parameters = null;
@@ -165,7 +165,7 @@ public class ConfigurationUI {
 	 * @param context
 	 * @param petrinet
 	 */
-	private void configureInitialMarking(UIPluginContext context, DataPetriNet petrinet) {
+	private void configureInitialMarking(UIPluginContext context, Petrinet petrinet) {
 		try {	
 			InitialMarkingConnection initCon = ConnectionManagerHelper
 					.safeGetFirstConnection(context.getConnectionManager(), InitialMarkingConnection.class, petrinet);
@@ -208,7 +208,7 @@ public class ConfigurationUI {
 	 * @param context The context to run in.
 	 * @param petrinet The Petri net.
 	 */
-	private void configureFinalMarking(UIPluginContext context, DataPetriNet petrinet) {
+	private void configureFinalMarking(UIPluginContext context, Petrinet petrinet) {
 		// check existence of final marking
 		try {			
 			FinalMarkingConnection finalConn = ConnectionManagerHelper

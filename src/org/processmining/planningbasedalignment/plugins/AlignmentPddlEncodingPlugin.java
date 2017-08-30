@@ -9,10 +9,10 @@ import javax.swing.JPanel;
 import org.deckfour.xes.model.XLog;
 import org.processmining.contexts.uitopia.UIPluginContext;
 import org.processmining.contexts.uitopia.annotations.UITopiaVariant;
-import org.processmining.datapetrinets.DataPetriNet;
 import org.processmining.framework.plugin.annotations.Plugin;
 import org.processmining.framework.plugin.annotations.PluginCategory;
 import org.processmining.framework.plugin.annotations.PluginVariant;
+import org.processmining.models.graphbased.directed.petrinet.Petrinet;
 import org.processmining.planningbasedalignment.algorithms.AlignmentPddlEncoding;
 import org.processmining.planningbasedalignment.help.HelpMessages;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
@@ -51,7 +51,7 @@ public class AlignmentPddlEncodingPlugin extends AlignmentPddlEncoding {
 	@UITopiaVariant(affiliation = AFFILIATION, author = AUTHOR, email = EMAIL)
 	@PluginVariant(variantLabel = "Generate PDDL Encoding for Planning-based Alignment",
 	requiredParameterLabels = { 0, 1 })
-	public void runUI(UIPluginContext context, XLog log, DataPetriNet petrinet) {
+	public void runUI(UIPluginContext context, XLog log, Petrinet petrinet) {
 		
 		ConfigurationUI configurationUI = new ConfigurationUI();
 		PlanningBasedAlignmentParameters parameters = configurationUI.getPlanningBasedAlignmentParameters(

@@ -9,7 +9,7 @@ import org.deckfour.xes.classification.XEventClass;
 import org.deckfour.xes.classification.XEventClassifier;
 import org.deckfour.xes.model.XEvent;
 import org.deckfour.xes.model.XTrace;
-import org.processmining.datapetrinets.DataPetriNet;
+import org.processmining.models.graphbased.directed.petrinet.Petrinet;
 import org.processmining.models.graphbased.directed.petrinet.PetrinetEdge;
 import org.processmining.models.graphbased.directed.petrinet.PetrinetNode;
 import org.processmining.models.graphbased.directed.petrinet.elements.Place;
@@ -32,7 +32,7 @@ public abstract class AbstractPddlEncoder {
 	protected static final String INVISIBLE_TRANSITION_PREFIX = "generatedinv";
 	protected static final String DUMMY = "DUMMY";
 	
-	protected DataPetriNet petrinet;
+	protected Petrinet petrinet;
 	protected PlanningBasedAlignmentParameters parameters;
 	
 	/**
@@ -60,7 +60,7 @@ public abstract class AbstractPddlEncoder {
 	 */
 	protected StringBuffer movesOnModelBuffer;
 	
-	protected AbstractPddlEncoder(DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) {
+	protected AbstractPddlEncoder(Petrinet petrinet, PlanningBasedAlignmentParameters parameters) {
 		this.petrinet = petrinet;
 		this.parameters = parameters;
 		

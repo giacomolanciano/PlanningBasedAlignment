@@ -17,8 +17,8 @@ import org.deckfour.xes.classification.XEventClassifier;
 import org.deckfour.xes.model.XEvent;
 import org.deckfour.xes.model.XLog;
 import org.deckfour.xes.model.XTrace;
-import org.processmining.datapetrinets.DataPetriNet;
 import org.processmining.framework.plugin.PluginContext;
+import org.processmining.models.graphbased.directed.petrinet.Petrinet;
 import org.processmining.models.graphbased.directed.petrinet.elements.Transition;
 import org.processmining.planningbasedalignment.models.PlanningBasedReplayResult;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
@@ -83,7 +83,7 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 	 * @return The result of the replay of the event log on the Petri net.
 	 */
 	protected PlanningBasedReplayResult align(
-			PluginContext context, XLog log, DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) {
+			PluginContext context, XLog log, Petrinet petrinet, PlanningBasedAlignmentParameters parameters) {
 		  
 		PlanningBasedReplayResult output = null;
 		
@@ -254,7 +254,7 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 	 * @throws IOException
 	 */
 	private PlanningBasedReplayResult parsePlannerOutput(
-			XLog log, DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) throws IOException {
+			XLog log, Petrinet petrinet, PlanningBasedAlignmentParameters parameters) throws IOException {
 		
 		if (!plansFoundDir.exists()) {
 			throw new RuntimeException("The planner output directory does not exist.");
@@ -366,11 +366,6 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 				// create alignment object
 				dataAlignmentState = new DataAlignmentState(logTrace, modelTrace, traceAlignmentCost);
 				float fitness = computeFitness(trace, traceAlignmentCost, emptyTraceAlignmentCost, parameters);
-				
-				// since the visualization used by the plug-in takes also into account the data fitness, 
-				// control flow fitness has to be adjusted in order to be shown properly.
-//				fitness = adjustFitness(fitness);
-				
 				dataAlignmentState.setControlFlowFitness(fitness);
 				
 				// add alignment object to collection
@@ -395,11 +390,7 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 		System.out.println("\tStandard deviation:       " + generatedStatesSummary.getStandardDeviation());
 		
 		// produce result to be visualized
-//		VariableMatchCosts variableCost = VariableMatchCosts.NOCOST;			// dummy
-//		Map<String, String> variableMapping = new HashMap<String, String>();	// dummy
 		XEventClassifier eventClassifier = parameters.getTransitionsEventsMapping().getEventClassifier();
-//		result = new PlanningBasedReplayResult(
-//				alignments, null, variableCost, variableMapping, log, eventClassifier);
 		result = new PlanningBasedReplayResult(
 				alignments, eventClassifier, log, petrinet,
 				alignmentTimeSummary, expandedStatesSummary, generatedStatesSummary);

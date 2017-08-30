@@ -7,7 +7,7 @@ import java.util.Map.Entry;
 import org.deckfour.xes.classification.XEventClass;
 import org.deckfour.xes.model.XEvent;
 import org.deckfour.xes.model.XTrace;
-import org.processmining.datapetrinets.DataPetriNet;
+import org.processmining.models.graphbased.directed.petrinet.Petrinet;
 import org.processmining.models.graphbased.directed.petrinet.PetrinetEdge;
 import org.processmining.models.graphbased.directed.petrinet.PetrinetNode;
 import org.processmining.models.graphbased.directed.petrinet.elements.Place;
@@ -24,7 +24,7 @@ import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmen
  */
 public class StandardPddlEncoder extends AbstractPddlEncoder {
 	
-	public StandardPddlEncoder(DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) {
+	public StandardPddlEncoder(Petrinet petrinet, PlanningBasedAlignmentParameters parameters) {
 		super(petrinet, parameters);
 	}
 	
