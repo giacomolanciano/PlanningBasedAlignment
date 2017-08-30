@@ -7,8 +7,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,6 +20,7 @@ import org.deckfour.xes.model.XTrace;
 import org.processmining.datapetrinets.DataPetriNet;
 import org.processmining.framework.plugin.PluginContext;
 import org.processmining.models.graphbased.directed.petrinet.elements.Transition;
+import org.processmining.planningbasedalignment.models.PlanningBasedReplayResult;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 import org.processmining.planningbasedalignment.pddl.AbstractPddlEncoder;
 import org.processmining.planningbasedalignment.utils.FilesWritingProgressChecker;
@@ -30,10 +29,8 @@ import org.processmining.planningbasedalignment.utils.PlannerSearchStrategy;
 import org.processmining.planningbasedalignment.utils.StreamAsyncReader;
 import org.processmining.plugins.DataConformance.DataAlignment.DataAlignmentState;
 import org.processmining.plugins.DataConformance.DataAlignment.GenericTrace;
-import org.processmining.plugins.DataConformance.DataAlignment.PetriNet.ResultReplayPetriNetWithData;
 import org.processmining.plugins.DataConformance.framework.ExecutionStep;
 import org.processmining.plugins.DataConformance.framework.ExecutionTrace;
-import org.processmining.plugins.DataConformance.framework.VariableMatchCosts;
 
 /**
  * The implementation of the algorithm for Planning-based Alignment of an event log and a Petri net.
@@ -85,10 +82,10 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 	 * @param parameters The parameters to use.
 	 * @return The result of the replay of the event log on the Petri net.
 	 */
-	protected ResultReplayPetriNetWithData align(
+	protected PlanningBasedReplayResult align(
 			PluginContext context, XLog log, DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) {
 		  
-		ResultReplayPetriNetWithData output = null;
+		PlanningBasedReplayResult output = null;
 		
 		try {
 			buildPlannerInput(null, context, log, petrinet, parameters);
@@ -256,7 +253,7 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 	 * @return The alignment of the event log and the Petri net.
 	 * @throws IOException
 	 */
-	private ResultReplayPetriNetWithData parsePlannerOutput(
+	private PlanningBasedReplayResult parsePlannerOutput(
 			XLog log, DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) throws IOException {
 		
 		if (!plansFoundDir.exists()) {
@@ -268,7 +265,7 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 		ExecutionTrace modelTrace;
 		DataAlignmentState dataAlignmentState;
 		ArrayList<DataAlignmentState> alignments = new ArrayList<DataAlignmentState>();
-		ResultReplayPetriNetWithData result = null;		
+		PlanningBasedReplayResult result = null;		
 		float traceAlignmentCost;
 		float emptyTraceAlignmentCost = 0;
 		
@@ -372,7 +369,7 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 				
 				// since the visualization used by the plug-in takes also into account the data fitness, 
 				// control flow fitness has to be adjusted in order to be shown properly.
-				fitness = adjustFitness(fitness);
+//				fitness = adjustFitness(fitness);
 				
 				dataAlignmentState.setControlFlowFitness(fitness);
 				
@@ -398,11 +395,13 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 		System.out.println("\tStandard deviation:       " + generatedStatesSummary.getStandardDeviation());
 		
 		// produce result to be visualized
-		VariableMatchCosts variableCost = VariableMatchCosts.NOCOST;			// dummy
-		Map<String, String> variableMapping = new HashMap<String, String>();	// dummy
+//		VariableMatchCosts variableCost = VariableMatchCosts.NOCOST;			// dummy
+//		Map<String, String> variableMapping = new HashMap<String, String>();	// dummy
 		XEventClassifier eventClassifier = parameters.getTransitionsEventsMapping().getEventClassifier();
-		result = new ResultReplayPetriNetWithData(
-				alignments, variableCost, variableMapping, petrinet, log, eventClassifier);
+//		result = new PlanningBasedReplayResult(
+//				alignments, null, variableCost, variableMapping, log, eventClassifier);
+		result = new PlanningBasedReplayResult(
+				alignments, log, eventClassifier, alignmentTimeSummary, expandedStatesSummary, generatedStatesSummary);
 		return result;
 	}
 	
@@ -485,6 +484,8 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 	 * @param fitness The float representing the fitness value.
 	 * @return The adjusted value.
 	 */
+	@SuppressWarnings("unused")
+	@Deprecated
 	private float adjustFitness(float fitness) {
 		return (2 * fitness) - 1 ;
 	}

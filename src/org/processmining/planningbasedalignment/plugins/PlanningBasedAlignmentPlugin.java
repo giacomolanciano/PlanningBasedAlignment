@@ -24,10 +24,10 @@ import org.processmining.framework.util.ui.widgets.helper.UserCancelledException
 import org.processmining.planningbasedalignment.algorithms.PlanningBasedAlignment;
 import org.processmining.planningbasedalignment.connections.PlanningBasedAlignmentConnection;
 import org.processmining.planningbasedalignment.help.HelpMessages;
+import org.processmining.planningbasedalignment.models.PlanningBasedReplayResult;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 import org.processmining.planningbasedalignment.ui.ConfigurationUI;
 import org.processmining.planningbasedalignment.utils.ResourcesUnpacker;
-import org.processmining.plugins.DataConformance.DataAlignment.PetriNet.ResultReplayPetriNetWithData;
 
 /**
  * The ProM plug-in for Planning-based Alignment of an event log and a Petri net.
@@ -39,7 +39,7 @@ import org.processmining.plugins.DataConformance.DataAlignment.PetriNet.ResultRe
 	name = "Planning-based Alignment of Event Logs and Petri Nets",
 	parameterLabels = { "Event Log", "Petri Net", "Name of your parameters" }, 
 	returnLabels = { "Petri Net Replay Result" },
-	returnTypes = { ResultReplayPetriNetWithData.class },
+	returnTypes = { PlanningBasedReplayResult.class },
 	userAccessible = true,
 	categories = PluginCategory.ConformanceChecking,
 	keywords = {"conformance", "alignment", "planning", "PDDL"},
@@ -65,7 +65,7 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	@UITopiaVariant(affiliation = AFFILIATION, author = AUTHOR, email = EMAIL)
 	@PluginVariant(variantLabel = "Planning-based Alignment of Event Logs and Petri Nets",
 	requiredParameterLabels = { 0, 1 })
-	public ResultReplayPetriNetWithData runUI(UIPluginContext context, XLog log, DataPetriNet petrinet) {
+	public PlanningBasedReplayResult runUI(UIPluginContext context, XLog log, DataPetriNet petrinet) {
 		
 		if (!isPython27Installed()) {			
 			JOptionPane.showMessageDialog(
@@ -95,7 +95,7 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 		}
 		
 		// start algorithm
-		ResultReplayPetriNetWithData result = runAlgorithm(context, log, petrinet, parameters);
+		PlanningBasedReplayResult result = runAlgorithm(context, log, petrinet, parameters);
 
 		context.getFutureResult(0).setLabel(
 				"Replay result - log " + XConceptExtension.instance().extractName(log) + " on " + petrinet.getLabel()
@@ -113,10 +113,10 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	 * @param parameters The parameters to be used by the alignment algorithm.
 	 * @return The result of the replay of the event log on the Petri net.
 	 */
-	private ResultReplayPetriNetWithData runAlgorithm(
+	private PlanningBasedReplayResult runAlgorithm(
 			UIPluginContext context, XLog log, DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters) {
 			
-		ResultReplayPetriNetWithData replayRes = align(context, log, petrinet, parameters);
+		PlanningBasedReplayResult replayRes = align(context, log, petrinet, parameters);
 		
 		// add connection if result is found
 		if (replayRes != null) {

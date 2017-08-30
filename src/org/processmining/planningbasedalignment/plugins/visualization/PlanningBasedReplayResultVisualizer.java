@@ -12,6 +12,7 @@ import org.processmining.contexts.uitopia.annotations.Visualizer;
 import org.processmining.framework.plugin.PluginContext;
 import org.processmining.framework.plugin.annotations.Plugin;
 import org.processmining.framework.plugin.annotations.PluginVariant;
+import org.processmining.planningbasedalignment.models.PlanningBasedReplayResult;
 import org.processmining.planningbasedalignment.plugins.visualization.StrippedDownAlignmentView.Layout;
 import org.processmining.plugins.DataConformance.Alignment;
 import org.processmining.plugins.DataConformance.ResultReplay;
@@ -29,56 +30,35 @@ import com.google.common.collect.Iterables;
  *
  */
 @Plugin(
-	name = "Planning-based Alignment",
+	name = "01 Planning-based Alignment",
 	returnLabels = { "Planning-based Alignment" },
 	returnTypes = { JComponent.class },
 	parameterLabels = { "Matching Instances" }
 )
 @Visualizer
-public class AlignmentCollectionVisualizer {
+public class PlanningBasedReplayResultVisualizer {
 
 	private StrippedDownAlignmentView alignmentView;
 
 	@PluginVariant(requiredParameterLabels = { 0 })
-	public JComponent visualize(PluginContext context, AlignmentCollection alignments) {
+	public JComponent visualize(PluginContext context, PlanningBasedReplayResult alignments) {
 		XAlignmentConverter converter = new XAlignmentConverter();
-		if (alignments instanceof ResultReplay) {
-			ResultReplay result = (ResultReplay) alignments;
-			final Map<String, XTrace> traceMap = buildTraceMap(result);
-			XTraceResolver traceResolver = new XTraceResolver() {
+		
+		ResultReplay result = (ResultReplay) alignments;
+		final Map<String, XTrace> traceMap = buildTraceMap(result);
+		XTraceResolver traceResolver = new XTraceResolver() {
 
-				public XTrace getOriginalTrace(String name) {
-					return traceMap.get(name);
-				}
+			public XTrace getOriginalTrace(String name) {
+				return traceMap.get(name);
+			}
 
-				public boolean hasOriginalTraces() {
-					return true;
-				}
-			};
-			converter.setClassifier(result.getClassifier()).setVariableMapping(result.getVariableMapping());
-			return doVisualize(context, traceResolver, convertToXAlignment(alignments, traceResolver, converter));
-		} else {
-			return doVisualize(context, new XTraceResolver() {
-
-				public XTrace getOriginalTrace(String name) {
-					return null;
-				}
-
-				public boolean hasOriginalTraces() {
-					return false;
-				}
-
-			}, convertToXAlignment(alignments, new XTraceResolver() {
-				
-				public boolean hasOriginalTraces() {
-					return false;
-				}
-				
-				public XTrace getOriginalTrace(String name) {
-					return null;
-				}
-			},converter));
-		}
+			public boolean hasOriginalTraces() {
+				return true;
+			}
+		};
+		converter.setClassifier(result.getClassifier()).setVariableMapping(result.getVariableMapping());
+		return doVisualize(context, traceResolver, convertToXAlignment(alignments, traceResolver, converter));
+		
 	}
 
 	private Iterable<XAlignment> convertToXAlignment(AlignmentCollection alignments,

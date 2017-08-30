@@ -447,10 +447,10 @@ public class StrippedDownAlignmentView extends JPanel implements DetailView<XAli
 		statisticsModel.getDataVector().clear();
 
 		NumberFormat format = NumberFormat.getPercentInstance();
+		statisticsModel
+			.addRow(new String[] { "Count Traces", NumberFormat.getIntegerInstance().format(fitness.length) });
 		statisticsModel.addRow(new String[] { "Average Fitness", format.format(StatUtils.mean(fitness)) });
 		statisticsModel.addRow(new String[] { "Median Fitness", format.format(StatUtils.percentile(fitness, 50)) });
-		statisticsModel
-				.addRow(new String[] { "Count Traces", NumberFormat.getIntegerInstance().format(fitness.length) });
 
 		statisticsModel.fireTableDataChanged();
 	}

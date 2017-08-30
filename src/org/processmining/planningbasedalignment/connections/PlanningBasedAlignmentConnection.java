@@ -3,8 +3,8 @@ package org.processmining.planningbasedalignment.connections;
 import org.deckfour.xes.model.XLog;
 import org.processmining.datapetrinets.DataPetriNet;
 import org.processmining.framework.connections.impl.AbstractConnection;
+import org.processmining.planningbasedalignment.models.PlanningBasedReplayResult;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
-import org.processmining.plugins.DataConformance.DataAlignment.PetriNet.ResultReplayPetriNetWithData;
 
 /**
  * The connection among plug-in inputs and outputs.
@@ -44,7 +44,7 @@ public class PlanningBasedAlignmentConnection extends AbstractConnection {
 	 */
 	public PlanningBasedAlignmentConnection(
 			XLog log, DataPetriNet petrinet, PlanningBasedAlignmentParameters parameters,
-			ResultReplayPetriNetWithData output) {
+			PlanningBasedReplayResult output) {
 		
 		super("Planning-based Alignment connection");
 		put(LOG_LABEL, log);
