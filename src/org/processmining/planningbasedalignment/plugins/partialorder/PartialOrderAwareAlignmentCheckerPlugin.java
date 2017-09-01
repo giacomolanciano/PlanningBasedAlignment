@@ -10,13 +10,15 @@ import org.processmining.framework.plugin.annotations.PluginVariant;
 import org.processmining.framework.util.ui.widgets.traceview.ProMTraceView.Event;
 import org.processmining.framework.util.ui.widgets.traceview.ProMTraceView.Trace;
 import org.processmining.planningbasedalignment.help.HelpMessages;
+import org.processmining.plugins.DataConformance.ResultReplay;
+import org.processmining.plugins.DataConformance.visualization.comparison.AlignmentComparisonPlugin;
 import org.processmining.plugins.DataConformance.visualization.comparison.AlignmentComparisonPlugin.AlignmentComparisonResult;
 import org.processmining.plugins.DataConformance.visualization.comparison.AlignmentComparisonPlugin.AlignmentEntry;
 
 @Plugin(
 	name = "Partial Order Aware Alignment Checker",
-	parameterLabels = { "Alignment Comparison" }, 
-	returnLabels = { "Filtered Alignment Comparison" },
+	parameterLabels = { "Alignment Comparison", "Partial Order Aware Alignment", "Standard Alignment" }, 
+	returnLabels = { "Alignments Violating Fitness Constraint" },
 	returnTypes = { AlignmentComparisonResult.class },
 	userAccessible = true
 )
@@ -27,7 +29,9 @@ public class PartialOrderAwareAlignmentCheckerPlugin {
 	private static final String EMAIL = "lanciano.1487019@studenti.uniroma1.it";
 	
 	/**
-	 * The plug-in variant that ...
+	 * The plug-in variant that retains the alignments violating the fitness constraint (see
+	 * {@link #checkFitnessConstraint(Trace)}) from a previously computed alignment results comparison. The first 
+	 * alignment result is assumed to be the one that has been computed under Partial Order assumption.
 	 * 
 	 * @param context The context to run in.
 	 * @param log The event log to replay.
@@ -35,8 +39,10 @@ public class PartialOrderAwareAlignmentCheckerPlugin {
 	@UITopiaVariant(
 		affiliation = AFFILIATION, author = AUTHOR, email = EMAIL, pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE,
 		uiLabel = UITopiaVariant.USEVARIANT)
-	@PluginVariant(requiredParameterLabels = { 0 })
-	public AlignmentComparisonResult runCheck(PluginContext context, AlignmentComparisonResult alignmentComparison) {
+	@PluginVariant(
+		variantLabel = "Retain Alignments Violating Fitness Constraint", requiredParameterLabels = { 0 })
+	public AlignmentComparisonResult retainViolatingAlignments(
+			PluginContext context, AlignmentComparisonResult alignmentComparison) {
 		
 		final Collection<AlignmentEntry> filteredEntries = new ArrayList<>();
 		Collection<AlignmentEntry> alignmentComparisonEntries = alignmentComparison.getTraceEntries();
@@ -47,6 +53,8 @@ public class PartialOrderAwareAlignmentCheckerPlugin {
 				filteredEntries.add(entry);
 		}
 		
+		context.getFutureResult(0).setLabel("Alignments Violating Fitness Constraint");
+		
 		return new AlignmentComparisonResult() {
 			public Collection<AlignmentEntry> getTraceEntries() {
 				return filteredEntries;
@@ -55,17 +63,38 @@ public class PartialOrderAwareAlignmentCheckerPlugin {
 	}
 	
 	/**
-	 * Check whether the fitness of the trace aligned under partial order assumption is greater or equal to the ...
-	 * aligned under total order assumption.
+	 * The plug-in variant that compares two alignment results, the first of which is assumed to be the one that has 
+	 * been computed under Partial Order assumption, and retains the alignments violating the fitness constraint (see
+	 * {@link #checkFitnessConstraint(Trace)}).
 	 * 
-	 * @param combinedTrace
-	 * @return true if the fitness of the trace aligned under partial order assumption is greater or equal ...
+	 * @param context The context to run in.
+	 * @param log The event log to replay.
+	 */
+	@UITopiaVariant(
+		affiliation = AFFILIATION, author = AUTHOR, email = EMAIL, pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE,
+		uiLabel = UITopiaVariant.USEVARIANT)
+	@PluginVariant(
+		variantLabel = "Compare Alignment Results to Check Fitness Constraint", requiredParameterLabels = { 1, 2 })
+	public AlignmentComparisonResult compareAlignmentResults(
+			PluginContext context, final ResultReplay partialOrderAwareResult, final ResultReplay result)
+					throws Exception {
+		
+		return retainViolatingAlignments(
+				context, new AlignmentComparisonPlugin().compareLogs(context, partialOrderAwareResult, result));
+	}
+	
+	/**
+	 * Check whether the fitness of the trace aligned under Partial Order assumption is greater or equal to the fitness
+	 * of the trace aligned under Total Order (standard) assumption.
+	 * 
+	 * @param combinedTrace the alignments whose fitness values must be checked.
+	 * @return true if the constraint is satisfied.
 	 */
 	private boolean checkFitnessConstraint(Trace<? extends Event> combinedTrace) {		
-		String stringFitnessA = (combinedTrace.getName().split("Fitness A:"))[1].trim().replace("%", "");
-		String stringFitnessB = (combinedTrace.getInfo().split("Fitness B:"))[1].trim().replace("%", "");
-		int fitnessA = Integer.parseInt(stringFitnessA);
-		int fitnessB = Integer.parseInt(stringFitnessB);
+		String parsedFitnessA = (combinedTrace.getName().split("Fitness A:"))[1].trim().replace("%", "");
+		String parsedFitnessB = (combinedTrace.getInfo().split("Fitness B:"))[1].trim().replace("%", "");
+		int fitnessA = Integer.parseInt(parsedFitnessA);
+		int fitnessB = Integer.parseInt(parsedFitnessB);
 		
 		// assume trace A to have been aligned under partially ordered assumption
 		return fitnessA >= fitnessB;
