@@ -336,7 +336,7 @@ public class PartialOrderAwarePddlEncoder extends AbstractPddlEncoder {
 	private static String extractSafeEventTimestamp(XEvent event) {		
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 		Date date = XTimeExtension.instance().extractTimestamp(event);
-		String timestamp = dateFormat.format(date);		
+		String timestamp = dateFormat.format(date);
 		return timestamp;
 	}
 	
