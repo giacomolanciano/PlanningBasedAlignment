@@ -38,8 +38,8 @@ public class PartialOrderAwareAlignmentCheckerPlugin {
 	@PluginVariant(requiredParameterLabels = { 0 })
 	public AlignmentComparisonResult runCheck(PluginContext context, AlignmentComparisonResult alignmentComparison) {
 		
+		final Collection<AlignmentEntry> filteredEntries = new ArrayList<>();
 		Collection<AlignmentEntry> alignmentComparisonEntries = alignmentComparison.getTraceEntries();
-		Collection<AlignmentEntry> filteredEntries = new ArrayList<>();
 		
 		for (AlignmentEntry entry : alignmentComparisonEntries) {
 			Trace<? extends Event> combinedTrace = entry.getCombinedTrace();
