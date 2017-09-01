@@ -18,9 +18,10 @@ import org.processmining.contexts.uitopia.annotations.UITopiaVariant;
 import org.processmining.framework.plugin.PluginContext;
 import org.processmining.framework.plugin.annotations.Plugin;
 import org.processmining.framework.plugin.annotations.PluginVariant;
+import org.processmining.planningbasedalignment.help.HelpMessages;
 
 @Plugin(
-	name = "Partial Order Maker (Daily)",
+	name = "Partial Order Maker",
 	parameterLabels = { "Event Log" }, 
 	returnLabels = { "Partially Ordered Log" },
 	returnTypes = { XLog.class },
@@ -39,9 +40,10 @@ public class PartialOrderMakerPlugin {
 	 * @param context The context to run in.
 	 * @param log The event log to replay.
 	 */
-	@UITopiaVariant(affiliation = AFFILIATION, author = AUTHOR, email = EMAIL)
-	@PluginVariant(variantLabel = "Partial Order Maker (Daily)",
-	requiredParameterLabels = { 0 })
+	@UITopiaVariant(
+		affiliation = AFFILIATION, author = AUTHOR, email = EMAIL, pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE,
+		uiLabel = UITopiaVariant.USEVARIANT)
+	@PluginVariant(variantLabel = "Partial Order Maker (Daily)", requiredParameterLabels = { 0 })
 	public XLog makeDailyPartialOrder(PluginContext context, XLog log) {
 
 		XFactory factory = XFactoryRegistry.instance().currentDefault();

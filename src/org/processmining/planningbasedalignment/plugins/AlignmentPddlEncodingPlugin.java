@@ -48,9 +48,9 @@ public class AlignmentPddlEncodingPlugin extends AlignmentPddlEncoding {
 	 * @param log The event log to replay.
 	 * @param petrinet The Petri net on which the log has to be replayed.
 	 */
-	@UITopiaVariant(affiliation = AFFILIATION, author = AUTHOR, email = EMAIL)
-	@PluginVariant(variantLabel = "Generate PDDL Encoding for Planning-based Alignment",
-	requiredParameterLabels = { 0, 1 })
+	@UITopiaVariant(
+		affiliation = AFFILIATION, author = AUTHOR, email = EMAIL, pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE)
+	@PluginVariant(requiredParameterLabels = { 0, 1 })
 	public void runUI(UIPluginContext context, XLog log, Petrinet petrinet) {
 		
 		ConfigurationUI configurationUI = new ConfigurationUI();

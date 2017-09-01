@@ -2,6 +2,8 @@ package org.processmining.planningbasedalignment.help;
 
 public class HelpMessages {
 
+	public final static String PLANNING_BASED_ALIGNMENT_PACKAGE = "PlanningBasedAlignment";
+	
 	public final static String PLANNING_BASED_ALIGNMENT_ARTICLE = 
 		"'Aligning Real Process Executions and Prescriptive Process Models through Automated Planning' "
 		+ "by M. de Leoni and A. Marrella";

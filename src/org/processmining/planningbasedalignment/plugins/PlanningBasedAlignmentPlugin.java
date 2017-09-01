@@ -62,9 +62,9 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	 * @throws ConnectionCannotBeObtained
 	 * @throws UserCancelledException 
 	 */
-	@UITopiaVariant(affiliation = AFFILIATION, author = AUTHOR, email = EMAIL)
-	@PluginVariant(variantLabel = "Planning-based Alignment of Event Logs and Petri Nets",
-	requiredParameterLabels = { 0, 1 })
+	@UITopiaVariant(
+		affiliation = AFFILIATION, author = AUTHOR, email = EMAIL, pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE)
+	@PluginVariant(requiredParameterLabels = { 0, 1 })
 	public PlanningBasedReplayResult runUI(UIPluginContext context, XLog log, Petrinet petrinet) {
 		
 		if (!isPython27Installed()) {			
