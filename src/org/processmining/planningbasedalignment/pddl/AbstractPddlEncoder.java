@@ -98,9 +98,51 @@ public abstract class AbstractPddlEncoder {
 	abstract protected String createPropositionalProblem(XTrace trace);
 
 	/**
+	 * Return a valid PDDL id for the given transition.
+	 * 
+	 * @param transition
+	 * @return
+	 */
+	protected String encode(Transition transition) {
+		return petrinetNodeToPddlIdMapping.get(transition);
+	}
+
+	/**
+	 * Return a valid PDDL id for the given place.
+	 * 
+	 * @param place
+	 * @return
+	 */
+	protected String encode(Place place) {
+		return petrinetNodeToPddlIdMapping.get(place);
+	}
+
+	/**
+	 * Return a valid PDDL id for the given event class.
+	 * 
+	 * @param eventLabel
+	 * @return
+	 */
+	protected String encode(XEventClass eventLabel) {
+		return getCorrectPddlFormat(eventLabel.toString());
+	}
+	
+	/**
+	 * Return a valid PDDL id for the given event, that is the same we would get by encoding the class this event
+	 * belongs to (acording to the event log classifier).
+	 * 
+	 * @param event
+	 * @return
+	 */
+	protected String encode(XEvent event) {
+		XEventClassifier eventClassifier = parameters.getTransitionsEventsMapping().getEventClassifier();
+		return getCorrectPddlFormat(eventClassifier.getClassIdentity(event));
+	}
+	
+	/**
 	 * Populate the mappings that relate Petri net nodes and events class with their PDDL identifiers.
 	 */
-	protected void buildMappings() {
+	private void buildMappings() {
 		
 		Transition transition;
 		String pddlTransitionId;
@@ -151,14 +193,14 @@ public abstract class AbstractPddlEncoder {
 			pddlIdToPetrinetNodeMapping.put(pddlPlaceId, place);
 		}
 	}
-
+	
 	/**
 	 * Format string to be a valid PDDL identifier. Notice that lower-case ids are safer.
 	 * 
 	 * @param string The string to be formatted.
 	 * @return The correctly formatted string.
 	 */
-	protected static String getCorrectPddlFormat(String string)  {
+	private String getCorrectPddlFormat(String string)  {
 		string = string.replaceAll(" ", "");
 		string = string.replaceAll("\\/", "");
 		string = string.replaceAll("\\(", "");
@@ -169,6 +211,7 @@ public abstract class AbstractPddlEncoder {
 		string = string.replaceAll("\\,", "_");
 		string = string.replaceAll("\\+", "_");
 		string = string.replaceAll("\\-", "_");
+		string = string.replaceAll(SEPARATOR, "_");  // to avoid errors when parsing planner output
 		return string.toLowerCase();
 	}
 	
@@ -179,7 +222,7 @@ public abstract class AbstractPddlEncoder {
 	 * @param pddlId The PDDL id to be aliased.
 	 * @return The (possibly) aliased PDDL id.
 	 */
-	protected String getAliasedPddlId(String pddlId) {		
+	private String getAliasedPddlId(String pddlId) {		
 		Integer pddlIdOccurrences = pddlIdToOccurrencesMapping.get(pddlId);
 		if (pddlIdOccurrences != null) {
 			// update occurrences
@@ -197,55 +240,13 @@ public abstract class AbstractPddlEncoder {
 		pddlIdToOccurrencesMapping.put(pddlId, 1);
 		return pddlId;
 	}
-
-	/**
-	 * Return a valid PDDL id for the given transition.
-	 * 
-	 * @param transition
-	 * @return
-	 */
-	protected String encode(Transition transition) {
-		return petrinetNodeToPddlIdMapping.get(transition);
-	}
-
-	/**
-	 * Return a valid PDDL id for the given place.
-	 * 
-	 * @param place
-	 * @return
-	 */
-	protected String encode(Place place) {
-		return petrinetNodeToPddlIdMapping.get(place);
-	}
-
-	/**
-	 * Return a valid PDDL id for the given event class.
-	 * 
-	 * @param eventLabel
-	 * @return
-	 */
-	protected String encode(XEventClass eventLabel) {
-		return getCorrectPddlFormat(eventLabel.toString());
-	}
-	
-	/**
-	 * Return a valid PDDL id for the given event, that is the same we would get by encoding the class this event
-	 * belongs to (acording to the event log classifier).
-	 * 
-	 * @param event
-	 * @return
-	 */
-	protected String encode(XEvent event) {
-		XEventClassifier eventClassifier = parameters.getTransitionsEventsMapping().getEventClassifier();
-		return getCorrectPddlFormat(eventClassifier.getClassIdentity(event));
-	}
 	
 	/**
 	 * Compute the PDDL encoding of the moves on model.
 	 * 
 	 * @return A {@link StringBuffer} containing the PDDL encoding of the moves on model.
 	 */
-	protected StringBuffer getMovesOnModelEncoding() {
+	private StringBuffer getMovesOnModelEncoding() {
 		
 		StringBuffer result = new StringBuffer();
 		Map<Transition, Integer> movesOnModelCosts = parameters.getMovesOnModelCosts();

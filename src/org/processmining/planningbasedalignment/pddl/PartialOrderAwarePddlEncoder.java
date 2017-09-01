@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.collections15.MapUtils;
 import org.deckfour.xes.classification.XEventClass;
 import org.deckfour.xes.extension.std.XTimeExtension;
 import org.deckfour.xes.model.XEvent;
@@ -108,6 +109,11 @@ public class PartialOrderAwarePddlEncoder extends AbstractPddlEncoder {
 				groupIdToEventsMapping.put(groupId, isochronousGroup);
 			}
 		}
+		
+		// print data structure for debug
+		MapUtils.debugPrint(System.out, "eventToLabel", eventToLabelMapping);
+		MapUtils.debugPrint(System.out, "timestampToGroupId", timestampToGroupIdMapping);
+		MapUtils.debugPrint(System.out, "groupIdToEvents", groupIdToEventsMapping);
 	}
 	
 	@Override
@@ -343,7 +349,7 @@ public class PartialOrderAwarePddlEncoder extends AbstractPddlEncoder {
 	 */
 	private ArrayList<XEvent> getPreviousIsochronousGroup(XEvent event) {
 		String timestamp = extractSafeEventTimestamp(event);
-		Integer groupId = timestampToGroupIdMapping.get(timestamp);  // cannot be null
+		Integer groupId = timestampToGroupIdMapping.get(timestamp);
 		
 		if (groupId == null)
 			throw new RuntimeException("Unable to find a group associated with timestamp " + timestamp);
