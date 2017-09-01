@@ -1,4 +1,4 @@
-package org.processmining.planningbasedalignment.plugins;
+package org.processmining.planningbasedalignment.plugins.partialorder;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;

@@ -97,9 +97,13 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 		// start algorithm
 		PlanningBasedReplayResult result = runAlgorithm(context, log, petrinet, parameters);
 
-		context.getFutureResult(0).setLabel(
-				"Replay result - log " + XConceptExtension.instance().extractName(log) + " on " + petrinet.getLabel()
-				+ " using Automated Planning");
+		String resultLabel = "Replay result - log " + XConceptExtension.instance().extractName(log) 
+				+ " on " + petrinet.getLabel() + " using Automated Planning";
+		
+		if (parameters.isPartiallyOrderedEvents())
+			resultLabel += " (Partial Order Assumption)";
+		
+		context.getFutureResult(0).setLabel(resultLabel);
 		return result;
 
 	}
