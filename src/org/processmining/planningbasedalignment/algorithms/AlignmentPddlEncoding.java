@@ -33,6 +33,7 @@ public class AlignmentPddlEncoding {
 	protected static final String PDDL_PROBLEM_FILE_PREFIX = "problem";
 	protected static final int EMPTY_TRACE_POS = 0;
 	protected static final int PDDL_FILES_PER_TRACE = 2;
+	protected static final int PROGRESS_CHECKER_DELAY = 1000;
 	
 	/**
 	 * The object used to generate the PDDL encodings.
@@ -116,10 +117,11 @@ public class AlignmentPddlEncoding {
 		XTrace emptyTrace = new XTraceImpl(new XAttributeMapImpl());
 		writePddlEncoding(emptyTrace, EMPTY_TRACE_POS);
 		
-		// start progress checker
+		// start progress checker (ignoring empty trace related files)
 		int totalPddlFilesNum =  (tracePosToCheckTo - tracePosToCheckFrom + 1) * PDDL_FILES_PER_TRACE;
 		pddlEncodingProgressChecker = new FilesWritingProgressChecker(
-				context, pddlFilesDir, totalPddlFilesNum, " PDDL files written so far.", 1000);
+				context, pddlFilesDir, totalPddlFilesNum, PDDL_FILES_PER_TRACE, " PDDL files written so far.",
+				PROGRESS_CHECKER_DELAY);
 		pddlEncodingProgressChecker.start();
 		
 		// consider only the traces in the chosen interval

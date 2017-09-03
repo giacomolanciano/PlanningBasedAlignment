@@ -35,6 +35,11 @@ public class FilesWritingProgressChecker extends Thread {
 	private int totalFilesNum;
 	
 	/**
+	 * The amount to be ... from the file counter. 
+	 */
+	private int fileCounterDelta;
+	
+	/**
 	 * The message to be displayed beside the file counter.
 	 */
 	private String message;
@@ -49,11 +54,12 @@ public class FilesWritingProgressChecker extends Thread {
 	 * @param message The message to be displayed beside the file counter.
 	 */
 	public FilesWritingProgressChecker(
-			PluginContext context, File directory, int totalFilesNum, String message) {
+			PluginContext context, File directory, int totalFilesNum, int fileCounterDelta, String message) {
 		super();
 		this.context = context;
 		this.directory = directory;
 		this.totalFilesNum = totalFilesNum;
+		this.fileCounterDelta = fileCounterDelta;
 		this.message = message;
 		this.delayMillisecs = DEFAULT_DELAY_MILLISECS;
 	}
@@ -69,11 +75,13 @@ public class FilesWritingProgressChecker extends Thread {
 	 * @param delayMillisecs The delay after which the thread show the progress.
 	 */
 	public FilesWritingProgressChecker(
-			PluginContext context, File directory, int totalFilesNum, String message, int delayMillisecs) {
+			PluginContext context, File directory, int totalFilesNum, int fileCounterDelta, String message,
+			int delayMillisecs) {
 		super();
 		this.context = context;
 		this.directory = directory;
 		this.totalFilesNum = totalFilesNum;
+		this.fileCounterDelta = fileCounterDelta;
 		this.message = message;
 		this.delayMillisecs = delayMillisecs;
 	}
@@ -82,8 +90,13 @@ public class FilesWritingProgressChecker extends Thread {
 	public void run() {
 		try {
 			while(true) {
-				int filesNum = directory.listFiles().length;
-				context.log(filesNum + "/" + totalFilesNum + " " + message);				
+				int fileCounter = directory.listFiles().length - fileCounterDelta;
+				
+				// do not show negative counter
+				if (fileCounter < 0)
+					fileCounter = 0;
+				
+				context.log(fileCounter + "/" + totalFilesNum + " " + message);				
 				Thread.sleep(delayMillisecs);
 			}
 		} catch (InterruptedException e) {

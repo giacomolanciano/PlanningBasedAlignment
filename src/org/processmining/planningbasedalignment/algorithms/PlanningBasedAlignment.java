@@ -52,6 +52,7 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 	protected static final String COMMAND_ARG_PLACEHOLDER = "+";
 	protected static final String CASE_PREFIX = "Case ";
 	protected static final int INITIAL_EXECUTION_TRACE_CAPACITY = 10;
+	protected static final int RESULT_FILES_PER_TRACE = 1;
 
 	public static final String DEFAULT_TIME_UNIT = " ms";
 	
@@ -152,11 +153,11 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 		errorGobbler.start();
 		outputGobbler.start();
 		
-		// start thread to show progress to the user
+		// start progress checker (ignoring empty trace related files)
 		int[] traceInterval = parameters.getTracesInterval();
 		int totalAlignmentsNum = traceInterval[1] - traceInterval[0] + 1;
 		alignmentProgressChecker = new FilesWritingProgressChecker(
-				context, plansFoundDir, totalAlignmentsNum, " alignments processed so far.");
+				context, plansFoundDir, totalAlignmentsNum, RESULT_FILES_PER_TRACE, " alignments processed so far.");
 		alignmentProgressChecker.start();
 
 		// wait for the process to return to read the generated outputs
