@@ -36,7 +36,7 @@ public class FilesWritingProgressChecker extends Thread {
 	private int totalFilesNum;
 	
 	/**
-	 * The amount to be ... from the file counter. 
+	 * The amount to be deducted from the file counter. 
 	 */
 	private int fileCounterDelta;
 	
