@@ -16,6 +16,7 @@ import org.deckfour.xes.model.XLog;
 import org.deckfour.xes.model.XTrace;
 import org.processmining.contexts.uitopia.annotations.UITopiaVariant;
 import org.processmining.framework.plugin.PluginContext;
+import org.processmining.framework.plugin.Progress;
 import org.processmining.framework.plugin.annotations.Plugin;
 import org.processmining.framework.plugin.annotations.PluginVariant;
 import org.processmining.planningbasedalignment.help.HelpMessages;
@@ -46,9 +47,14 @@ public class PartialOrderMakerPlugin {
 	@PluginVariant(variantLabel = "Partial Order Maker (Daily)", requiredParameterLabels = { 0 })
 	public XLog makeDailyPartialOrder(PluginContext context, XLog log) {
 
-		XFactory factory = XFactoryRegistry.instance().currentDefault();
+		// init progress bar
+		Progress progress = context.getProgress();
+		progress.setIndeterminate(false);
+		progress.setMaximum(log.size());
+		progress.setMinimum(0);
 		
 		// create new log with the same attributes (make copy to avoid side-effects)
+		XFactory factory = XFactoryRegistry.instance().currentDefault();
 		XLog newLog = factory.createLog((XAttributeMap) log.getAttributes().clone());
 		String newLogName = "Partially Ordered " + XConceptExtension.instance().extractName(log);
 		XConceptExtension.instance().assignName(newLog, newLogName);
@@ -70,6 +76,9 @@ public class PartialOrderMakerPlugin {
 			}
 			
 			newLog.add(newTrace);
+			
+			// update progress bar
+			progress.setValue(progress.getValue() + 1);
 		}
 		
 		// set result label

@@ -3,6 +3,7 @@ package org.processmining.planningbasedalignment.utils;
 import java.io.File;
 
 import org.processmining.framework.plugin.PluginContext;
+import org.processmining.framework.plugin.Progress;
 
 /**
  * Worker thread for showing the progress of a process that writes a bunch of files in a directory. 
@@ -62,6 +63,7 @@ public class FilesWritingProgressChecker extends Thread {
 		this.fileCounterDelta = fileCounterDelta;
 		this.message = message;
 		this.delayMillisecs = DEFAULT_DELAY_MILLISECS;
+		initProgressBar();
 	}
 	
 	/**
@@ -84,6 +86,7 @@ public class FilesWritingProgressChecker extends Thread {
 		this.fileCounterDelta = fileCounterDelta;
 		this.message = message;
 		this.delayMillisecs = delayMillisecs;
+		initProgressBar();
 	}
 
 	@Override
@@ -96,12 +99,20 @@ public class FilesWritingProgressChecker extends Thread {
 				if (fileCounter < 0)
 					fileCounter = 0;
 				
-				context.log(fileCounter + "/" + totalFilesNum + " " + message);				
+				context.log(fileCounter + "/" + totalFilesNum + " " + message);
+				context.getProgress().setValue(fileCounter);
 				Thread.sleep(delayMillisecs);
 			}
 		} catch (InterruptedException e) {
 			System.out.println("Stop checking progress.");
 		}
+	}
+	
+	private void initProgressBar() {
+		Progress progress = context.getProgress();
+		progress.setIndeterminate(false);
+		progress.setMaximum(totalFilesNum);
+		progress.setMinimum(0);
 	}
 	
 }
