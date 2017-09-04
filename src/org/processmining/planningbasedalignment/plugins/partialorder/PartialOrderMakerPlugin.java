@@ -60,19 +60,35 @@ public class PartialOrderMakerPlugin {
 		XConceptExtension.instance().assignName(newLog, newLogName);
 		
 		for (XTrace trace : log) {
+			String caseId = XConceptExtension.instance().extractName(trace);
+
+			// initialize a default timestamp for events that have a null one
+			Date defaultDate = new Date(0);
+			
 			// create new trace with the same attributes (make copy to avoid side-effects)
 			XTrace newTrace = factory.createTrace((XAttributeMap) trace.getAttributes().clone());
 			
+			int eventPos = 1;
 			for (XEvent event : trace) {
 				// create new event with the same attributes (make copy to avoid side-effects)
 				XEvent newEvent = factory.createEvent((XAttributeMap) event.getAttributes().clone());
 				Date date = XTimeExtension.instance().extractTimestamp(newEvent);
+				
+				if (date == null) {
+					// the event has a null timestamp, set it as equal to the timestamp of the previous event
+					context.log(new RuntimeException("Null timestamp at trace " + caseId + ", event #" + eventPos));
+					date = defaultDate;
+				}
 				
 				// round down timestamp to midnight of the same day
 				Date newDate = DateUtils.truncate(date, Calendar.DATE);
 				XTimeExtension.instance().assignTimestamp(newEvent, newDate);
 				
 				newTrace.add(newEvent);
+				
+				// update default date
+				defaultDate = (Date) date.clone();
+				eventPos++;
 			}
 			
 			newLog.add(newTrace);
@@ -84,7 +100,7 @@ public class PartialOrderMakerPlugin {
 		// set result label
 		DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
 		Date date = new Date();		
-		String resultLabel = newLogName + " (created @ "+dateFormat.format(date)+")";		
+		String resultLabel = newLogName + " (created @ " + dateFormat.format(date) + ")";		
 		context.getFutureResult(0).setLabel(resultLabel);
 		
 		return newLog;
