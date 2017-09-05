@@ -48,7 +48,6 @@ import org.processmining.framework.util.ui.widgets.traceview.model.FilteredListM
 import org.processmining.framework.util.ui.widgets.traceview.model.FilteredListModelImpl.ListModelFilter;
 import org.processmining.planningbasedalignment.algorithms.PlanningBasedAlignment;
 import org.processmining.planningbasedalignment.models.PlanningBasedReplayResult;
-import org.processmining.plugins.DataConformance.visualization.alignment.AlignmentLegend;
 import org.processmining.plugins.DataConformance.visualization.alignment.AlignmentListView;
 import org.processmining.plugins.DataConformance.visualization.alignment.AlignmentListView.XAlignmentOrdering;
 import org.processmining.plugins.DataConformance.visualization.alignment.AlignmentQueryPredicate;
@@ -172,7 +171,7 @@ public class StrippedDownAlignmentView extends JPanel implements DetailView<XAli
 			JPanel rightPanel = new JPanel();
 			rightPanel.setAlignmentY(Component.TOP_ALIGNMENT);
 			preparePanel(rightPanel, BoxLayout.Y_AXIS);
-			rightPanel.add(new AlignmentLegend());
+			rightPanel.add(new StrippedDownAlignmentLegend());
 
 			rightPanel.add(createHeading("ALIGNMENT STATISTICS"));
 			rightPanel.add(Box.createVerticalStrut(5));
