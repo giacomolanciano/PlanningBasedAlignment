@@ -1,11 +1,9 @@
-package org.processmining.planningbasedalignment.plugins.partialorder;
+package org.processmining.planningbasedalignment.plugins.partialorder.maker;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 
-import org.apache.commons.lang3.time.DateUtils;
 import org.deckfour.xes.extension.std.XConceptExtension;
 import org.deckfour.xes.extension.std.XTimeExtension;
 import org.deckfour.xes.factory.XFactory;
@@ -39,13 +37,41 @@ public class PartialOrderMakerPlugin {
 	 * the same day.
 	 * 
 	 * @param context The context to run in.
-	 * @param log The event log to replay.
+	 * @param log The event log to modify.
 	 */
 	@UITopiaVariant(
 		affiliation = AFFILIATION, author = AUTHOR, email = EMAIL, pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE,
 		uiLabel = UITopiaVariant.USEVARIANT)
-	@PluginVariant(variantLabel = "Partial Order Maker (Daily)", requiredParameterLabels = { 0 })
+	@PluginVariant(variantLabel = "Partial Order Maker (Daily Granularity)", requiredParameterLabels = { 0 })
 	public XLog makeDailyPartialOrder(PluginContext context, XLog log) {
+		return makePartialOrder(context, log, new DailyPartialOrderMaker());
+	}
+	
+	/**
+	 * The plug-in variant that create a copy of the given event log with timestamps rounded down to to the closest 
+	 * previous checkpoint of the same day. The checkpoints are set every 8 hours, i.e.: 00:00, 08:00, 16:00.
+	 * 
+	 * @param context The context to run in.
+	 * @param log The event log to modify.
+	 */
+	@UITopiaVariant(
+		affiliation = AFFILIATION, author = AUTHOR, email = EMAIL, pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE,
+		uiLabel = UITopiaVariant.USEVARIANT)
+	@PluginVariant(variantLabel = "Partial Order Maker (8-hours Granularity)", requiredParameterLabels = { 0 })
+	public XLog makeEightHoursPartialOrder(PluginContext context, XLog log) {
+		return makePartialOrder(context, log, new EightHoursPartialOrderMaker());
+	}
+	
+	/**
+	 * Create a copy of the given event log with all timestamps rounded according to the criteria defined by the given
+	 * {@link PartialOrderMaker}. 
+	 * 
+	 * @param context The context to run in.
+	 * @param log The event log to modify.
+	 * @param partialOrderMaker The criteria according to which the timestamps have to be modified.
+	 * @return The new modified event log.
+	 */
+	private XLog makePartialOrder(PluginContext context, XLog log, PartialOrderMaker partialOrderMaker) {
 
 		// init progress bar
 		Progress progress = context.getProgress();
@@ -72,22 +98,21 @@ public class PartialOrderMakerPlugin {
 			for (XEvent event : trace) {
 				// create new event with the same attributes (make copy to avoid side-effects)
 				XEvent newEvent = factory.createEvent((XAttributeMap) event.getAttributes().clone());
-				Date date = XTimeExtension.instance().extractTimestamp(newEvent);
+				Date timestamp = XTimeExtension.instance().extractTimestamp(newEvent);
 				
-				if (date == null) {
+				if (timestamp == null) {
 					// the event has a null timestamp, set it as equal to the timestamp of the previous event
 					context.log(new RuntimeException("Null timestamp at trace " + caseId + ", event #" + eventPos));
-					date = defaultDate;
+					timestamp = defaultDate;
 				}
 				
-				// round down timestamp to midnight of the same day
-				Date newDate = DateUtils.truncate(date, Calendar.DATE);
-				XTimeExtension.instance().assignTimestamp(newEvent, newDate);
+				Date newTimestamp = partialOrderMaker.modifyTimestamp(timestamp);
+				XTimeExtension.instance().assignTimestamp(newEvent, newTimestamp);
 				
 				newTrace.add(newEvent);
 				
 				// update default date
-				defaultDate = (Date) date.clone();
+				defaultDate = (Date) timestamp.clone();
 				eventPos++;
 			}
 			

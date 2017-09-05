@@ -1,4 +1,4 @@
-package org.processmining.planningbasedalignment.plugins.partialorder;
+package org.processmining.planningbasedalignment.plugins.partialorder.alignmentchecker;
 
 import java.util.ArrayList;
 import java.util.Collection;
