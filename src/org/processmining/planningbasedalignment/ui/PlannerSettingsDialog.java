@@ -12,7 +12,9 @@ import org.deckfour.xes.info.XLogInfo;
 import org.deckfour.xes.info.XLogInfoFactory;
 import org.deckfour.xes.model.XLog;
 import org.deckfour.xes.model.XTrace;
+import org.processmining.framework.plugin.PluginDescriptor;
 import org.processmining.framework.util.ui.widgets.ProMTable;
+import org.processmining.planningbasedalignment.models.PlanningBasedReplayResult;
 import org.processmining.planningbasedalignment.utils.PlannerSearchStrategy;
 
 import com.fluxicon.slickerbox.factory.SlickerFactory;
@@ -37,46 +39,60 @@ public class PlannerSettingsDialog extends JComponent {
 	 * The radio button for selecting optimal strategy.
 	 */
 	private final JRadioButton optimalStrategy;
-	
+
 	/**
 	 * The radio button for selecting sub-optimal strategy.
 	 */
 	private final JRadioButton subOptimalStrategy;
-	
+
 	/**
 	 * The table holding data for the trace interval.
 	 */
 	private DefaultTableModel tracesIntervalModel;
-	
+
 	/**
 	 * The table holding data for the trace length boundaries.
 	 */
 	private DefaultTableModel tracesLengthBoundsModel;
-	
-	
-	public PlannerSettingsDialog(XLog log) {
+
+
+	public PlannerSettingsDialog(XLog log, PluginDescriptor pluginDescriptor) {
+
+		// check whether the planner will be executed after configuration
+		boolean plannerExecution = pluginDescriptor.getReturnTypes().contains(PlanningBasedReplayResult.class);
 		
-		double size[][] = { 
-				{ 30, TableLayoutConstants.FILL, 50 },					// cols
-				{ 30, 30, 30, 60, TABLE_HEIGHT, 60, TABLE_HEIGHT} };	// rows
+		// change table according to plannerExecution
+		// TODO refactoring
+		double size[][];
+		if (plannerExecution) {
+			double sizeA[][] = { 
+					{ 30, TableLayoutConstants.FILL, 50 },					// cols
+					{ 30, 30, 30, 60, TABLE_HEIGHT, 60, TABLE_HEIGHT} };	// rows
+			size = sizeA;
+		} else {
+			double sizeB[][] = { 
+					{ 30, TableLayoutConstants.FILL, 50 },		// cols
+					{ 60, TABLE_HEIGHT, 60, TABLE_HEIGHT} };	// rows
+			size = sizeB;
+		}
 		
 		setLayout(new TableLayout(size));
 		setBackground(new Color(200, 200, 200));
 
 		SlickerFactory slickerFactory = SlickerFactory.instance();
-		
+
 		// strategy choices
 		ButtonGroup plannerSearchStrategySelection = new ButtonGroup();
-		
+
 		optimalStrategy = slickerFactory.createRadioButton("Optimal (Blind A*)");
 		plannerSearchStrategySelection.add(optimalStrategy);
 		optimalStrategy.setSelected(true);  // optimal strategy set by default
-		
+
 		subOptimalStrategy = slickerFactory.createRadioButton("Sub-optimal (Lazy Greedy)");
 		plannerSearchStrategySelection.add(subOptimalStrategy);
-		
+
 		XLogInfo logInfo = XLogInfoFactory.createLogInfo(log);
-		
+
 		// trace ids interval
 		Object[][] tracesInterval = new Object[1][TABLE_FIELDS_NUM];
 		tracesInterval[0][0] = "1";
@@ -92,8 +108,8 @@ public class PlannerSettingsDialog extends JComponent {
 		ProMTable tracesIntervalTable = new ProMTable(tracesIntervalModel);
 		tracesIntervalTable.setPreferredSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
 		tracesIntervalTable.setMinimumSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
-		
-		
+
+
 		// traces length bounds
 		Object[][] tracesLengthBounds = new Object[1][TABLE_FIELDS_NUM];
 		tracesLengthBounds[0] = getActualTracesLengthBounds(log);
@@ -108,38 +124,41 @@ public class PlannerSettingsDialog extends JComponent {
 		ProMTable tracesLengthBoundsTable = new ProMTable(tracesLengthBoundsModel);
 		tracesLengthBoundsTable.setPreferredSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
 		tracesLengthBoundsTable.setMinimumSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
-		
-		
+
+
 		// add components to view
 		int basicRowCounter = 0;
-		
-		add(slickerFactory.createLabel("<html><h2>Select Planner Search Strategy</h2></html>"), 
-				"0," + basicRowCounter + ",1," + basicRowCounter + ",l,b");
-		basicRowCounter++;
-		
-		add(optimalStrategy, "0," + basicRowCounter + ",1," + basicRowCounter + ",l,b");
-		basicRowCounter++;
-		
-		add(subOptimalStrategy, "0," + basicRowCounter + ",1," + basicRowCounter + ",l,b");
-		basicRowCounter++;
-		
+
+		// show strategy selection if planner will be executed
+		if (plannerExecution) {
+			add(slickerFactory.createLabel("<html><h2>Select Planner Search Strategy</h2></html>"),
+					"0," + basicRowCounter + ",1," + basicRowCounter + ",l,b");
+			basicRowCounter++;
+			
+			add(optimalStrategy, "0," + basicRowCounter + ",1," + basicRowCounter + ",l,b");
+			basicRowCounter++;
+			
+			add(subOptimalStrategy, "0," + basicRowCounter + ",1," + basicRowCounter + ",l,b");
+			basicRowCounter++;
+		}
+
 		add(slickerFactory.createLabel("<html><h2>Select the interval of trace to align</h2></html>"), 
 				"0," + basicRowCounter + ",1," + basicRowCounter + ",l,b");
 		basicRowCounter++;
-		
+
 		add(tracesIntervalTable, "0," + basicRowCounter + ",1," + basicRowCounter + ",l,t");
 		basicRowCounter++;
-		
+
 		add(slickerFactory.createLabel("<html><h2>Select the bounds for traces length</h2></html>"), 
 				"0," + basicRowCounter + ",1," + basicRowCounter + ",l,b");
 		basicRowCounter++;
-		
+
 		add(tracesLengthBoundsTable, "0," + basicRowCounter + ",1," + basicRowCounter + ",l,t");
 		basicRowCounter++;
-		
+
 	}
-	
-	
+
+
 	/**
 	 * Compute the minimum and maximum traces lengths of the given event log.
 	 * 
@@ -173,8 +192,8 @@ public class PlannerSettingsDialog extends JComponent {
 			return PlannerSearchStrategy.LAZY_GREEDY;
 		return null;
 	}
-	
-	
+
+
 	/**
 	 * Returns the endpoints (trace ids) of the interval of traces to be aligned.
 	 * 
@@ -185,8 +204,8 @@ public class PlannerSettingsDialog extends JComponent {
 		int end = Integer.parseInt((String) tracesIntervalModel.getValueAt(0, 1));
 		return new int[]{start, end};
 	}
-	
-	
+
+
 	/**
 	 * Returns the length boundaries for the traces to be aligned.
 	 * 
@@ -197,7 +216,7 @@ public class PlannerSettingsDialog extends JComponent {
 		int maxLength = Integer.parseInt((String) tracesLengthBoundsModel.getValueAt(0, 1));
 		return new int[]{minLength, maxLength};
 	}
-	
+
 	/**
 	 * Check whether the inserted settings are valid.
 	 * 
@@ -206,7 +225,7 @@ public class PlannerSettingsDialog extends JComponent {
 	public boolean checkSettingsIntegrity() {
 		return checkTracesIntervalIntegrity() && checkTracesLengthBoundsIntegrity();
 	}
-	
+
 	/**
 	 * Check whether the inserted traces interval is valid.
 	 * 
@@ -216,7 +235,7 @@ public class PlannerSettingsDialog extends JComponent {
 		int[] interval = getChosenTracesInterval();
 		return interval[0] <= interval[1];
 	}
-	
+
 	/**
 	 * Check whether the inserted traces length boundaries are valid.
 	 * 

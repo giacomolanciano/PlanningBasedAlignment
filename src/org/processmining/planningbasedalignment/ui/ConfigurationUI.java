@@ -25,6 +25,7 @@ import org.processmining.framework.connections.Connection;
 import org.processmining.framework.connections.ConnectionCannotBeObtained;
 import org.processmining.framework.connections.annotations.ConnectionObjectFactory;
 import org.processmining.framework.plugin.PluginContext;
+import org.processmining.framework.plugin.PluginDescriptor;
 import org.processmining.framework.plugin.PluginExecutionResult;
 import org.processmining.framework.plugin.PluginParameterBinding;
 import org.processmining.framework.util.Pair;
@@ -101,7 +102,8 @@ public class ConfigurationUI {
 		configurationStepsDialogs = new JComponent[CONFIGURATION_STEPS_NUMBER];
 		
 		// init gui for planner settings step
-		configurationStepsDialogs[0] = new PlannerSettingsDialog(log);
+		PluginDescriptor pluginDescriptor = context.getPluginDescriptor().getFirst();
+		configurationStepsDialogs[0] = new PlannerSettingsDialog(log, pluginDescriptor);
 		
 		// init gui for moves costs step. Notice that event classes must be taken from the log (not from mapping) to 
 		// avoid losing (possibly) unmapped event classes. 
