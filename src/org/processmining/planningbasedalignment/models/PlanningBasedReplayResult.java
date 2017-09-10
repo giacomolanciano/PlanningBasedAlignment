@@ -25,7 +25,7 @@ public class PlanningBasedReplayResult extends ResultReplay {
 			SummaryStatistics generatedStatesSummary) {
 		
 		super(alignments, null, VariableMatchCosts.NOCOST, new HashMap<String, String>(), log, classifier);
-		this.setPetrinet(petrinet);
+		this.petrinet = petrinet;
 		this.alignmentTimeSummary = alignmentTimeSummary;
 		this.expandedStatesSummary = expandedStatesSummary;
 		this.generatedStatesSummary = generatedStatesSummary;
@@ -38,10 +38,6 @@ public class PlanningBasedReplayResult extends ResultReplay {
 
 	public PetrinetGraph getPetrinet() {
 		return petrinet;
-	}
-	
-	public void setPetrinet(PetrinetGraph petrinet) {
-		this.petrinet = petrinet;
 	}
 
 	public SummaryStatistics getAlignmentTimeSummary() {

@@ -154,8 +154,7 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 		outputGobbler.start();
 		
 		// start progress checker (ignoring empty trace related files)
-		int[] traceInterval = parameters.getTracesInterval();
-		int totalAlignmentsNum = traceInterval[1] - traceInterval[0] + 1;
+		int totalAlignmentsNum = tracesToAlign.size();
 		alignmentProgressChecker = new FilesWritingProgressChecker(
 				context, plansFoundDir, totalAlignmentsNum, RESULT_FILES_PER_TRACE, " alignments processed so far.");
 		alignmentProgressChecker.start();

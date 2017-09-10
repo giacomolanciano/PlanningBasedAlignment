@@ -2,7 +2,9 @@ package org.processmining.planningbasedalignment.algorithms;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.deckfour.xes.extension.std.XConceptExtension;
@@ -67,6 +69,11 @@ public class AlignmentPddlEncoding {
 	protected Map<Integer, String> positionToCaseIdMapping;
 	
 	/**
+	 * The positions in the log of the traces to align.
+	 */
+	protected List<Integer> tracesToAlign;
+	
+	/**
 	 * Produces the PDDL input files (representing the instances of the alignment problem) to be fed to the planner.
 	 * 
 	 * @param log The event log to replay.
@@ -94,15 +101,6 @@ public class AlignmentPddlEncoding {
 		OSUtils.cleanDirectory(pddlFilesDir);
 		
 		context.log("Creating PDDL encodings for trace alignment problem instances...");
-		
-		int[] traceInterval = parameters.getTracesInterval();
-		int tracePosToCheckFrom = traceInterval[0];
-		int tracePosToCheckTo = traceInterval[1];
-
-		// set traces length bounds
-		int[] traceLengthBounds = parameters.getTracesLengthBounds();
-		int minTracesLength = traceLengthBounds[0];
-		int maxTracesLength = traceLengthBounds[1];
 
 		// select the PDDL encoder implementation according to the assumption on events ordering
 		if (parameters.isPartiallyOrderedEvents())
@@ -110,6 +108,11 @@ public class AlignmentPddlEncoding {
 		else
 			pddlEncoder = new StandardPddlEncoder(petrinet, parameters);
 
+		// get the positions in the log of the traces to align
+		int[] tracesInterval = parameters.getTracesInterval();
+		int[] tracesLengthBounds = parameters.getTracesLengthBounds();
+		tracesToAlign = computeTracesToAlign(log, tracesInterval, tracesLengthBounds);
+		
 		// initialize position to case id mapping
 		positionToCaseIdMapping = new HashMap<Integer, String>();
 		
@@ -118,22 +121,17 @@ public class AlignmentPddlEncoding {
 		writePddlEncoding(emptyTrace, EMPTY_TRACE_POS);
 		
 		// start progress checker (ignoring empty trace related files)
-		int totalPddlFilesNum =  (tracePosToCheckTo - tracePosToCheckFrom + 1) * PDDL_FILES_PER_TRACE;
+		int totalPddlFilesNum =  tracesToAlign.size() * PDDL_FILES_PER_TRACE;
 		pddlEncodingProgressChecker = new FilesWritingProgressChecker(
 				context, pddlFilesDir, totalPddlFilesNum, PDDL_FILES_PER_TRACE, " PDDL files written so far.",
 				PROGRESS_CHECKER_DELAY);
 		pddlEncodingProgressChecker.start();
 		
-		// consider only the traces in the chosen interval
-		for(int tracePos = tracePosToCheckFrom - 1; tracePos < tracePosToCheckTo; tracePos++) {
-			XTrace trace = log.get(tracePos);
-			int traceLength = trace.size();						
-
-			// check whether the trace matches the length bounds
-			if(traceLength >= minTracesLength && traceLength <= maxTracesLength)  {
-				// create PDDL encodings (domain & problem) for current trace
-				writePddlEncoding(trace, tracePos+1);
-			}
+		// create the PDDL encoding for each trace
+		XTrace trace;
+		for (Integer tracePos : tracesToAlign) {
+			trace = log.get(tracePos);
+			writePddlEncoding(trace, tracePos+1);
 		}
 		
 		pddlEncodingProgressChecker.interrupt();
@@ -180,6 +178,38 @@ public class AlignmentPddlEncoding {
 			caseId = "";
 		
 		positionToCaseIdMapping.put(tracePos, caseId);
+	}
+	
+	/**
+	 * Scan the given interval of the log to check which traces match the given length constraints.
+	 * 
+	 * @param log The event log to replay.
+	 * @param parameters The parameters to be used by the encoding algorithm.
+	 * @return A list of integers containing the positions in the log of the traces to align (ascending order).
+	 */
+	private List<Integer> computeTracesToAlign(XLog log, int[] tracesInterval, int[] tracesLengthBounds) {
+		List<Integer> result = new ArrayList<Integer>();
+		
+		// get traces interval end-points
+		int tracePosToCheckFrom = tracesInterval[0];
+		int tracePosToCheckTo = tracesInterval[1];
+
+		// get traces min & max length
+		int minTraceLength = tracesLengthBounds[0];
+		int maxTraceLength = tracesLengthBounds[1];
+		
+		// consider only the traces in the given interval
+		for(int tracePos = tracePosToCheckFrom - 1; tracePos < tracePosToCheckTo; tracePos++) {
+			XTrace trace = log.get(tracePos);
+			int traceLength = trace.size();						
+
+			// check whether the trace matches the length constraints
+			if(traceLength >= minTraceLength && traceLength <= maxTraceLength) {
+				result.add(tracePos);
+			}
+		}
+		
+		return result;
 	}
 
 }
