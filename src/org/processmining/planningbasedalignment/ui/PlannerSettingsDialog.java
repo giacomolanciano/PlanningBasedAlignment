@@ -58,30 +58,9 @@ public class PlannerSettingsDialog extends JComponent {
 
 	public PlannerSettingsDialog(XLog log, PluginDescriptor pluginDescriptor) {
 
-		// check whether the planner will be executed after configuration
-		boolean plannerExecution = pluginDescriptor.getReturnTypes().contains(PlanningBasedReplayResult.class);
-		
-		// change table according to plannerExecution
-		// TODO refactoring
-		double size[][];
-		if (plannerExecution) {
-			double sizeA[][] = { 
-					{ 30, TableLayoutConstants.FILL, 50 },					// cols
-					{ 30, 30, 30, 60, TABLE_HEIGHT, 60, TABLE_HEIGHT} };	// rows
-			size = sizeA;
-		} else {
-			double sizeB[][] = { 
-					{ 30, TableLayoutConstants.FILL, 50 },		// cols
-					{ 60, TABLE_HEIGHT, 60, TABLE_HEIGHT} };	// rows
-			size = sizeB;
-		}
-		
-		setLayout(new TableLayout(size));
-		setBackground(new Color(200, 200, 200));
-
 		SlickerFactory slickerFactory = SlickerFactory.instance();
 
-		// strategy choices
+		// search strategy selection
 		ButtonGroup plannerSearchStrategySelection = new ButtonGroup();
 
 		optimalStrategy = slickerFactory.createRadioButton("Optimal (Blind A*)");
@@ -91,9 +70,9 @@ public class PlannerSettingsDialog extends JComponent {
 		subOptimalStrategy = slickerFactory.createRadioButton("Sub-optimal (Lazy Greedy)");
 		plannerSearchStrategySelection.add(subOptimalStrategy);
 
-		XLogInfo logInfo = XLogInfoFactory.createLogInfo(log);
 
 		// trace ids interval
+		XLogInfo logInfo = XLogInfoFactory.createLogInfo(log);
 		Object[][] tracesInterval = new Object[1][TABLE_FIELDS_NUM];
 		tracesInterval[0][0] = "1";
 		tracesInterval[0][1] = ""+logInfo.getNumberOfTraces();
@@ -125,10 +104,32 @@ public class PlannerSettingsDialog extends JComponent {
 		tracesLengthBoundsTable.setPreferredSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
 		tracesLengthBoundsTable.setMinimumSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
 
-
-		// add components to view
+		
+		/* add components to view */
+		
 		int basicRowCounter = 0;
 
+		// check whether the planner will be executed after configuration
+		boolean plannerExecution = pluginDescriptor.getReturnTypes().contains(PlanningBasedReplayResult.class);
+		
+		// change table according to plannerExecution
+		double tableStructure[][];
+		double columnsStructure[] = { 30, TableLayoutConstants.FILL, 50 };
+		if (plannerExecution) {
+			tableStructure = new double[][] {
+				columnsStructure,
+				{ 30, 30, 30, 60, TABLE_HEIGHT, 60, TABLE_HEIGHT}
+			};
+			
+		} else {
+			tableStructure = new double[][] { 
+				columnsStructure,
+				{ 60, TABLE_HEIGHT, 60, TABLE_HEIGHT}
+			};
+		}
+		setLayout(new TableLayout(tableStructure));
+		setBackground(new Color(200, 200, 200));
+		
 		// show strategy selection if planner will be executed
 		if (plannerExecution) {
 			add(slickerFactory.createLabel("<html><h2>Select Planner Search Strategy</h2></html>"),
