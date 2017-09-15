@@ -272,6 +272,9 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 		float emptyTraceAlignmentCost = 0;
 		
 		// initialize stats summaries
+		boolean alignmentTimeReliable = true;
+		boolean expandedStatesReliable = true;
+		boolean generatedStatesReliable = true;
 		SummaryStatistics alignmentTimeSummary = new SummaryStatistics();
 		SummaryStatistics expandedStatesSummary = new SummaryStatistics();
 		SummaryStatistics generatedStatesSummary = new SummaryStatistics();
@@ -318,13 +321,24 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 
 				} else if (tracePos != EMPTY_TRACE_POS) {
 					
+					double parsedValue = Double.parseDouble(matcher.group());
+					
 					if(outputLine.startsWith(SEARCH_TIME_ENTRY_PREFIX)) {
+						if (parsedValue < 0)
+							alignmentTimeReliable = false;
+						
 						alignmentTimeSummary.addValue(Double.parseDouble(matcher.group()));
 
 					} else if(outputLine.startsWith(EXPANDED_STATES_ENTRY_PREFIX)) {
+						if (parsedValue < 0)
+							expandedStatesReliable = false;
+						
 						expandedStatesSummary.addValue(Double.parseDouble(matcher.group()));
 						
 					} else if(outputLine.startsWith(GENERATED_STATES_ENTRY_PREFIX)) {
+						if (parsedValue < 0)
+							generatedStatesReliable = false;
+						
 						generatedStatesSummary.addValue(Double.parseDouble(matcher.group()));
 						
 					} else {
@@ -378,16 +392,19 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 		// print stats
 		NumberFormat realFormat = NumberFormat.getNumberInstance();
 		realFormat.setMaximumFractionDigits(2);
+		System.out.println("\tAlignment Time Reliability: " + alignmentTimeReliable);
 		System.out.println("\tAverage (actual) Time: " + realFormat.format(alignmentTimeSummary.getMean()) + DEFAULT_TIME_UNIT);
 		System.out.println("\tMaximum (actual) Time: " + realFormat.format(alignmentTimeSummary.getMax()) + DEFAULT_TIME_UNIT);
 		System.out.println("\tMinimum (actual) Time: " + realFormat.format(alignmentTimeSummary.getMin()) + DEFAULT_TIME_UNIT);
 		System.out.println("\tStandard deviation:    " + realFormat.format(alignmentTimeSummary.getStandardDeviation()) + DEFAULT_TIME_UNIT);
 		System.out.println();
+		System.out.println("\tExpanded States Reliability: " + expandedStatesReliable);
 		System.out.println("\tAverage Expanded States: " + realFormat.format(expandedStatesSummary.getMean()));
 		System.out.println("\tMaximum Expanded States: " + realFormat.format(expandedStatesSummary.getMax()));
 		System.out.println("\tMinimum Expanded States: " + realFormat.format(expandedStatesSummary.getMin()));
 		System.out.println("\tStandard deviation:      " + realFormat.format(expandedStatesSummary.getStandardDeviation()));
 		System.out.println();
+		System.out.println("\tGenerated States Reliability: " + generatedStatesReliable);
 		System.out.println("\tAverage Generated States: " + realFormat.format(generatedStatesSummary.getMean()));
 		System.out.println("\tMaximum Generated States: " + realFormat.format(generatedStatesSummary.getMax()));
 		System.out.println("\tMinimum Generated States: " + realFormat.format(generatedStatesSummary.getMin()));
