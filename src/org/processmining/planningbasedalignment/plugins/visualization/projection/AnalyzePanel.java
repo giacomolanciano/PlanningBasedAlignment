@@ -57,6 +57,7 @@ public class AnalyzePanel extends JPanel {
 
 	private static final long serialVersionUID = 5707969720823392664L;
 
+	@SuppressWarnings("unused")
 	private static class AnalyzePanelListener extends MouseAdapter {
 
 		private final ProMJGraphPanel panel;
@@ -315,8 +316,8 @@ public class AnalyzePanel extends JPanel {
 		ViewSpecificAttributeMap viewSpecificMap = new ViewSpecificAttributeMap();
 		this.panel = ProMJGraphVisualizer.instance().visualizeGraph(context, net, viewSpecificMap);
 		this.panel.getGraph().setEditable(false);
-		this.panel.getGraph()
-				.addMouseListener(new AnalyzePanelListener(context, panel, replayResult));
+//		this.panel.getGraph()
+//				.addMouseListener(new AnalyzePanelListener(context, panel, replayResult));
 		this.add(panel);
 	}
 
