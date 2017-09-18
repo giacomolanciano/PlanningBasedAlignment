@@ -113,8 +113,6 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 			plannerManagerProcess.destroy();
 		if (alignmentProgressChecker != null)
 			alignmentProgressChecker.interrupt();
-		if (resourcesUnpacker != null)
-			resourcesUnpacker.interrupt();
 	}
 	
 	/**

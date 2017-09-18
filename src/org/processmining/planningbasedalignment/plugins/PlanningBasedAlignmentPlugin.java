@@ -46,12 +46,15 @@ import org.processmining.planningbasedalignment.utils.ResourcesUnpacker;
 	help = HelpMessages.PLANNING_BASED_ALIGNMENT_HELP
 )
 public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
-	
+
 	private static final String AFFILIATION = "Sapienza University of Rome";
 	private static final String AUTHOR = "Giacomo Lanciano";
 	private static final String EMAIL = "lanciano.1487019@studenti.uniroma1.it";
+	private static final int PYTHON_2 = 2;
+	private static final int PYTHON_3 = 3;
 	private static final int PYTHON_2_MIN_VERSION = 7;
-	
+	private static final int PYTHON_3_MIN_VERSION = 2;
+
 	/**
 	 * The plug-in variant that runs in a UI context and prompt the user to get the parameters.
 	 * 
@@ -63,46 +66,48 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	 * @throws UserCancelledException 
 	 */
 	@UITopiaVariant(
-		affiliation = AFFILIATION, author = AUTHOR, email = EMAIL, pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE)
+			affiliation = AFFILIATION, author = AUTHOR, email = EMAIL, pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE)
 	@PluginVariant(requiredParameterLabels = { 0, 1 })
 	public PlanningBasedReplayResult runUI(UIPluginContext context, XLog log, Petrinet petrinet) {
-		
-		if (!isPython27Installed()) {			
+
+		if (!isPythonInstalled()) {			
 			JOptionPane.showMessageDialog(
 					new JPanel(),
-					"The plug-in is not able to find and call Python 2.7+ on your machine. Please, install it "
+					"The plug-in is not able to find and call Python 2.7+ or 3.2+ on your machine. Please, install it "
 					+ "and make sure it is visible in the PATH.\n"
 					+ "If you are using another version of Python, you just need to create a virtualenv with the "
-					+ "latest version of Python 2 installed\n"
-					+ "and start ProM from there.",
+					+ "latest version of Python (2 or 3) installed\n"
+					+ "and start ProM from there.\n"
+					+ "To check which version of Python you are running, type \"python -V\" on a command line (the"
+					+ "expected output is \"Python X.X.X ...\").",
 					"Python not found", JOptionPane.ERROR_MESSAGE);
 			abortExecution(context);
 			return null;
 		}
-		
+
 		if (!checkPlannerSources()) {			
 			resourcesUnpacker = new ResourcesUnpacker(context);
 			resourcesUnpacker.start();
 		}
-		
-	    ConfigurationUI configurationUI = new ConfigurationUI();
+
+		ConfigurationUI configurationUI = new ConfigurationUI();
 		PlanningBasedAlignmentParameters parameters = configurationUI.getPlanningBasedAlignmentParameters(
 				context, log, petrinet);
-		
+
 		if (parameters == null) {
 			abortExecution(context);
 			return null;
 		}
-		
+
 		// start algorithm
 		PlanningBasedReplayResult result = runAlgorithm(context, log, petrinet, parameters);
 
 		String resultLabel = "Replay result - log " + XConceptExtension.instance().extractName(log) 
 				+ " on " + petrinet.getLabel() + " using Automated Planning";
-		
+
 		if (parameters.isPartiallyOrderedEvents())
 			resultLabel += " (Partial Order Assumption)";
-		
+
 		context.getFutureResult(0).setLabel(resultLabel);
 		return result;
 
@@ -119,18 +124,18 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	 */
 	private PlanningBasedReplayResult runAlgorithm(
 			UIPluginContext context, XLog log, Petrinet petrinet, PlanningBasedAlignmentParameters parameters) {
-			
+
 		PlanningBasedReplayResult replayRes = align(context, log, petrinet, parameters);
-		
+
 		// add connection if result is found
 		if (replayRes != null) {
 			context.getConnectionManager().addConnection(
 					new PlanningBasedAlignmentConnection(log, petrinet, parameters, replayRes));
 		}
-		
+
 		return replayRes;	
 	}
-	
+
 	/**
 	 * Abort the execution of the plug-in and its subprocesses.
 	 * 
@@ -140,52 +145,67 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 		context.getFutureResult(0).cancel(true);
 		killSubprocesses();
 	}
-	
+
 	/**
-	 * Check whether Python 2.7+ is installed and callable from command line.
+	 * Check whether Python 2.7+ or 3.2+ is installed and callable from command line.
 	 * 
-	 * @return true if Python 2.7+ is installed and callable from command line.
+	 * @return true if Python 2.7+ or 3.2+ is installed and callable from command line.
 	 * @throws InterruptedException 
 	 * @throws IOException 
 	 */
-	private boolean isPython27Installed() {
-		
-		Pattern pythonVersionRegexPattern = Pattern.compile("Python 2\\.\\d+");
-		
-		String[] commandArgs = new String[]{"python", "-V"};		
+	private boolean isPythonInstalled() {
+
+		String python = "Python ";
+		Pattern pythonVersionRegexPattern = Pattern.compile("\\d+\\.\\d+");
+		String[] commandArgs = new String[]{"python", "-V"};
 		ProcessBuilder processBuilder = new ProcessBuilder(commandArgs);
 		Process pythonVersionCheckerProcess = null; 
-		
+
 		try {
 			pythonVersionCheckerProcess = processBuilder.start();
-			
-			// python version number is outputed on std error
+
+			// Python version number is outputed on std error
 			InputStream output = pythonVersionCheckerProcess.getErrorStream();
 			InputStreamReader inputStreamReader = new InputStreamReader(output);
 			BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
 			String line = null;
-			while ((line = bufferedReader.readLine()) != null) {	
-				Matcher pythonVersionMatcher = pythonVersionRegexPattern.matcher(line);
-				if (pythonVersionMatcher.find()) {
-					String pythonVersion = pythonVersionMatcher.group();
-										
-					String[] pythonVersionTokens = pythonVersion.split("\\.");
-					int minorVersion = Integer.parseInt(pythonVersionTokens[1]);
-					if (minorVersion >= PYTHON_2_MIN_VERSION)
-						return true;
+			Matcher pythonVersionMatcher = null;
+			while ((line = bufferedReader.readLine()) != null) {
+								
+				// check only the line with Python version
+				if (line.startsWith(python)) {	
+					pythonVersionMatcher = pythonVersionRegexPattern.matcher(line);
+					
+					if (pythonVersionMatcher.find()) {
+						String pythonVersion = pythonVersionMatcher.group();
+						
+						String[] pythonVersionTokens = pythonVersion.split("\\.");
+						int majorVersion = Integer.parseInt(pythonVersionTokens[0]);
+						int minorVersion = Integer.parseInt(pythonVersionTokens[1]);
+
+						if ((majorVersion == PYTHON_2 && minorVersion >= PYTHON_2_MIN_VERSION)
+								|| (majorVersion == PYTHON_3 && minorVersion >= PYTHON_3_MIN_VERSION)) {
+							System.out.println("Python found.");
+							return true;	
+						}
+					}
+					
+					// no need to check other lines
+					break;
 				}
 			}
-			
+
 			// wait for the process to return
 			pythonVersionCheckerProcess.waitFor();
-			
+
 		} catch (IOException | InterruptedException e) {
 			System.out.println(e);
 		}
-		
+
+		System.out.println("Python not found.");
 		return false;
 	}
-	
+
 	/**
 	 * Check whether the planner source code has already been unpacked.
 	 * 
@@ -196,5 +216,5 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 		File fdScript = new File(PlanningBasedAlignment.FAST_DOWNWARD_DIR);
 		return plannerManagerScript.exists() && fdScript.exists();
 	}
-	
+
 }
