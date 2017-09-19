@@ -319,25 +319,30 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 
 				} else if (tracePos != EMPTY_TRACE_POS) {
 					
-					double parsedValue = Double.parseDouble(matcher.group());
-					
+					double parsedValue;
 					if(outputLine.startsWith(SEARCH_TIME_ENTRY_PREFIX)) {
+						parsedValue = Double.parseDouble(matcher.group());
+						
 						if (parsedValue < 0)
 							alignmentTimeReliable = false;
 						
-						alignmentTimeSummary.addValue(Double.parseDouble(matcher.group()));
+						alignmentTimeSummary.addValue(parsedValue);
 
 					} else if(outputLine.startsWith(EXPANDED_STATES_ENTRY_PREFIX)) {
+						parsedValue = Double.parseDouble(matcher.group());
+						
 						if (parsedValue < 0)
 							expandedStatesReliable = false;
 						
-						expandedStatesSummary.addValue(Double.parseDouble(matcher.group()));
+						expandedStatesSummary.addValue(parsedValue);
 						
 					} else if(outputLine.startsWith(GENERATED_STATES_ENTRY_PREFIX)) {
+						parsedValue = Double.parseDouble(matcher.group());
+						
 						if (parsedValue < 0)
 							generatedStatesReliable = false;
 						
-						generatedStatesSummary.addValue(Double.parseDouble(matcher.group()));
+						generatedStatesSummary.addValue(parsedValue);
 						
 					} else {
 						// parse alignment move
