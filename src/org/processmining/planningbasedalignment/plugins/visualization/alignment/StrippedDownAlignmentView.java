@@ -447,6 +447,7 @@ public class StrippedDownAlignmentView extends JPanel implements DetailView<XAli
 	}
 
 	private void updateStatistics() {
+		
 		NumberFormat integerFormat = NumberFormat.getIntegerInstance();
 		NumberFormat percentageFormat = NumberFormat.getPercentInstance();
 		NumberFormat realFormat = NumberFormat.getNumberInstance();
@@ -468,32 +469,48 @@ public class StrippedDownAlignmentView extends JPanel implements DetailView<XAli
 		
 		// time stats
 		SummaryStatistics alignmentTimeSummary = replayResult.getAlignmentTimeSummary();
-		statisticsModel.addRow(new String[] { "", "" });
-		statisticsModel.addRow(new String[] { "Average (actual) Time",
-				realFormat.format(alignmentTimeSummary.getMean()) + PlanningBasedAlignment.DEFAULT_TIME_UNIT});
-		statisticsModel.addRow(new String[] { "Maximum (actual) Time",
-				realFormat.format(alignmentTimeSummary.getMax()) + PlanningBasedAlignment.DEFAULT_TIME_UNIT});
-		statisticsModel.addRow(new String[] { "Minimum (actual) Time",
-				realFormat.format(alignmentTimeSummary.getMin()) + PlanningBasedAlignment.DEFAULT_TIME_UNIT});
-		statisticsModel.addRow(new String[] { "Standard deviation",
-				realFormat.format(alignmentTimeSummary.getStandardDeviation()) + PlanningBasedAlignment.DEFAULT_TIME_UNIT});
+		if (alignmentTimeSummary != null) {
+			statisticsModel.addRow(new String[] { "", "" });
+			statisticsModel.addRow(new String[] { "Average (actual) Time",
+					realFormat.format(alignmentTimeSummary.getMean()) + PlanningBasedAlignment.DEFAULT_TIME_UNIT });
+			statisticsModel.addRow(new String[] { "Maximum (actual) Time",
+					realFormat.format(alignmentTimeSummary.getMax()) + PlanningBasedAlignment.DEFAULT_TIME_UNIT });
+			statisticsModel.addRow(new String[] { "Minimum (actual) Time",
+					realFormat.format(alignmentTimeSummary.getMin()) + PlanningBasedAlignment.DEFAULT_TIME_UNIT });
+			statisticsModel.addRow(
+					new String[] { "Standard deviation", realFormat.format(alignmentTimeSummary.getStandardDeviation())
+							+ PlanningBasedAlignment.DEFAULT_TIME_UNIT });
+		}
 		
 		// expanded states stats
 		SummaryStatistics expandedStatesSummary = replayResult.getExpandedStatesSummary();
-		statisticsModel.addRow(new String[] { "", "" });
-		statisticsModel.addRow(new String[] { "Average Expanded States", realFormat.format(expandedStatesSummary.getMean())});
-		statisticsModel.addRow(new String[] { "Average Expanded States", realFormat.format(expandedStatesSummary.getMax())});
-		statisticsModel.addRow(new String[] { "Minimum Expanded States", realFormat.format(expandedStatesSummary.getMin())});
-		statisticsModel.addRow(new String[] { "Standard deviation", realFormat.format(expandedStatesSummary.getStandardDeviation())});
+		if (expandedStatesSummary != null) {
+			statisticsModel.addRow(new String[] { "", "" });
+			statisticsModel.addRow(
+					new String[] { "Average Expanded States", realFormat.format(expandedStatesSummary.getMean()) });
+			statisticsModel.addRow(
+					new String[] { "Average Expanded States", realFormat.format(expandedStatesSummary.getMax()) });
+			statisticsModel.addRow(
+					new String[] { "Minimum Expanded States", realFormat.format(expandedStatesSummary.getMin()) });
+			statisticsModel.addRow( new String[] { 
+							"Standard deviation", 
+							realFormat.format(expandedStatesSummary.getStandardDeviation()) });
+		}
 		
 		// generate states stats
 		SummaryStatistics generatedStatesSummary = replayResult.getGeneratedStatesSummary();
-		statisticsModel.addRow(new String[] { "", "" });
-		statisticsModel.addRow(new String[] { "Average Generated States", realFormat.format(generatedStatesSummary.getMean())});
-		statisticsModel.addRow(new String[] { "Maximum Generated States", realFormat.format(generatedStatesSummary.getMax())});
-		statisticsModel.addRow(new String[] { "Minimum Generated States", realFormat.format(generatedStatesSummary.getMin())});
-		statisticsModel.addRow(new String[] { "Standard deviation", realFormat.format(generatedStatesSummary.getStandardDeviation())});
-
+		if (generatedStatesSummary != null) {
+			statisticsModel.addRow(new String[] { "", "" });
+			statisticsModel.addRow(
+					new String[] { "Average Generated States", realFormat.format(generatedStatesSummary.getMean()) });
+			statisticsModel.addRow(
+					new String[] { "Maximum Generated States", realFormat.format(generatedStatesSummary.getMax()) });
+			statisticsModel.addRow(
+					new String[] { "Minimum Generated States", realFormat.format(generatedStatesSummary.getMin()) });
+			statisticsModel.addRow(new String[] { "Standard deviation",
+					realFormat.format(generatedStatesSummary.getStandardDeviation()) });
+		}
+		
 		statisticsModel.fireTableDataChanged();
 	}
 

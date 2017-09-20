@@ -50,7 +50,6 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 	protected static final String EXPANDED_STATES_ENTRY_PREFIX = "; expandedstates = ";
 	protected static final String GENERATED_STATES_ENTRY_PREFIX = "; generatedstates = ";
 	protected static final String COMMAND_ARG_PLACEHOLDER = "+";
-	protected static final String CASE_PREFIX = "Case ";
 	protected static final int INITIAL_EXECUTION_TRACE_CAPACITY = 10;
 	protected static final int RESULT_FILES_PER_TRACE = 1;
 
@@ -260,14 +259,21 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 			throw new RuntimeException("The planner output directory does not exist.");
 		}
 		
-		Pattern decimalNumberRegexPattern = Pattern.compile("\\d+(,\\d{3})*(\\.\\d+)*");
+		int tracePos;
+		String caseId;
+		float traceAlignmentCost;
+		float emptyTraceAlignmentCost = 0;
+		String outputLine;
+		BufferedReader processOutputReader;
+		Matcher realNumberMatcher;
+		Pattern realNumberRegexPattern = Pattern.compile("\\-?\\d+(,\\d{3})*(\\.\\d+)*");
+		
+		// result
 		ExecutionTrace logTrace;
 		ExecutionTrace modelTrace;
 		DataAlignmentState dataAlignmentState;
 		ArrayList<DataAlignmentState> alignments = new ArrayList<DataAlignmentState>();
 		PlanningBasedReplayResult result = null;		
-		float traceAlignmentCost;
-		float emptyTraceAlignmentCost = 0;
 		
 		// initialize stats summaries
 		boolean alignmentTimeReliable = true;
@@ -284,12 +290,12 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 			traceAlignmentCost = 0;
 			
 			// extract trace position from file name
-			Matcher tracePosMatcher = decimalNumberRegexPattern.matcher(alignmentFile.getName());
-			tracePosMatcher.find();
-			int tracePos = Integer.parseInt(tracePosMatcher.group());
+			realNumberMatcher = realNumberRegexPattern.matcher(alignmentFile.getName());
+			realNumberMatcher.find();
+			tracePos = Integer.parseInt(realNumberMatcher.group());
 			
 			// retrieve case id 
-			String caseId = positionToCaseIdMapping.get(tracePos);
+			caseId = positionToCaseIdMapping.get(tracePos);
 			
 			if (caseId == null) {
 				throw new RuntimeException("The given position does not match any case id.");
@@ -300,18 +306,16 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 			modelTrace = new GenericTrace(INITIAL_EXECUTION_TRACE_CAPACITY, caseId);
 
 			// parse planner output file line by line
-			Matcher matcher;
-			BufferedReader processOutputReader = new BufferedReader(new FileReader(alignmentFile));
-			String outputLine = processOutputReader.readLine(); 
-			while (outputLine != null) {
+			processOutputReader = new BufferedReader(new FileReader(alignmentFile));
+			while ((outputLine = processOutputReader.readLine()) != null) {
 
-				// parse decimal number in output line
-				matcher = decimalNumberRegexPattern.matcher(outputLine);
-				matcher.find();
+				// parse real number in output line
+				realNumberMatcher = realNumberRegexPattern.matcher(outputLine);
+				realNumberMatcher.find();
 				
 				if(outputLine.startsWith(COST_ENTRY_PREFIX)) {
 					// parse alignment cost
-					traceAlignmentCost = Float.parseFloat(matcher.group());
+					traceAlignmentCost = Float.parseFloat(realNumberMatcher.group());
 					
 					if (tracePos == EMPTY_TRACE_POS)
 						// if empty trace, set the cost to compute fitness
@@ -321,15 +325,16 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 					
 					double parsedValue;
 					if(outputLine.startsWith(SEARCH_TIME_ENTRY_PREFIX)) {
-						parsedValue = Double.parseDouble(matcher.group());
+						parsedValue = Double.parseDouble(realNumberMatcher.group());
 						
+						// if the value is negative, then an overflow has occurred. the stat is not reliable anymore
 						if (parsedValue < 0)
 							alignmentTimeReliable = false;
 						
 						alignmentTimeSummary.addValue(parsedValue);
 
 					} else if(outputLine.startsWith(EXPANDED_STATES_ENTRY_PREFIX)) {
-						parsedValue = Double.parseDouble(matcher.group());
+						parsedValue = Double.parseDouble(realNumberMatcher.group());
 						
 						if (parsedValue < 0)
 							expandedStatesReliable = false;
@@ -337,7 +342,7 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 						expandedStatesSummary.addValue(parsedValue);
 						
 					} else if(outputLine.startsWith(GENERATED_STATES_ENTRY_PREFIX)) {
-						parsedValue = Double.parseDouble(matcher.group());
+						parsedValue = Double.parseDouble(realNumberMatcher.group());
 						
 						if (parsedValue < 0)
 							generatedStatesReliable = false;
@@ -375,7 +380,6 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 						}
 					}
 				}
-				outputLine = processOutputReader.readLine();
 			}
 			processOutputReader.close();
 			
@@ -392,32 +396,34 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 			}
 		}
 		
-		// print stats
-		NumberFormat realFormat = NumberFormat.getNumberInstance();
-		realFormat.setMaximumFractionDigits(2);
-		System.out.println("\tAlignment Time Reliability: " + alignmentTimeReliable);
-		System.out.println("\tAverage (actual) Time: " + realFormat.format(alignmentTimeSummary.getMean()) + DEFAULT_TIME_UNIT);
-		System.out.println("\tMaximum (actual) Time: " + realFormat.format(alignmentTimeSummary.getMax()) + DEFAULT_TIME_UNIT);
-		System.out.println("\tMinimum (actual) Time: " + realFormat.format(alignmentTimeSummary.getMin()) + DEFAULT_TIME_UNIT);
-		System.out.println("\tStandard deviation:    " + realFormat.format(alignmentTimeSummary.getStandardDeviation()) + DEFAULT_TIME_UNIT);
-		System.out.println();
-		System.out.println("\tExpanded States Reliability: " + expandedStatesReliable);
-		System.out.println("\tAverage Expanded States: " + realFormat.format(expandedStatesSummary.getMean()));
-		System.out.println("\tMaximum Expanded States: " + realFormat.format(expandedStatesSummary.getMax()));
-		System.out.println("\tMinimum Expanded States: " + realFormat.format(expandedStatesSummary.getMin()));
-		System.out.println("\tStandard deviation:      " + realFormat.format(expandedStatesSummary.getStandardDeviation()));
-		System.out.println();
-		System.out.println("\tGenerated States Reliability: " + generatedStatesReliable);
-		System.out.println("\tAverage Generated States: " + realFormat.format(generatedStatesSummary.getMean()));
-		System.out.println("\tMaximum Generated States: " + realFormat.format(generatedStatesSummary.getMax()));
-		System.out.println("\tMinimum Generated States: " + realFormat.format(generatedStatesSummary.getMin()));
-		System.out.println("\tStandard deviation:       " + realFormat.format(generatedStatesSummary.getStandardDeviation()));
-		
 		// produce result to be visualized
 		XEventClassifier eventClassifier = parameters.getTransitionsEventsMapping().getEventClassifier();
-		result = new PlanningBasedReplayResult(
-				alignments, eventClassifier, log, petrinet,
-				alignmentTimeSummary, expandedStatesSummary, generatedStatesSummary);
+		result = new PlanningBasedReplayResult(alignments, eventClassifier, log, petrinet);
+		
+		// add alignment time stats to result (if any)
+		if (alignmentTimeSummary.getN() > 0) {			
+			result.setAlignmentTimeSummary(alignmentTimeSummary);
+			
+			// print stats
+			System.out.println(alignmentTimeSummaryToString(alignmentTimeSummary, alignmentTimeReliable));
+		}
+		
+		// add expanded states stats to result (if any)
+		if (expandedStatesSummary.getN() > 0) {			
+			result.setExpandedStatesSummary(expandedStatesSummary);
+			
+			// print stats
+			System.out.println(expandedStatesSummaryToString(expandedStatesSummary, expandedStatesReliable));
+		}
+		
+		// add generated states stats to result (if any)
+		if (generatedStatesSummary.getN() > 0) {			
+			result.setGeneratedStatesSummary(generatedStatesSummary);
+			
+			// print stats
+			System.out.println(generatedStatesSummaryToString(generatedStatesSummary, generatedStatesReliable));
+		}
+		
 		return result;
 	}
 	
@@ -504,6 +510,90 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 	@Deprecated
 	private float adjustFitness(float fitness) {
 		return (2 * fitness) - 1 ;
+	}
+	
+	/**
+	 * Provide a standard format for displaying real values.
+	 * 
+	 * @return A {@link NumberFormat} to format values with.
+	 */
+	private NumberFormat getRealNumberFormat() {
+		NumberFormat realFormat = NumberFormat.getNumberInstance();
+		realFormat.setMaximumFractionDigits(2);
+		return realFormat;
+	}
+	
+	/**
+	 * Provide a textual view of the relevant statistics in the given summary about traces alignments time.
+	 * 
+	 * @param alignmentTimeSummary The {@link SummaryStatistics} representing the summary about traces alignments time.
+	 * @param reliable Whether the statistics are reliable or not (e.g. if an overflow occurred during the computation).
+	 */
+	private String alignmentTimeSummaryToString(SummaryStatistics alignmentTimeSummary, boolean reliable) {
+		StringBuffer result = new StringBuffer();
+		NumberFormat realFormat = getRealNumberFormat();
+		result.append("\tAlignment Time Reliability: " + reliable);
+		result.append('\n');
+		result.append("\tAverage (actual) Time: " + realFormat.format(alignmentTimeSummary.getMean()));
+		result.append(DEFAULT_TIME_UNIT + '\n');
+		result.append("\tMaximum (actual) Time: " + realFormat.format(alignmentTimeSummary.getMax()));
+		result.append(DEFAULT_TIME_UNIT + '\n');
+		result.append("\tMinimum (actual) Time: " + realFormat.format(alignmentTimeSummary.getMin()));
+		result.append(DEFAULT_TIME_UNIT + '\n');
+		result.append("\tStandard deviation:    " + realFormat.format(alignmentTimeSummary.getStandardDeviation()));
+		result.append(DEFAULT_TIME_UNIT + '\n');
+		
+		return result.toString();
+	}
+	
+	/**
+	 * Provide a textual view of the relevant statistics in the given summary about traces alignments expanded search 
+	 * states.
+	 * 
+	 * @param expandedStatesSummary The {@link SummaryStatistics} representing the summary about traces alignments
+	 * expanded search states.
+	 * @param reliable Whether the statistics are reliable or not (e.g. if an overflow occurred during the computation).
+	 */
+	private String expandedStatesSummaryToString(SummaryStatistics expandedStatesSummary, boolean reliable) {
+		StringBuffer result = new StringBuffer();
+		NumberFormat realFormat = getRealNumberFormat();
+		result.append("\tExpanded States Reliability: " + reliable);
+		result.append('\n');
+		result.append("\tAverage Expanded States: " + realFormat.format(expandedStatesSummary.getMean()));
+		result.append('\n');
+		result.append("\tMaximum Expanded States: " + realFormat.format(expandedStatesSummary.getMax()));
+		result.append('\n');
+		result.append("\tMinimum Expanded States: " + realFormat.format(expandedStatesSummary.getMin()));
+		result.append('\n');
+		result.append("\tStandard deviation:      " + realFormat.format(expandedStatesSummary.getStandardDeviation()));
+		result.append('\n');
+		
+		return result.toString();
+	}
+	
+	/**
+	 * Provide a textual view of the relevant statistics in the given summary about traces alignments generated search 
+	 * states.
+	 * 
+	 * @param generatedStatesSummary The {@link SummaryStatistics} representing the summary about traces alignments
+	 * generated search states.
+	 * @param reliable Whether the statistics are reliable or not (e.g. if an overflow occurred during the computation).
+	 */
+	private String generatedStatesSummaryToString(SummaryStatistics generatedStatesSummary, boolean reliable) {
+		StringBuffer result = new StringBuffer();
+		NumberFormat realFormat = getRealNumberFormat();
+		result.append("\tGenerated States Reliability: " + reliable);
+		result.append('\n');
+		result.append("\tAverage Generated States: " + realFormat.format(generatedStatesSummary.getMean()));
+		result.append('\n');
+		result.append("\tMaximum Generated States: " + realFormat.format(generatedStatesSummary.getMax()));
+		result.append('\n');
+		result.append("\tMinimum Generated States: " + realFormat.format(generatedStatesSummary.getMin()));
+		result.append('\n');
+		result.append("\tStandard deviation:       " + realFormat.format(generatedStatesSummary.getStandardDeviation()));
+		result.append('\n');
+		
+		return result.toString();
 	}
 	
 }
