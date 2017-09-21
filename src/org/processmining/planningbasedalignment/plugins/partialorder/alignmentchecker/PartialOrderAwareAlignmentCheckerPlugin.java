@@ -15,6 +15,12 @@ import org.processmining.plugins.DataConformance.visualization.comparison.Alignm
 import org.processmining.plugins.DataConformance.visualization.comparison.AlignmentComparisonPlugin.AlignmentComparisonResult;
 import org.processmining.plugins.DataConformance.visualization.comparison.AlignmentComparisonPlugin.AlignmentEntry;
 
+/**
+ * The ProM plug-in for checking the result of Planning-based Alignment under partial ordering assumptions.
+ * 
+ * @author Giacomo Lanciano
+ *
+ */
 @Plugin(
 	name = "Partial Order Aware Alignment Checker",
 	parameterLabels = { "Alignment Comparison", "Partial Order Aware Alignment", "Standard Alignment" }, 

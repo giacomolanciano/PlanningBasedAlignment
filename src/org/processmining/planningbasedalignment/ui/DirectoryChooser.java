@@ -5,7 +5,13 @@ import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 
-public class DestinationDirectoryChooser extends JPanel {
+/**
+ * A dialog for choosing a directory from the file system.
+ * 
+ * @author Giacomo Lanciano
+ *
+ */
+public class DirectoryChooser extends JPanel {
 
 	private static final long serialVersionUID = -1674408935899704180L;
 

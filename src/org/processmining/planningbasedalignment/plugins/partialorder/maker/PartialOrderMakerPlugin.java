@@ -19,6 +19,12 @@ import org.processmining.framework.plugin.annotations.Plugin;
 import org.processmining.framework.plugin.annotations.PluginVariant;
 import org.processmining.planningbasedalignment.help.HelpMessages;
 
+/**
+ * The ProM plug-in for making an event log partially ordered, according to several different granularities.
+ * 
+ * @author Giacomo Lanciano
+ *
+ */
 @Plugin(
 	name = "Partial Order Maker",
 	parameterLabels = { "Event Log" }, 

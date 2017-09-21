@@ -7,7 +7,7 @@ import org.processmining.planningbasedalignment.models.PlanningBasedReplayResult
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 
 /**
- * The connection among plug-in inputs and outputs.
+ * The connection among Planning-based Alignment plug-in inputs and outputs.
  * 
  * @author Giacomo Lanciano
  *

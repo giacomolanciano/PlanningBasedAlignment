@@ -23,6 +23,9 @@ import org.processmining.models.semantics.petrinet.Marking;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 
 /**
+ * An implementation of the PDDL encoder that takes into account a possible partial ordering in the event log to be 
+ * replayed on the Petri net.
+ * 
  * @author Giacomo Lanciano
  *
  */

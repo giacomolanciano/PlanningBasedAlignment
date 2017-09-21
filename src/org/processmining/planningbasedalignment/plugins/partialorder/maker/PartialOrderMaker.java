@@ -3,7 +3,7 @@ package org.processmining.planningbasedalignment.plugins.partialorder.maker;
 import java.util.Date;
 
 /**
- * A class to modify timestamps of events according to some criteria.
+ * A class to modify timestamps of events according to a criteria.
  * 
  * @author Giacomo Lanciano
  *

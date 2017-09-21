@@ -6,7 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 /**
- * Class for reading and printing on stdout an {@link InputStream} in a separated thread.
+ * A worker thread for reading and printing on stdout an {@link InputStream}.
  * 
  * @author Giacomo Lanciano
  *

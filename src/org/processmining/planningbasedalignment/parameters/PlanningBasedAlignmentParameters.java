@@ -11,7 +11,7 @@ import org.processmining.planningbasedalignment.utils.PlannerSearchStrategy;
 import org.processmining.plugins.connectionfactories.logpetrinet.TransEvClassMapping;
 
 /**
- * The parameters needed by the plug-in for Planning-based Alignment.
+ * The parameters needed by Planning-based Alignment plug-in.
  * 
  * @author Giacomo Lanciano
  *

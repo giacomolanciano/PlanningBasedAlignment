@@ -17,7 +17,7 @@ import org.processmining.planningbasedalignment.algorithms.AlignmentPddlEncoding
 import org.processmining.planningbasedalignment.help.HelpMessages;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 import org.processmining.planningbasedalignment.ui.ConfigurationUI;
-import org.processmining.planningbasedalignment.ui.DestinationDirectoryChooser;
+import org.processmining.planningbasedalignment.ui.DirectoryChooser;
 
 /**
  * The ProM plug-in for generating PDDL encodings for Planning-based Alignment.
@@ -63,7 +63,7 @@ public class AlignmentPddlEncodingPlugin extends AlignmentPddlEncoding {
 		}
 		
 		// prompt user for destination directory
-		DestinationDirectoryChooser chooser = new DestinationDirectoryChooser();
+		DirectoryChooser chooser = new DirectoryChooser();
 		File destinationDir = chooser.chooseDirectory();
 		
 		if (destinationDir == null) {

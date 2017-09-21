@@ -12,6 +12,12 @@ import java.util.zip.ZipInputStream;
 import org.processmining.contexts.uitopia.UIPluginContext;
 import org.processmining.planningbasedalignment.algorithms.PlanningBasedAlignment;
 
+/**
+ * A worker thread for unpacking the resources needed to run the planner. 
+ * 
+ * @author Giacomo Lanciano
+ *
+ */
 public class ResourcesUnpacker extends Thread {
 
 	/**

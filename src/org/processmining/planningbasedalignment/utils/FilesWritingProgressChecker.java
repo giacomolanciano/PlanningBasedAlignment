@@ -6,7 +6,7 @@ import org.processmining.framework.plugin.PluginContext;
 import org.processmining.framework.plugin.Progress;
 
 /**
- * Worker thread for showing the progress of a process that writes a bunch of files in a directory. 
+ * A worker thread for showing the progress of a process that writes a bunch of files in a directory. 
  * 
  * @author Giacomo Lanciano
  *
