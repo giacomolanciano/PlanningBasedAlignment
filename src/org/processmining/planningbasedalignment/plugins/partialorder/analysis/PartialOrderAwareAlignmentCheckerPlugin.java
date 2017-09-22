@@ -10,7 +10,7 @@ import org.processmining.framework.plugin.annotations.PluginVariant;
 import org.processmining.framework.util.ui.widgets.traceview.ProMTraceView.Event;
 import org.processmining.framework.util.ui.widgets.traceview.ProMTraceView.Trace;
 import org.processmining.planningbasedalignment.help.HelpMessages;
-import org.processmining.plugins.DataConformance.ResultReplay;
+import org.processmining.planningbasedalignment.models.PlanningBasedReplayResult;
 import org.processmining.plugins.DataConformance.visualization.comparison.AlignmentComparisonPlugin;
 import org.processmining.plugins.DataConformance.visualization.comparison.AlignmentComparisonPlugin.AlignmentComparisonResult;
 import org.processmining.plugins.DataConformance.visualization.comparison.AlignmentComparisonPlugin.AlignmentEntry;
@@ -40,8 +40,9 @@ public class PartialOrderAwareAlignmentCheckerPlugin {
 	 * alignment result is assumed to be the one that has been computed under Partial Order assumption.
 	 * 
 	 * @param context The context to run in.
-	 * @param alignmentComparison
-	 * @return
+	 * @param alignmentComparison The result of the comparison of the two alignments.
+	 * @return The filtered result of the comparison of the two alignments, retaining only the trace alignments
+	 * violating the fitness constraint.
 	 */
 	@UITopiaVariant(
 		affiliation = AFFILIATION, author = AUTHOR, email = EMAIL, pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE,
@@ -75,9 +76,10 @@ public class PartialOrderAwareAlignmentCheckerPlugin {
 	 * {@link #checkFitnessConstraint(Trace)}).
 	 * 
 	 * @param context The context to run in.
-	 * @param partialOrderAwareResult
-	 * @param result
-	 * @return
+	 * @param partialOrderAwareResult The Planning-based alignments under Partial Order assumption.
+	 * @param result The standard Planning-based alignments.
+	 * @return The filtered result of the comparison of the two alignments, retaining only the trace alignments
+	 * violating the fitness constraint.
 	 * @throws Exception
 	 */
 	@UITopiaVariant(
@@ -86,8 +88,8 @@ public class PartialOrderAwareAlignmentCheckerPlugin {
 	@PluginVariant(
 		variantLabel = "Compare Alignment Results to Check Fitness Constraint", requiredParameterLabels = { 1, 2 })
 	public AlignmentComparisonResult compareAlignmentResults(
-			PluginContext context, final ResultReplay partialOrderAwareResult, final ResultReplay result)
-					throws Exception {
+			PluginContext context, final PlanningBasedReplayResult partialOrderAwareResult,
+			final PlanningBasedReplayResult result) throws Exception {
 		
 		return retainViolatingAlignments(
 				context, new AlignmentComparisonPlugin().compareLogs(context, partialOrderAwareResult, result));

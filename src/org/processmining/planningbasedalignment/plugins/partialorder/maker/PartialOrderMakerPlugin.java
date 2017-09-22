@@ -44,6 +44,7 @@ public class PartialOrderMakerPlugin {
 	 * 
 	 * @param context The context to run in.
 	 * @param log The event log to modify.
+	 * @return The partially ordered event log with a daily granularity.
 	 */
 	@UITopiaVariant(
 		affiliation = AFFILIATION, author = AUTHOR, email = EMAIL, pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE,
@@ -59,6 +60,7 @@ public class PartialOrderMakerPlugin {
 	 * 
 	 * @param context The context to run in.
 	 * @param log The event log to modify.
+	 * @return The partially ordered event log with a 8-hours granularity.
 	 */
 	@UITopiaVariant(
 		affiliation = AFFILIATION, author = AUTHOR, email = EMAIL, pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE,
