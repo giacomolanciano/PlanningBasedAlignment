@@ -38,22 +38,22 @@ public abstract class AbstractPddlEncoder {
 	/**
 	 * The mapping between PDDL ids and their occurrences.
 	 */
-	protected Map<String, Integer> pddlIdToOccurrencesMapping = new HashMap<String, Integer>();
+	protected Map<String, Integer> pddlIdToOccurrencesMapping;
 	
 	/**
 	 * The mapping between Petri net nodes and related PDDL ids.
 	 */
-	protected Map<PetrinetNode, String> petrinetNodeToPddlIdMapping = new HashMap<PetrinetNode, String>();
+	protected Map<PetrinetNode, String> petrinetNodeToPddlIdMapping;
 	
 	/**
 	 * The mapping between PDDL ids and related Petri net nodes.
 	 */
-	protected Map<String, PetrinetNode> pddlIdToPetrinetNodeMapping = new HashMap<String, PetrinetNode>();
+	protected Map<String, PetrinetNode> pddlIdToPetrinetNodeMapping;
 	
 	/**
 	 * The mapping between PDDL ids and related event classes.
 	 */
-	protected Map<String, XEventClass> pddlIdToEventClassMapping = new HashMap<String, XEventClass>();
+	protected Map<String, XEventClass> pddlIdToEventClassMapping;
 	
 	/**
 	 * The encoding of the moves on model that is independent from the traces in the event log.   
@@ -64,11 +64,18 @@ public abstract class AbstractPddlEncoder {
 		this.petrinet = petrinet;
 		this.parameters = parameters;
 		
-		// build the structures needed to properly encode the problem instances.
-		buildMappings();
-		
-		// compute the part of the encoding that only depends on the model. 
-		this.movesOnModelBuffer = getMovesOnModelEncoding();
+		if (this.petrinet != null && this.parameters != null) {
+			this.pddlIdToOccurrencesMapping = new HashMap<String, Integer>();
+			this.petrinetNodeToPddlIdMapping = new HashMap<PetrinetNode, String>();
+			this.pddlIdToPetrinetNodeMapping = new HashMap<String, PetrinetNode>();
+			this.pddlIdToEventClassMapping = new HashMap<String, XEventClass>();
+			
+			// build the structures needed to properly encode the problem instances.
+			buildMappings();
+			
+			// compute the part of the encoding that only depends on the model. 
+			this.movesOnModelBuffer = getMovesOnModelEncoding();
+		}
 	}
 
 	/**
@@ -78,6 +85,12 @@ public abstract class AbstractPddlEncoder {
 	 * @return An array of Strings containing respectively the planning Domain and the planning Problem.
 	 */
 	public String[] getPddlEncoding(XTrace trace) {
+		
+		if (this.parameters == null || this.parameters == null) {
+			throw new NullPointerException(
+					"Both the Petri net and the parameters have to be initialized for the trace to be encoded.");
+		}
+		
 		return new String[] {createPropositionalDomain(trace), createPropositionalProblem(trace)};
 	}
 	
@@ -104,7 +117,7 @@ public abstract class AbstractPddlEncoder {
 	 * @return
 	 */
 	protected String encode(Transition transition) {
-		return petrinetNodeToPddlIdMapping.get(transition);
+		return this.petrinetNodeToPddlIdMapping.get(transition);
 	}
 
 	/**
@@ -114,7 +127,7 @@ public abstract class AbstractPddlEncoder {
 	 * @return
 	 */
 	protected String encode(Place place) {
-		return petrinetNodeToPddlIdMapping.get(place);
+		return this.petrinetNodeToPddlIdMapping.get(place);
 	}
 
 	/**
@@ -135,7 +148,7 @@ public abstract class AbstractPddlEncoder {
 	 * @return
 	 */
 	protected String encode(XEvent event) {
-		XEventClassifier eventClassifier = parameters.getTransitionsEventsMapping().getEventClassifier();
+		XEventClassifier eventClassifier = this.parameters.getTransitionsEventsMapping().getEventClassifier();
 		return getCorrectPddlFormat(eventClassifier.getClassIdentity(event));
 	}
 	
@@ -149,7 +162,7 @@ public abstract class AbstractPddlEncoder {
 		XEventClass eventLabel;
 		String pddlEventLabelId;
 		int invisibleTransitionsCount = 0;
-		for (Entry<Transition, XEventClass> entry : parameters.getTransitionsEventsMapping().entrySet()) {
+		for (Entry<Transition, XEventClass> entry : this.parameters.getTransitionsEventsMapping().entrySet()) {
 			transition = entry.getKey();
 			eventLabel = entry.getValue();
 
@@ -167,30 +180,30 @@ public abstract class AbstractPddlEncoder {
 			pddlTransitionId = getAliasedPddlId(pddlTransitionId);
 			
 			// add a mapping from the transition to the generated id
-			petrinetNodeToPddlIdMapping.put(transition, pddlTransitionId);
+			this.petrinetNodeToPddlIdMapping.put(transition, pddlTransitionId);
 			
 			// add a mapping from the generated id to the transition
-			pddlIdToPetrinetNodeMapping.put(pddlTransitionId, transition);
+			this.pddlIdToPetrinetNodeMapping.put(pddlTransitionId, transition);
 
 			// get pddl id for event class
 			pddlEventLabelId = getCorrectPddlFormat(eventLabel.toString());
 			if (!pddlEventLabelId.equals(DUMMY))
-				pddlIdToEventClassMapping.put(pddlEventLabelId, eventLabel);
+				this.pddlIdToEventClassMapping.put(pddlEventLabelId, eventLabel);
 		}
 
 		// get pddl ids for places
 		String pddlPlaceId;
-		for (Place place : petrinet.getPlaces()) {
+		for (Place place : this.petrinet.getPlaces()) {
 			pddlPlaceId = getCorrectPddlFormat(place.getLabel());
 			
 			// handle places aliasing (if needed)
 			pddlPlaceId = getAliasedPddlId(pddlPlaceId);
 			
 			// add a mapping from the place to the generated id
-			petrinetNodeToPddlIdMapping.put(place, pddlPlaceId);
+			this.petrinetNodeToPddlIdMapping.put(place, pddlPlaceId);
 			
 			// add a mapping from the generated id to the place
-			pddlIdToPetrinetNodeMapping.put(pddlPlaceId, place);
+			this.pddlIdToPetrinetNodeMapping.put(pddlPlaceId, place);
 		}
 	}
 	
@@ -223,21 +236,21 @@ public abstract class AbstractPddlEncoder {
 	 * @return The (possibly) aliased PDDL id.
 	 */
 	private String getAliasedPddlId(String pddlId) {		
-		Integer pddlIdOccurrences = pddlIdToOccurrencesMapping.get(pddlId);
+		Integer pddlIdOccurrences = this.pddlIdToOccurrencesMapping.get(pddlId);
 		if (pddlIdOccurrences != null) {
 			// update occurrences
-			pddlIdToOccurrencesMapping.put(pddlId, pddlIdOccurrences + 1);
+			this.pddlIdToOccurrencesMapping.put(pddlId, pddlIdOccurrences + 1);
 			
 			// create alias
 			String newPddlId = pddlId + "_" + pddlIdOccurrences;
 			
 			// insert new aliased id to avoid new conflicts
-			pddlIdToOccurrencesMapping.put(newPddlId, 1);
+			this.pddlIdToOccurrencesMapping.put(newPddlId, 1);
 			
 			return newPddlId;
 		}
 		
-		pddlIdToOccurrencesMapping.put(pddlId, 1);
+		this.pddlIdToOccurrencesMapping.put(pddlId, 1);
 		return pddlId;
 	}
 	
@@ -249,13 +262,13 @@ public abstract class AbstractPddlEncoder {
 	private StringBuffer getMovesOnModelEncoding() {
 		
 		StringBuffer result = new StringBuffer();
-		Map<Transition, Integer> movesOnModelCosts = parameters.getMovesOnModelCosts();
+		Map<Transition, Integer> movesOnModelCosts = this.parameters.getMovesOnModelCosts();
 		
-		for(Transition transition : petrinet.getTransitions()) {
+		for(Transition transition : this.petrinet.getTransitions()) {
 
 			String transitionName = encode(transition);
-			Collection<PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode>> transitionInEdgesCollection = petrinet.getInEdges(transition);
-			Collection<PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode>> transitionOutEdgesCollection = petrinet.getOutEdges(transition);
+			Collection<PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode>> transitionInEdgesCollection = this.petrinet.getInEdges(transition);
+			Collection<PetrinetEdge<? extends PetrinetNode, ? extends PetrinetNode>> transitionOutEdgesCollection = this.petrinet.getOutEdges(transition);
 			
 			/* Move in the Model */
 			result.append("(:action " + MODEL_MOVE_PREFIX + SEPARATOR + transitionName + "\n");
@@ -328,14 +341,14 @@ public abstract class AbstractPddlEncoder {
 	 * @return the pddlIdToPetrinetNodeMapping
 	 */
 	public Map<String, PetrinetNode> getPddlIdToPetrinetNodeMapping() {
-		return pddlIdToPetrinetNodeMapping;
+		return this.pddlIdToPetrinetNodeMapping;
 	}
 
 	/**
 	 * @return the pddlIdToEventClassMapping
 	 */
 	public Map<String, XEventClass> getPddlIdToEventClassMapping() {
-		return pddlIdToEventClassMapping;
+		return this.pddlIdToEventClassMapping;
 	}
 
 }

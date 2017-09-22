@@ -1,4 +1,4 @@
-package org.processmining.planningbasedalignment.plugins.partialorder.alignmentchecker;
+package org.processmining.planningbasedalignment.plugins.partialorder.analysis;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,7 +40,8 @@ public class PartialOrderAwareAlignmentCheckerPlugin {
 	 * alignment result is assumed to be the one that has been computed under Partial Order assumption.
 	 * 
 	 * @param context The context to run in.
-	 * @param log The event log to replay.
+	 * @param alignmentComparison
+	 * @return
 	 */
 	@UITopiaVariant(
 		affiliation = AFFILIATION, author = AUTHOR, email = EMAIL, pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE,
@@ -74,7 +75,10 @@ public class PartialOrderAwareAlignmentCheckerPlugin {
 	 * {@link #checkFitnessConstraint(Trace)}).
 	 * 
 	 * @param context The context to run in.
-	 * @param log The event log to replay.
+	 * @param partialOrderAwareResult
+	 * @param result
+	 * @return
+	 * @throws Exception
 	 */
 	@UITopiaVariant(
 		affiliation = AFFILIATION, author = AUTHOR, email = EMAIL, pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE,

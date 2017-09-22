@@ -35,7 +35,7 @@ public class PartialOrderAwarePddlEncoder extends AbstractPddlEncoder {
 	 * The mapping between the events in the trace and their (positional, unique) labels, used to refer to them in the
 	 * PDDL encding.
 	 */
-	Map<XEvent, String> eventToLabelMapping;
+	protected Map<XEvent, String> eventToLabelMapping;
 	
 	/**
 	 * The mapping between isochronous groups timestamps (that are the unique timestamps in the trace) and their ids.
@@ -44,12 +44,16 @@ public class PartialOrderAwarePddlEncoder extends AbstractPddlEncoder {
 	 * Since the ids reflect their chronological order, it is easy to access the "previous" group, given the timestamp 
 	 * of an event. 
 	 */
-	Map<String, Integer> timestampToGroupIdMapping;
+	protected Map<String, Integer> timestampToGroupIdMapping;
 	
 	/**
 	 * The mapping between isochronous groups ids and the related events.
 	 */
-	Map<Integer, ArrayList<XEvent>> groupIdToEventsMapping;
+	protected Map<Integer, ArrayList<XEvent>> groupIdToEventsMapping;
+	
+	public PartialOrderAwarePddlEncoder() {
+		super(null, null);
+	}
 	
 	public PartialOrderAwarePddlEncoder(Petrinet petrinet, PlanningBasedAlignmentParameters parameters) {
 		super(petrinet, parameters);
@@ -63,52 +67,52 @@ public class PartialOrderAwarePddlEncoder extends AbstractPddlEncoder {
 	}
 	
 	/**
-	 * Initialize the data structures needed for dealing with partially ordered events.
+	 * Initialize the data structures needed for dealing with the partially ordered events in the current trace.
 	 * 
 	 * @param trace The event log trace whose alignment has to be encoded.
 	 */
-	protected void buildIsochronousGroups(XTrace trace) {
+	public void buildIsochronousGroups(XTrace trace) {
 		
-		eventToLabelMapping = new HashMap<XEvent, String>();
-		timestampToGroupIdMapping = new HashMap<String, Integer>();
-		groupIdToEventsMapping = new HashMap<Integer, ArrayList<XEvent>>();
+		this.eventToLabelMapping = new HashMap<XEvent, String>();
+		this.timestampToGroupIdMapping = new HashMap<String, Integer>();
+		this.groupIdToEventsMapping = new HashMap<Integer, ArrayList<XEvent>>();
 		
 		int eventIndex = 0;
 		for (XEvent event : trace) {
 			// store the event label
 			String eventLabel = "ev" + ++eventIndex;
-			eventToLabelMapping.put(event, eventLabel);
+			this.eventToLabelMapping.put(event, eventLabel);
 			
 			// store the (unique) timestamps
 			String timestamp = extractSafeEventTimestamp(event);
-			timestampToGroupIdMapping.put(timestamp, 0);
+			this.timestampToGroupIdMapping.put(timestamp, 0);
 		}
 
 		// get sorted (unique) timestamps
-		String[] timestamps = timestampToGroupIdMapping.keySet().toArray(new String[] {});
+		String[] timestamps = this.timestampToGroupIdMapping.keySet().toArray(new String[] {});
 		Arrays.sort(timestamps);
 		
 		// update timestamp to group id mapping with chronologically sorted ids
 		int groupIndex = 0;
 		for (String timestamp : timestamps) {
-			timestampToGroupIdMapping.put(timestamp, groupIndex++);
+			this.timestampToGroupIdMapping.put(timestamp, groupIndex++);
 		}
 		
 		// put each event in its isochronous group
 		for (XEvent event : trace) {
 			String timestamp = extractSafeEventTimestamp(event);
-			Integer groupId = timestampToGroupIdMapping.get(timestamp);
+			Integer groupId = this.timestampToGroupIdMapping.get(timestamp);
 			
 			if (groupId == null)
 				throw new RuntimeException("Unable to find a group associated with timestamp " + timestamp);
 			
-			ArrayList<XEvent> isochronousGroup = groupIdToEventsMapping.get(groupId);
+			ArrayList<XEvent> isochronousGroup = this.groupIdToEventsMapping.get(groupId);
 			if (isochronousGroup != null) {
 				isochronousGroup.add(event);
 			} else {
 				isochronousGroup = new ArrayList<XEvent>();
 				isochronousGroup.add(event);
-				groupIdToEventsMapping.put(groupId, isochronousGroup);
+				this.groupIdToEventsMapping.put(groupId, isochronousGroup);
 			}
 		}
 		
@@ -259,7 +263,7 @@ public class PartialOrderAwarePddlEncoder extends AbstractPddlEncoder {
 
 		pddlDomainBuffer.append(syncMovesBuffer);
 		pddlDomainBuffer.append(movesOnLogBuffer);
-		pddlDomainBuffer.append(movesOnModelBuffer);
+		pddlDomainBuffer.append(this.movesOnModelBuffer);
 		pddlDomainBuffer.append(")");
 		return pddlDomainBuffer.toString();
 	}
@@ -354,9 +358,15 @@ public class PartialOrderAwarePddlEncoder extends AbstractPddlEncoder {
 		Integer groupId = timestampToGroupIdMapping.get(timestamp);
 		
 		if (groupId == null)
-			throw new RuntimeException("Unable to find a group associated with timestamp " + timestamp);
+			throw new NullPointerException("Unable to find a group associated with timestamp " + timestamp);
 		
 		return groupIdToEventsMapping.get(groupId - 1);
+	}
+
+	/* GETTERS & SETTERS */
+	
+	public Map<Integer, ArrayList<XEvent>> getGroupIdToEventsMapping() {
+		return groupIdToEventsMapping;
 	}
 
 }
