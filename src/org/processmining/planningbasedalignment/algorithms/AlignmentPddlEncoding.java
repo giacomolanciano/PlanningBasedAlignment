@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.deckfour.xes.extension.std.XConceptExtension;
 import org.deckfour.xes.model.XLog;
@@ -33,6 +34,7 @@ public class AlignmentPddlEncoding {
 	protected static final String PDDL_FILES_DIR_PREFIX = "pddl_files_";
 	protected static final String PDDL_DOMAIN_FILE_PREFIX = "domain";
 	protected static final String PDDL_PROBLEM_FILE_PREFIX = "problem";
+	protected static final String MAPPING_FILE_NAME = "_mapping.txt";
 	protected static final int EMPTY_TRACE_POS = 0;
 	protected static final int PDDL_FILES_PER_TRACE = 2;
 	protected static final int PROGRESS_CHECKER_DELAY = 1000;
@@ -135,6 +137,9 @@ public class AlignmentPddlEncoding {
 		}
 		
 		pddlEncodingProgressChecker.interrupt();
+		
+		context.log("Dumping mapping between case ids and positions of the traces in the log...");
+		writePositionToCaseIdMapping();
 	}
 	
 	/**
@@ -146,7 +151,7 @@ public class AlignmentPddlEncoding {
 	}
 	
 	/**
-	 * Write the PDDL encoding of the alignment problem related to the given trace.
+	 * Write the PDDL encoding of the alignment problem related to the given trace on disk.
 	 * 
 	 * @param trace The trace.
 	 * @throws IOException 
@@ -210,6 +215,31 @@ public class AlignmentPddlEncoding {
 		}
 		
 		return result;
+	}
+	
+	/**
+	 * Write the mapping between case ids and positions of the traces in the log on disk.
+	 * 
+	 * @throws IOException
+	 */
+	private void writePositionToCaseIdMapping() throws IOException {
+		String mappingFileName = new File(pddlFilesDir, MAPPING_FILE_NAME).getCanonicalPath();
+		OSUtils.writeTextualFile(mappingFileName, positionToCaseIdMappingToString());
+	}
+	
+	/**
+	 * Create a textual representation of the mapping between case ids and positions of the traces in the log.
+	 * 
+	 * @return The String representing the mapping between case ids and positions of the traces in the log.
+	 */
+	private String positionToCaseIdMappingToString() {
+		StringBuffer result = new StringBuffer();
+		
+		for (Entry<Integer, String> entry : positionToCaseIdMapping.entrySet()) {
+			result.append(entry.getKey() + "\t\t\t" + entry.getValue() + "\n");
+		}
+		
+		return result.toString();
 	}
 
 }
