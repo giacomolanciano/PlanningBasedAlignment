@@ -12,7 +12,7 @@ import org.processmining.contexts.uitopia.annotations.Visualizer;
 import org.processmining.framework.plugin.PluginContext;
 import org.processmining.framework.plugin.annotations.Plugin;
 import org.processmining.framework.plugin.annotations.PluginVariant;
-import org.processmining.planningbasedalignment.models.PlanningBasedReplayResult;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.models.PlanningBasedReplayResult;
 import org.processmining.planningbasedalignment.plugins.visualization.alignment.StrippedDownAlignmentView.Layout;
 import org.processmining.plugins.DataConformance.Alignment;
 import org.processmining.plugins.DataConformance.ResultReplay;

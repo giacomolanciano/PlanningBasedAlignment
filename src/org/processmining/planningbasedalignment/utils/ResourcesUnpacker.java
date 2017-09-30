@@ -10,7 +10,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import org.processmining.contexts.uitopia.UIPluginContext;
-import org.processmining.planningbasedalignment.algorithms.PlanningBasedAlignment;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.algorithms.PlanningBasedAlignment;
 
 /**
  * A worker thread for unpacking the resources needed to run the planner. 

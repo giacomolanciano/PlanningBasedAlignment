@@ -1,4 +1,4 @@
-package org.processmining.planningbasedalignment.pddl;
+package org.processmining.planningbasedalignment.plugins.planningbasedalignment.pddl;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -14,7 +14,7 @@ import org.processmining.models.graphbased.directed.petrinet.PetrinetEdge;
 import org.processmining.models.graphbased.directed.petrinet.PetrinetNode;
 import org.processmining.models.graphbased.directed.petrinet.elements.Place;
 import org.processmining.models.graphbased.directed.petrinet.elements.Transition;
-import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 
 /**
  * Abstract class that can be extended to provide different ways of encoding an alignment-based conformance checking

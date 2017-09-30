@@ -1,4 +1,4 @@
-package org.processmining.planningbasedalignment.ui;
+package org.processmining.planningbasedalignment.plugins.planningbasedalignment.ui;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -36,7 +36,7 @@ import org.processmining.models.graphbased.directed.petrinet.Petrinet;
 import org.processmining.models.graphbased.directed.petrinet.PetrinetGraph;
 import org.processmining.models.graphbased.directed.petrinet.elements.Transition;
 import org.processmining.models.semantics.petrinet.Marking;
-import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 import org.processmining.plugins.connectionfactories.logpetrinet.TransEvClassMapping;
 import org.processmining.plugins.utils.ConnectionManagerHelper;
 import org.processmining.plugins.utils.ProvidedObjectHelper;

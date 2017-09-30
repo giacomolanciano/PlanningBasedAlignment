@@ -13,8 +13,8 @@ import org.processmining.framework.plugin.PluginContext;
 import org.processmining.framework.plugin.Progress;
 import org.processmining.framework.plugin.annotations.Plugin;
 import org.processmining.framework.plugin.annotations.PluginVariant;
-import org.processmining.planningbasedalignment.help.HelpMessages;
-import org.processmining.planningbasedalignment.pddl.PartialOrderAwarePddlEncoder;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.pddl.PartialOrderAwarePddlEncoder;
+import org.processmining.planningbasedalignment.utils.HelpMessages;
 
 /**
  * The ProM plug-in for analyzing a partially ordered event log.
@@ -31,10 +31,6 @@ import org.processmining.planningbasedalignment.pddl.PartialOrderAwarePddlEncode
 )
 public class PartialOrderStatsPlugin {
 
-	private static final String AFFILIATION = "Sapienza University of Rome";
-	private static final String AUTHOR = "Giacomo Lanciano";
-	private static final String EMAIL = "lanciano.1487019@studenti.uniroma1.it";
-	
 	/**
 	 * The plug-in variant that analyze the given partially ordered event log.
 	 * 
@@ -43,7 +39,8 @@ public class PartialOrderStatsPlugin {
 	 * @return The text report of the analysis.
 	 */
 	@UITopiaVariant(
-		affiliation = AFFILIATION, author = AUTHOR, email = EMAIL, pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE)
+		affiliation = HelpMessages.AFFILIATION, author = HelpMessages.AUTHOR, email = HelpMessages.EMAIL,
+		pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE)
 	@PluginVariant(requiredParameterLabels = { 0 })
 	public String analyzeLog(PluginContext context, XLog log) {
 		

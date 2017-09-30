@@ -1,4 +1,4 @@
-package org.processmining.planningbasedalignment.algorithms;
+package org.processmining.planningbasedalignment.plugins.planningbasedalignment.algorithms;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,10 +15,10 @@ import org.deckfour.xes.model.impl.XAttributeMapImpl;
 import org.deckfour.xes.model.impl.XTraceImpl;
 import org.processmining.framework.plugin.PluginContext;
 import org.processmining.models.graphbased.directed.petrinet.Petrinet;
-import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
-import org.processmining.planningbasedalignment.pddl.AbstractPddlEncoder;
-import org.processmining.planningbasedalignment.pddl.PartialOrderAwarePddlEncoder;
-import org.processmining.planningbasedalignment.pddl.StandardPddlEncoder;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.pddl.AbstractPddlEncoder;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.pddl.PartialOrderAwarePddlEncoder;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.pddl.StandardPddlEncoder;
 import org.processmining.planningbasedalignment.utils.FilesWritingProgressChecker;
 import org.processmining.planningbasedalignment.utils.OSUtils;
 

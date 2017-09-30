@@ -1,4 +1,4 @@
-package org.processmining.planningbasedalignment.pddl;
+package org.processmining.planningbasedalignment.plugins.planningbasedalignment.pddl;
 
 import java.util.Collection;
 import java.util.Map;
@@ -13,7 +13,7 @@ import org.processmining.models.graphbased.directed.petrinet.PetrinetNode;
 import org.processmining.models.graphbased.directed.petrinet.elements.Place;
 import org.processmining.models.graphbased.directed.petrinet.elements.Transition;
 import org.processmining.models.semantics.petrinet.Marking;
-import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 
 /**
  * A standard implementation of the PDDL encoder that does NOT take into account a possible partial ordering in the

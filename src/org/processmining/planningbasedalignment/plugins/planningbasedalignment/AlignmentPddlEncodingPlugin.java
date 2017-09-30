@@ -1,4 +1,4 @@
-package org.processmining.planningbasedalignment.plugins;
+package org.processmining.planningbasedalignment.plugins.planningbasedalignment;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,11 +13,11 @@ import org.processmining.framework.plugin.annotations.Plugin;
 import org.processmining.framework.plugin.annotations.PluginCategory;
 import org.processmining.framework.plugin.annotations.PluginVariant;
 import org.processmining.models.graphbased.directed.petrinet.Petrinet;
-import org.processmining.planningbasedalignment.algorithms.AlignmentPddlEncoding;
-import org.processmining.planningbasedalignment.help.HelpMessages;
-import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
-import org.processmining.planningbasedalignment.ui.PlanningBasedAlignmentConfiguration;
-import org.processmining.planningbasedalignment.ui.DirectoryChooser;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.algorithms.AlignmentPddlEncoding;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.ui.PlanningBasedAlignmentConfiguration;
+import org.processmining.planningbasedalignment.utils.HelpMessages;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.ui.DirectoryChooser;
 
 /**
  * The ProM plug-in for generating PDDL encodings for Planning-based Alignment.
@@ -37,10 +37,6 @@ import org.processmining.planningbasedalignment.ui.DirectoryChooser;
 )
 public class AlignmentPddlEncodingPlugin extends AlignmentPddlEncoding {
 
-	private static final String AFFILIATION = "Sapienza University of Rome";
-	private static final String AUTHOR = "Giacomo Lanciano";
-	private static final String EMAIL = "lanciano.1487019@studenti.uniroma1.it";
-	
 	/**
 	 *  The plug-in variant that runs in a UI context and prompt the user to get the parameters.
 	 *  
@@ -49,7 +45,8 @@ public class AlignmentPddlEncodingPlugin extends AlignmentPddlEncoding {
 	 * @param petrinet The Petri net on which the log has to be replayed.
 	 */
 	@UITopiaVariant(
-		affiliation = AFFILIATION, author = AUTHOR, email = EMAIL, pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE)
+		affiliation = HelpMessages.AFFILIATION, author = HelpMessages.AUTHOR, email = HelpMessages.EMAIL,
+		pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE)
 	@PluginVariant(requiredParameterLabels = { 0, 1 })
 	public void runUI(UIPluginContext context, XLog log, Petrinet petrinet) {
 		

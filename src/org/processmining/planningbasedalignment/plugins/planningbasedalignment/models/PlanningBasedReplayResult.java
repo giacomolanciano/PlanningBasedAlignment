@@ -1,4 +1,4 @@
-package org.processmining.planningbasedalignment.models;
+package org.processmining.planningbasedalignment.plugins.planningbasedalignment.models;
 
 import java.util.Collection;
 import java.util.HashMap;

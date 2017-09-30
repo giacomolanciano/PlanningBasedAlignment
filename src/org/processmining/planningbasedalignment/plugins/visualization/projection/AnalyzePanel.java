@@ -36,7 +36,7 @@ import org.processmining.models.graphbased.directed.petrinet.PetrinetNode;
 import org.processmining.models.graphbased.directed.petrinet.elements.Transition;
 import org.processmining.models.jgraph.ProMJGraphVisualizer;
 import org.processmining.models.jgraph.visualization.ProMJGraphPanel;
-import org.processmining.planningbasedalignment.models.PlanningBasedReplayResult;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.models.PlanningBasedReplayResult;
 import org.processmining.plugins.DataConformance.Alignment;
 import org.processmining.plugins.DataConformance.framework.ExecutionStep;
 import org.processmining.plugins.DataConformance.visualization.DataAwareStepTypes;

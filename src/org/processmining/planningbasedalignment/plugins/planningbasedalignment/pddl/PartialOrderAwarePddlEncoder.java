@@ -1,4 +1,4 @@
-package org.processmining.planningbasedalignment.pddl;
+package org.processmining.planningbasedalignment.plugins.planningbasedalignment.pddl;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -20,7 +20,7 @@ import org.processmining.models.graphbased.directed.petrinet.PetrinetNode;
 import org.processmining.models.graphbased.directed.petrinet.elements.Place;
 import org.processmining.models.graphbased.directed.petrinet.elements.Transition;
 import org.processmining.models.semantics.petrinet.Marking;
-import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 
 /**
  * An implementation of the PDDL encoder that takes into account a possible partial ordering in the event log to be 

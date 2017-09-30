@@ -1,4 +1,4 @@
-package org.processmining.planningbasedalignment.ui;
+package org.processmining.planningbasedalignment.plugins.planningbasedalignment.ui;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -14,7 +14,7 @@ import org.deckfour.xes.model.XLog;
 import org.deckfour.xes.model.XTrace;
 import org.processmining.framework.plugin.PluginDescriptor;
 import org.processmining.framework.util.ui.widgets.ProMTable;
-import org.processmining.planningbasedalignment.models.PlanningBasedReplayResult;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.models.PlanningBasedReplayResult;
 import org.processmining.planningbasedalignment.utils.PlannerSearchStrategy;
 
 import com.fluxicon.slickerbox.factory.SlickerFactory;

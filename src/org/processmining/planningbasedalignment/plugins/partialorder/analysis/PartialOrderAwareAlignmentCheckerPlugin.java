@@ -9,8 +9,8 @@ import org.processmining.framework.plugin.annotations.Plugin;
 import org.processmining.framework.plugin.annotations.PluginVariant;
 import org.processmining.framework.util.ui.widgets.traceview.ProMTraceView.Event;
 import org.processmining.framework.util.ui.widgets.traceview.ProMTraceView.Trace;
-import org.processmining.planningbasedalignment.help.HelpMessages;
-import org.processmining.planningbasedalignment.models.PlanningBasedReplayResult;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.models.PlanningBasedReplayResult;
+import org.processmining.planningbasedalignment.utils.HelpMessages;
 import org.processmining.plugins.DataConformance.visualization.comparison.AlignmentComparisonPlugin;
 import org.processmining.plugins.DataConformance.visualization.comparison.AlignmentComparisonPlugin.AlignmentComparisonResult;
 import org.processmining.plugins.DataConformance.visualization.comparison.AlignmentComparisonPlugin.AlignmentEntry;
@@ -29,10 +29,6 @@ import org.processmining.plugins.DataConformance.visualization.comparison.Alignm
 	userAccessible = true
 )
 public class PartialOrderAwareAlignmentCheckerPlugin {
-
-	private static final String AFFILIATION = "Sapienza University of Rome";
-	private static final String AUTHOR = "Giacomo Lanciano";
-	private static final String EMAIL = "lanciano.1487019@studenti.uniroma1.it";
 	
 	/**
 	 * The plug-in variant that retains the alignments violating the fitness constraint (see
@@ -45,8 +41,8 @@ public class PartialOrderAwareAlignmentCheckerPlugin {
 	 * violating the fitness constraint.
 	 */
 	@UITopiaVariant(
-		affiliation = AFFILIATION, author = AUTHOR, email = EMAIL, pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE,
-		uiLabel = UITopiaVariant.USEVARIANT)
+		affiliation = HelpMessages.AFFILIATION, author = HelpMessages.AUTHOR, email = HelpMessages.EMAIL,
+		pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE, uiLabel = UITopiaVariant.USEVARIANT)
 	@PluginVariant(
 		variantLabel = "Retain Alignments Violating Fitness Constraint", requiredParameterLabels = { 0 })
 	public AlignmentComparisonResult retainViolatingAlignments(
@@ -83,8 +79,8 @@ public class PartialOrderAwareAlignmentCheckerPlugin {
 	 * @throws Exception
 	 */
 	@UITopiaVariant(
-		affiliation = AFFILIATION, author = AUTHOR, email = EMAIL, pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE,
-		uiLabel = UITopiaVariant.USEVARIANT)
+		affiliation = HelpMessages.AFFILIATION, author = HelpMessages.AUTHOR, email = HelpMessages.EMAIL,
+		pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE, uiLabel = UITopiaVariant.USEVARIANT)
 	@PluginVariant(
 		variantLabel = "Compare Alignment Results to Check Fitness Constraint", requiredParameterLabels = { 1, 2 })
 	public AlignmentComparisonResult compareAlignmentResults(

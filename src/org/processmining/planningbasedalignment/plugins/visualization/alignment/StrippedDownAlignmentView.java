@@ -46,8 +46,8 @@ import org.processmining.framework.util.ui.widgets.traceview.ProMTraceView.Trace
 import org.processmining.framework.util.ui.widgets.traceview.masterdetail.DetailView;
 import org.processmining.framework.util.ui.widgets.traceview.model.FilteredListModelImpl;
 import org.processmining.framework.util.ui.widgets.traceview.model.FilteredListModelImpl.ListModelFilter;
-import org.processmining.planningbasedalignment.algorithms.PlanningBasedAlignment;
-import org.processmining.planningbasedalignment.models.PlanningBasedReplayResult;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.algorithms.PlanningBasedAlignment;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.models.PlanningBasedReplayResult;
 import org.processmining.plugins.DataConformance.visualization.alignment.AlignmentListView;
 import org.processmining.plugins.DataConformance.visualization.alignment.AlignmentListView.XAlignmentOrdering;
 import org.processmining.plugins.DataConformance.visualization.alignment.AlignmentQueryPredicate;

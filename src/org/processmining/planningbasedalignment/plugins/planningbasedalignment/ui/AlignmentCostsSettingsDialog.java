@@ -1,4 +1,4 @@
-package org.processmining.planningbasedalignment.ui;
+package org.processmining.planningbasedalignment.plugins.planningbasedalignment.ui;
 
 import java.awt.Color;
 import java.awt.Dimension;

@@ -1,4 +1,4 @@
-package org.processmining.planningbasedalignment.plugins;
+package org.processmining.planningbasedalignment.plugins.planningbasedalignment;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -21,12 +21,12 @@ import org.processmining.framework.plugin.annotations.PluginCategory;
 import org.processmining.framework.plugin.annotations.PluginVariant;
 import org.processmining.framework.util.ui.widgets.helper.UserCancelledException;
 import org.processmining.models.graphbased.directed.petrinet.Petrinet;
-import org.processmining.planningbasedalignment.algorithms.PlanningBasedAlignment;
-import org.processmining.planningbasedalignment.connections.PlanningBasedAlignmentConnection;
-import org.processmining.planningbasedalignment.help.HelpMessages;
-import org.processmining.planningbasedalignment.models.PlanningBasedReplayResult;
-import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
-import org.processmining.planningbasedalignment.ui.PlanningBasedAlignmentConfiguration;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.algorithms.PlanningBasedAlignment;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.connections.PlanningBasedAlignmentConnection;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.models.PlanningBasedReplayResult;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.ui.PlanningBasedAlignmentConfiguration;
+import org.processmining.planningbasedalignment.utils.HelpMessages;
 import org.processmining.planningbasedalignment.utils.ResourcesUnpacker;
 
 /**
@@ -47,9 +47,6 @@ import org.processmining.planningbasedalignment.utils.ResourcesUnpacker;
 )
 public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 
-	private static final String AFFILIATION = "Sapienza University of Rome";
-	private static final String AUTHOR = "Giacomo Lanciano";
-	private static final String EMAIL = "lanciano.1487019@studenti.uniroma1.it";
 	private static final int PYTHON_2 = 2;
 	private static final int PYTHON_3 = 3;
 	private static final int PYTHON_2_MIN_VERSION = 7;
@@ -66,7 +63,8 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	 * @throws UserCancelledException 
 	 */
 	@UITopiaVariant(
-			affiliation = AFFILIATION, author = AUTHOR, email = EMAIL, pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE)
+		affiliation = HelpMessages.AFFILIATION, author = HelpMessages.AUTHOR, email = HelpMessages.EMAIL,
+		pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE)
 	@PluginVariant(requiredParameterLabels = { 0, 1 })
 	public PlanningBasedReplayResult runUI(UIPluginContext context, XLog log, Petrinet petrinet) {
 

@@ -22,12 +22,12 @@ import org.processmining.framework.plugin.PluginContext;
 import org.processmining.framework.plugin.Progress;
 import org.processmining.framework.plugin.annotations.Plugin;
 import org.processmining.framework.plugin.annotations.PluginVariant;
-import org.processmining.planningbasedalignment.help.HelpMessages;
 import org.processmining.planningbasedalignment.plugins.partialorder.maker.algorithms.DailyPartialOrderMaker;
 import org.processmining.planningbasedalignment.plugins.partialorder.maker.algorithms.EightHoursPartialOrderMaker;
 import org.processmining.planningbasedalignment.plugins.partialorder.maker.algorithms.TimeWisePartialOrderMaker;
 import org.processmining.planningbasedalignment.plugins.partialorder.maker.parameters.GroupsWisePartialOrderMakerParameters;
 import org.processmining.planningbasedalignment.plugins.partialorder.maker.ui.GroupsWisePartialOrderMakerConfiguration;
+import org.processmining.planningbasedalignment.utils.HelpMessages;
 
 /**
  * The ProM plug-in for making an event log partially ordered, according to several different granularities.
@@ -44,10 +44,6 @@ import org.processmining.planningbasedalignment.plugins.partialorder.maker.ui.Gr
 )
 public class PartialOrderMakerPlugin {
 
-	private static final String AFFILIATION = "Sapienza University of Rome";
-	private static final String AUTHOR = "Giacomo Lanciano";
-	private static final String EMAIL = "lanciano.1487019@studenti.uniroma1.it";
-	
 	/**
 	 * The plug-in variant that create a copy of the given event log with all timestamps rounded down to the midnight of
 	 * the same day.
@@ -57,8 +53,8 @@ public class PartialOrderMakerPlugin {
 	 * @return The partially ordered event log with a daily granularity.
 	 */
 	@UITopiaVariant(
-		affiliation = AFFILIATION, author = AUTHOR, email = EMAIL, pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE,
-		uiLabel = UITopiaVariant.USEVARIANT)
+		affiliation = HelpMessages.AFFILIATION, author = HelpMessages.AUTHOR, email = HelpMessages.EMAIL,
+		pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE, uiLabel = UITopiaVariant.USEVARIANT)
 	@PluginVariant(
 		variantLabel = "Make an Event Log partially ordered (Daily Granularity)", requiredParameterLabels = { 0 })
 	public XLog makeDailyPartialOrder(PluginContext context, XLog log) {
@@ -74,8 +70,8 @@ public class PartialOrderMakerPlugin {
 	 * @return The partially ordered event log with a 8-hours granularity.
 	 */
 	@UITopiaVariant(
-		affiliation = AFFILIATION, author = AUTHOR, email = EMAIL, pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE,
-		uiLabel = UITopiaVariant.USEVARIANT)
+		affiliation = HelpMessages.AFFILIATION, author = HelpMessages.AUTHOR, email = HelpMessages.EMAIL,
+		pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE, uiLabel = UITopiaVariant.USEVARIANT)
 	@PluginVariant(
 		variantLabel = "Make an Event Log partially ordered (8-hours Granularity)", requiredParameterLabels = { 0 })
 	public XLog makeEightHoursPartialOrder(PluginContext context, XLog log) {
@@ -91,8 +87,8 @@ public class PartialOrderMakerPlugin {
 	 * @return The partially ordered event log.
 	 */
 	@UITopiaVariant(
-		affiliation = AFFILIATION, author = AUTHOR, email = EMAIL, pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE,
-		uiLabel = UITopiaVariant.USEVARIANT)
+		affiliation = HelpMessages.AFFILIATION, author = HelpMessages.AUTHOR, email = HelpMessages.EMAIL,
+		pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE, uiLabel = UITopiaVariant.USEVARIANT)
 	@PluginVariant(
 		variantLabel = "Make an Event Log partially ordered setting isochronous groups expected size", 
 		requiredParameterLabels = { 0 })
