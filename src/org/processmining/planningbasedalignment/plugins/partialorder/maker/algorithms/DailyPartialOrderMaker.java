@@ -1,4 +1,4 @@
-package org.processmining.planningbasedalignment.plugins.partialorder.maker;
+package org.processmining.planningbasedalignment.plugins.partialorder.maker.algorithms;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -11,7 +11,7 @@ import org.apache.commons.lang3.time.DateUtils;
  * @author Giacomo Lanciano
  *
  */
-public class DailyPartialOrderMaker implements PartialOrderMaker {
+public class DailyPartialOrderMaker implements TimeWisePartialOrderMaker {
 
 	@Override
 	public Date modifyTimestamp(Date timestamp) {

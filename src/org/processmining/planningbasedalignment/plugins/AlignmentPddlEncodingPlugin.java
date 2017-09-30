@@ -16,7 +16,7 @@ import org.processmining.models.graphbased.directed.petrinet.Petrinet;
 import org.processmining.planningbasedalignment.algorithms.AlignmentPddlEncoding;
 import org.processmining.planningbasedalignment.help.HelpMessages;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
-import org.processmining.planningbasedalignment.ui.ConfigurationUI;
+import org.processmining.planningbasedalignment.ui.PlanningBasedAlignmentConfiguration;
 import org.processmining.planningbasedalignment.ui.DirectoryChooser;
 
 /**
@@ -53,8 +53,8 @@ public class AlignmentPddlEncodingPlugin extends AlignmentPddlEncoding {
 	@PluginVariant(requiredParameterLabels = { 0, 1 })
 	public void runUI(UIPluginContext context, XLog log, Petrinet petrinet) {
 		
-		ConfigurationUI configurationUI = new ConfigurationUI();
-		PlanningBasedAlignmentParameters parameters = configurationUI.getPlanningBasedAlignmentParameters(
+		PlanningBasedAlignmentConfiguration configurationUI = new PlanningBasedAlignmentConfiguration();
+		PlanningBasedAlignmentParameters parameters = configurationUI.getParameters(
 				context, log, petrinet);
 		
 		if (parameters == null) {

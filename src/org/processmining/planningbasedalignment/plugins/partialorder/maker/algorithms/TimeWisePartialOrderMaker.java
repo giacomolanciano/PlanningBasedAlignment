@@ -1,14 +1,14 @@
-package org.processmining.planningbasedalignment.plugins.partialorder.maker;
+package org.processmining.planningbasedalignment.plugins.partialorder.maker.algorithms;
 
 import java.util.Date;
 
 /**
- * A class to modify timestamps of events according to a criteria.
+ * A class to modify timestamps of events according to a time-wise criteria.
  * 
  * @author Giacomo Lanciano
  *
  */
-public interface PartialOrderMaker {
+public interface TimeWisePartialOrderMaker {
 	
 	/**
 	 * Modify the given timestamp.

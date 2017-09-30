@@ -46,7 +46,7 @@ import org.processmining.plugins.utils.ProvidedObjectHelper;
  * 
  * The GUI for setting the parameters of the Planning-based Alignment plug-in.
  */
-public class ConfigurationUI {
+public class PlanningBasedAlignmentConfiguration {
 
 	private static final int NEXT_CONFIGURATION_STEP = 1;
 	private static final int PREVIOUS_CONFIGURATION_STEP = -1;
@@ -76,8 +76,7 @@ public class ConfigurationUI {
 	 * @throws ConnectionCannotBeObtained
 	 * @throws UserCancelledException 
 	 */
-	public PlanningBasedAlignmentParameters getPlanningBasedAlignmentParameters(
-			UIPluginContext context, XLog log, Petrinet petrinet) {
+	public PlanningBasedAlignmentParameters getParameters(UIPluginContext context, XLog log, Petrinet petrinet) {
 		
 		// init local parameter
 		PlanningBasedAlignmentParameters parameters = null;

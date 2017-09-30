@@ -26,7 +26,7 @@ import org.processmining.planningbasedalignment.connections.PlanningBasedAlignme
 import org.processmining.planningbasedalignment.help.HelpMessages;
 import org.processmining.planningbasedalignment.models.PlanningBasedReplayResult;
 import org.processmining.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
-import org.processmining.planningbasedalignment.ui.ConfigurationUI;
+import org.processmining.planningbasedalignment.ui.PlanningBasedAlignmentConfiguration;
 import org.processmining.planningbasedalignment.utils.ResourcesUnpacker;
 
 /**
@@ -90,8 +90,8 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 			resourcesUnpacker.start();
 		}
 
-		ConfigurationUI configurationUI = new ConfigurationUI();
-		PlanningBasedAlignmentParameters parameters = configurationUI.getPlanningBasedAlignmentParameters(
+		PlanningBasedAlignmentConfiguration configurationUI = new PlanningBasedAlignmentConfiguration();
+		PlanningBasedAlignmentParameters parameters = configurationUI.getParameters(
 				context, log, petrinet);
 
 		if (parameters == null) {

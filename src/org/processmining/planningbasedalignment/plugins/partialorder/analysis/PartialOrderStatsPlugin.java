@@ -67,7 +67,7 @@ public class PartialOrderStatsPlugin {
 			}
 			
 			// update progress bar
-			progress.setValue(progress.getValue() + 1);
+			progress.inc();
 		}
 		
 		// create text report

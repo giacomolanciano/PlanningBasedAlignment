@@ -1,4 +1,4 @@
-package org.processmining.planningbasedalignment.plugins.partialorder.maker;
+package org.processmining.planningbasedalignment.plugins.partialorder.maker.algorithms;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -12,7 +12,7 @@ import org.apache.commons.lang3.time.DateUtils;
  * @author Giacomo Lanciano
  *
  */
-public class EightHoursPartialOrderMaker implements PartialOrderMaker {
+public class EightHoursPartialOrderMaker implements TimeWisePartialOrderMaker {
 	
 	private static final int FIRST_CHECKPOINT_HOUR = 8;
 	private static final int SECOND_CHECKPOINT_HOUR = 16;
