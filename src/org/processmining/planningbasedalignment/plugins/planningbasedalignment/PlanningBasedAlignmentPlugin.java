@@ -51,6 +51,12 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	private static final int PYTHON_3 = 3;
 	private static final int PYTHON_2_MIN_VERSION = 7;
 	private static final int PYTHON_3_MIN_VERSION = 2;
+	
+	/**
+	 * A flag that tells whether another run of the plug-in is in progress or not, to avoid conflicts due to the fact
+	 * that the underlying planner is not designed to handle concurrent execution.
+	 */
+	private static boolean plannerLock = false;
 
 	/**
 	 * The plug-in variant that runs in a UI context and prompt the user to get the parameters.
@@ -68,6 +74,17 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	@PluginVariant(requiredParameterLabels = { 0, 1 })
 	public PlanningBasedReplayResult runUI(UIPluginContext context, XLog log, Petrinet petrinet) {
 
+		if (plannerLock) {
+			JOptionPane.showMessageDialog(
+					new JPanel(),
+					"It is not allowed to run many instances of the plug-in in parallel, since the underlying planner\n"
+					+ "is not designed to handle concurrent executions. Wait for the other run to terminate and start\n"
+					+ "the execution again.",
+					"Concurrent Execution Not Allowed", JOptionPane.ERROR_MESSAGE);
+			abortExecution(context);
+			return null;
+		}
+		
 		if (!isPythonInstalled()) {			
 			JOptionPane.showMessageDialog(
 					new JPanel(),
@@ -82,6 +99,9 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 			abortExecution(context);
 			return null;
 		}
+		
+		// acquire lock
+		plannerLock = true;
 
 		if (!checkPlannerSources()) {			
 			resourcesUnpacker = new ResourcesUnpacker(context);
@@ -94,6 +114,10 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 
 		if (parameters == null) {
 			abortExecution(context);
+			
+			// release lock
+			plannerLock = false;
+			
 			return null;
 		}
 
@@ -107,6 +131,10 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 			resultLabel += " (Partial Order Assumption)";
 
 		context.getFutureResult(0).setLabel(resultLabel);
+		
+		// release lock
+		plannerLock = false;
+		
 		return result;
 
 	}
