@@ -9,10 +9,12 @@ import org.deckfour.xes.model.XEvent;
 import org.deckfour.xes.model.XLog;
 import org.deckfour.xes.model.XTrace;
 import org.processmining.contexts.uitopia.annotations.UITopiaVariant;
+import org.processmining.contexts.uitopia.packagemanager.PMPackage;
 import org.processmining.framework.plugin.PluginContext;
 import org.processmining.framework.plugin.Progress;
 import org.processmining.framework.plugin.annotations.Plugin;
 import org.processmining.framework.plugin.annotations.PluginVariant;
+import org.processmining.framework.util.HTMLToString;
 import org.processmining.planningbasedalignment.plugins.planningbasedalignment.pddl.PartialOrderAwarePddlEncoder;
 import org.processmining.planningbasedalignment.utils.HelpMessages;
 
@@ -26,11 +28,16 @@ import org.processmining.planningbasedalignment.utils.HelpMessages;
 	name = "Partial Order Statistics",
 	parameterLabels = { "Partially Ordered Event Log" }, 
 	returnLabels = { "Statistics" },
-	returnTypes = { String.class },
+	returnTypes = { HTMLToString.class },
 	userAccessible = true
 )
-public class PartialOrderStatsPlugin {
+public class PartialOrderStatsPlugin implements HTMLToString {
 
+	/**
+	 * The summary containing the relevant statistics about isochronous groups size.
+	 */
+	protected SummaryStatistics stats;
+	
 	/**
 	 * The plug-in variant that analyze the given partially ordered event log.
 	 * 
@@ -42,7 +49,7 @@ public class PartialOrderStatsPlugin {
 		affiliation = HelpMessages.AFFILIATION, author = HelpMessages.AUTHOR, email = HelpMessages.EMAIL,
 		pack = HelpMessages.PLANNING_BASED_ALIGNMENT_PACKAGE)
 	@PluginVariant(requiredParameterLabels = { 0 })
-	public String analyzeLog(PluginContext context, XLog log) {
+	public HTMLToString analyzeLog(PluginContext context, XLog log) {
 		
 		// init progress bar
 		Progress progress = context.getProgress();
@@ -51,7 +58,7 @@ public class PartialOrderStatsPlugin {
 		progress.setMinimum(0);
 		
 		// init stats
-		SummaryStatistics stats = new SummaryStatistics();
+		this.stats = new SummaryStatistics();
 		PartialOrderAwarePddlEncoder encoder = new PartialOrderAwarePddlEncoder();
 		
 		for (XTrace trace : log) {
@@ -60,28 +67,40 @@ public class PartialOrderStatsPlugin {
 			// iterate over the isochronous groups of the trace
 			for (Entry<Integer, ArrayList<XEvent>> entry : encoder.getGroupIdToEventsMapping().entrySet()) {
 				// add isochronous group size to stats
-				stats.addValue(entry.getValue().size());
+				this.stats.addValue(entry.getValue().size());
 			}
 			
 			// update progress bar
 			progress.inc();
 		}
 		
-		// create text report
-		StringBuffer result = new StringBuffer();
+		return this;
+	}
+
+	@Override
+	public String toHTMLString(boolean includeHTMLTags) {
+		StringBuffer buffer = new StringBuffer();
 		NumberFormat realFormat = NumberFormat.getNumberInstance();
 		realFormat.setMaximumFractionDigits(2);
-		result.append("\tAverage: " + realFormat.format(stats.getMean()));
-		result.append("     ");
-		result.append("Maximum: " + realFormat.format(stats.getMax()));
-		result.append("     ");
-		result.append("Minimum: " + realFormat.format(stats.getMin()));
-		result.append("     ");
-		result.append("Std dev: " + realFormat.format(stats.getStandardDeviation()));
 		
-		System.out.println(result);
-		return result.toString();
+		if (includeHTMLTags) {
+			buffer.append("<html>");
+		}
 		
+		buffer.append("<h2>Partial Order Statistics</h2>");
+		buffer.append("<table>");
+		buffer.append("<tr><th>Stat</th><th>Value</th></tr>");
+		buffer.append("<tr><td>Average</td><td>" + realFormat.format(this.stats.getMean()) + "</td></tr>");
+		buffer.append("<tr><td>Maximum</td><td>" + realFormat.format(this.stats.getMax()) + "</td></tr>");
+		buffer.append("<tr><td>Minimum</td><td>" + realFormat.format(this.stats.getMin()) + "</td></tr>");
+		buffer.append("<tr><td>Std dev</td><td>" + realFormat.format(this.stats.getStandardDeviation()) + "</td></tr>");
+		buffer.append("</table>");
+		
+		if (includeHTMLTags) {
+			buffer.append("</html>");
+		}
+		
+		return buffer.toString();
 	}
 
 }
