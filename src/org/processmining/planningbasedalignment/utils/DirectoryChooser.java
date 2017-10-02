@@ -1,4 +1,4 @@
-package org.processmining.planningbasedalignment.plugins.planningbasedalignment.ui;
+package org.processmining.planningbasedalignment.utils;
 
 import java.io.File;
 

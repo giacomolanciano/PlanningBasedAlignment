@@ -16,8 +16,8 @@ import org.processmining.models.graphbased.directed.petrinet.Petrinet;
 import org.processmining.planningbasedalignment.plugins.planningbasedalignment.algorithms.AlignmentPddlEncoding;
 import org.processmining.planningbasedalignment.plugins.planningbasedalignment.parameters.PlanningBasedAlignmentParameters;
 import org.processmining.planningbasedalignment.plugins.planningbasedalignment.ui.PlanningBasedAlignmentConfiguration;
+import org.processmining.planningbasedalignment.utils.DirectoryChooser;
 import org.processmining.planningbasedalignment.utils.HelpMessages;
-import org.processmining.planningbasedalignment.plugins.planningbasedalignment.ui.DirectoryChooser;
 
 /**
  * The ProM plug-in for generating PDDL encodings for Planning-based Alignment.
