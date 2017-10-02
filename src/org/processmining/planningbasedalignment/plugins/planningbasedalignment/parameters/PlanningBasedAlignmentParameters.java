@@ -7,7 +7,7 @@ import org.deckfour.xes.classification.XEventClass;
 import org.processmining.basicutils.parameters.impl.PluginParametersImpl;
 import org.processmining.models.graphbased.directed.petrinet.elements.Transition;
 import org.processmining.models.semantics.petrinet.Marking;
-import org.processmining.planningbasedalignment.utils.PlannerSearchStrategy;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.models.PlannerSearchStrategy;
 import org.processmining.plugins.connectionfactories.logpetrinet.TransEvClassMapping;
 
 /**

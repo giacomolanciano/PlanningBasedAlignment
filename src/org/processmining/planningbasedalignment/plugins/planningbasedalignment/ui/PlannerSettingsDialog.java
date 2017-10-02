@@ -14,8 +14,8 @@ import org.deckfour.xes.model.XLog;
 import org.deckfour.xes.model.XTrace;
 import org.processmining.framework.plugin.PluginDescriptor;
 import org.processmining.framework.util.ui.widgets.ProMTable;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.models.PlannerSearchStrategy;
 import org.processmining.planningbasedalignment.plugins.planningbasedalignment.models.PlanningBasedReplayResult;
-import org.processmining.planningbasedalignment.utils.PlannerSearchStrategy;
 
 import com.fluxicon.slickerbox.factory.SlickerFactory;
 
