@@ -2,12 +2,14 @@ package org.processmining.planningbasedalignment.plugins.planningbasedalignment.
 
 import java.io.File;
 import java.io.IOException;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.deckfour.xes.extension.std.XConceptExtension;
 import org.deckfour.xes.model.XLog;
 import org.deckfour.xes.model.XTrace;
@@ -38,6 +40,8 @@ public class AlignmentPddlEncoding {
 	protected static final int EMPTY_TRACE_POS = 0;
 	protected static final int PDDL_FILES_PER_TRACE = 2;
 	protected static final int PROGRESS_CHECKER_DELAY = 1000;
+	
+	public static final String DEFAULT_TIME_UNIT = " ms";
 	
 	/**
 	 * The object used to generate the PDDL encodings.
@@ -74,6 +78,11 @@ public class AlignmentPddlEncoding {
 	 * The positions in the log of the traces to align.
 	 */
 	protected List<Integer> tracesToAlign;
+	
+	/**
+	 * The summary containing the relevant statistics about traces pre-processing time.
+	 */
+	protected SummaryStatistics preprocessingTimeSummary;
 	
 	/**
 	 * Produces the PDDL input files (representing the instances of the alignment problem) to be fed to the planner.
@@ -131,10 +140,14 @@ public class AlignmentPddlEncoding {
 		
 		// create the PDDL encoding for each trace
 		XTrace trace;
+		preprocessingTimeSummary = new SummaryStatistics();
 		for (Integer tracePos : tracesToAlign) {
 			trace = log.get(tracePos);
 			writePddlEncoding(trace, tracePos+1);
 		}
+		
+		// output pre-processing statistics
+		System.out.println(preprocessingTimeSummaryToString());
 		
 		pddlEncodingProgressChecker.interrupt();
 		
@@ -164,8 +177,16 @@ public class AlignmentPddlEncoding {
 		String sbDomainFileName = new File(pddlFilesDir, PDDL_DOMAIN_FILE_PREFIX + pddlFileSuffix).getCanonicalPath();
 		String sbProblemFileName = new File(pddlFilesDir, PDDL_PROBLEM_FILE_PREFIX + pddlFileSuffix).getCanonicalPath();
 
-		// write contents on disk
+		// generate the encoding
+		long startTime = System.currentTimeMillis();
 		String[] pddlEncoding = pddlEncoder.getPddlEncoding(trace);
+		long elapsedTime = System.currentTimeMillis() - startTime;
+		
+		//update statistics
+		if (tracePos != EMPTY_TRACE_POS)
+			preprocessingTimeSummary.addValue(elapsedTime);
+		
+		// write contents on disk
 		OSUtils.writeTextualFile(sbDomainFileName, pddlEncoding[0]);
 		OSUtils.writeTextualFile(sbProblemFileName, pddlEncoding[1]);
 	}
@@ -238,6 +259,30 @@ public class AlignmentPddlEncoding {
 		for (Entry<Integer, String> entry : positionToCaseIdMapping.entrySet()) {
 			result.append(entry.getKey() + "\t\t\t" + entry.getValue() + "\n");
 		}
+		
+		return result.toString();
+	}
+	
+	/**
+	 * Provide a textual view of the relevant statistics in the summary about traces pre-processing time.
+	 */
+	private String preprocessingTimeSummaryToString() {
+		
+		if (preprocessingTimeSummary == null)
+			return "";
+		
+		StringBuffer result = new StringBuffer();
+		NumberFormat realFormat = NumberFormat.getNumberInstance();
+		realFormat.setMaximumFractionDigits(2);
+		
+		result.append("\tAverage Preprocessing Time: " + realFormat.format(preprocessingTimeSummary.getMean()));
+		result.append(DEFAULT_TIME_UNIT + '\n');
+		result.append("\tMaximum Preprocessing Time: " + realFormat.format(preprocessingTimeSummary.getMax()));
+		result.append(DEFAULT_TIME_UNIT + '\n');
+		result.append("\tMinimum Preprocessing Time: " + realFormat.format(preprocessingTimeSummary.getMin()));
+		result.append(DEFAULT_TIME_UNIT + '\n');
+		result.append("\tStandard deviation:    " + realFormat.format(preprocessingTimeSummary.getStandardDeviation()));
+		result.append(DEFAULT_TIME_UNIT + '\n');
 		
 		return result.toString();
 	}

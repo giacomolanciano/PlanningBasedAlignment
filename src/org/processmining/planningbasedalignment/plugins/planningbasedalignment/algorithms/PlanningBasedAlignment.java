@@ -53,8 +53,6 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 	protected static final int INITIAL_EXECUTION_TRACE_CAPACITY = 10;
 	protected static final int RESULT_FILES_PER_TRACE = 1;
 
-	public static final String DEFAULT_TIME_UNIT = " ms";
-	
 	/**
 	 * The separated process in which the planner is executed.
 	 */

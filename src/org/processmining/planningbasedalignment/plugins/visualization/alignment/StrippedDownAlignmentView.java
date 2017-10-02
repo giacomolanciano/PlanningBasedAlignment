@@ -46,7 +46,7 @@ import org.processmining.framework.util.ui.widgets.traceview.ProMTraceView.Trace
 import org.processmining.framework.util.ui.widgets.traceview.masterdetail.DetailView;
 import org.processmining.framework.util.ui.widgets.traceview.model.FilteredListModelImpl;
 import org.processmining.framework.util.ui.widgets.traceview.model.FilteredListModelImpl.ListModelFilter;
-import org.processmining.planningbasedalignment.plugins.planningbasedalignment.algorithms.PlanningBasedAlignment;
+import org.processmining.planningbasedalignment.plugins.planningbasedalignment.algorithms.AlignmentPddlEncoding;
 import org.processmining.planningbasedalignment.plugins.planningbasedalignment.models.PlanningBasedReplayResult;
 import org.processmining.plugins.DataConformance.visualization.alignment.AlignmentListView;
 import org.processmining.plugins.DataConformance.visualization.alignment.AlignmentListView.XAlignmentOrdering;
@@ -472,14 +472,14 @@ public class StrippedDownAlignmentView extends JPanel implements DetailView<XAli
 		if (alignmentTimeSummary != null) {
 			statisticsModel.addRow(new String[] { "", "" });
 			statisticsModel.addRow(new String[] { "Average (actual) Time",
-					realFormat.format(alignmentTimeSummary.getMean()) + PlanningBasedAlignment.DEFAULT_TIME_UNIT });
+					realFormat.format(alignmentTimeSummary.getMean()) + AlignmentPddlEncoding.DEFAULT_TIME_UNIT });
 			statisticsModel.addRow(new String[] { "Maximum (actual) Time",
-					realFormat.format(alignmentTimeSummary.getMax()) + PlanningBasedAlignment.DEFAULT_TIME_UNIT });
+					realFormat.format(alignmentTimeSummary.getMax()) + AlignmentPddlEncoding.DEFAULT_TIME_UNIT });
 			statisticsModel.addRow(new String[] { "Minimum (actual) Time",
-					realFormat.format(alignmentTimeSummary.getMin()) + PlanningBasedAlignment.DEFAULT_TIME_UNIT });
+					realFormat.format(alignmentTimeSummary.getMin()) + AlignmentPddlEncoding.DEFAULT_TIME_UNIT });
 			statisticsModel.addRow(
 					new String[] { "Standard deviation", realFormat.format(alignmentTimeSummary.getStandardDeviation())
-							+ PlanningBasedAlignment.DEFAULT_TIME_UNIT });
+							+ AlignmentPddlEncoding.DEFAULT_TIME_UNIT });
 		}
 		
 		// expanded states stats
