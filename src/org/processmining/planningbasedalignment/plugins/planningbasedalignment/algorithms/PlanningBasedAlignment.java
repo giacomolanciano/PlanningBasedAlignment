@@ -392,6 +392,22 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 				// add alignment object to collection
 				alignments.add(dataAlignmentState);
 			}
+			
+			// delete alignment file from disk
+			try {
+				alignmentFile.delete();
+				
+			} catch (SecurityException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		// delete alignment files directory from disk
+		try {
+			plansFoundDir.delete();
+			
+		} catch (SecurityException e) {
+			e.printStackTrace();
 		}
 		
 		// produce result to be visualized
