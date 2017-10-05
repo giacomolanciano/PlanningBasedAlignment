@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.deckfour.xes.classification.XEventClass;
 import org.deckfour.xes.classification.XEventClassifier;
@@ -394,21 +395,11 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 			}
 			
 			// delete alignment file from disk
-			try {
-				alignmentFile.delete();
-				
-			} catch (SecurityException e) {
-				e.printStackTrace();
-			}
+			FileUtils.deleteQuietly(alignmentFile);
 		}
 		
 		// delete alignment files directory from disk
-		try {
-			plansFoundDir.delete();
-			
-		} catch (SecurityException e) {
-			e.printStackTrace();
-		}
+		FileUtils.deleteQuietly(plansFoundDir);
 		
 		// produce result to be visualized
 		XEventClassifier eventClassifier = parameters.getTransitionsEventsMapping().getEventClassifier();

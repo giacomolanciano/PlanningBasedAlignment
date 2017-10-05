@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.SystemUtils;
 
 /**
  * Utility functions to deal with OS-related stuff.
@@ -30,8 +31,8 @@ public class OSUtils {
 			FileWriter fileWriter = new FileWriter(file);
 			fileWriter.write(contents);
 			fileWriter.close();
-		}
-		catch(IOException e) {
+			
+		} catch(IOException e) {
 			e.printStackTrace();
 			return null;
 		}
@@ -71,7 +72,7 @@ public class OSUtils {
 		String osArch = System.getProperty("os.arch");
 		String winArch = System.getenv("PROCESSOR_ARCHITECTURE");
 		String wow64Arch = System.getenv("PROCESSOR_ARCHITEW6432");
-
+		
 		return osArch != null && osArch.endsWith("64")
 				|| winArch != null && winArch.endsWith("64")
 				|| wow64Arch != null && wow64Arch.endsWith("64");
