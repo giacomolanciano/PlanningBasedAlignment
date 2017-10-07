@@ -1,10 +1,9 @@
 package org.processmining.planningbasedalignment.plugins.planningbasedalignment.ui;
 
-import java.awt.Color;
 import java.awt.Dimension;
 
+import javax.swing.Box;
 import javax.swing.ButtonGroup;
-import javax.swing.JComponent;
 import javax.swing.JRadioButton;
 import javax.swing.table.DefaultTableModel;
 
@@ -16,11 +15,9 @@ import org.processmining.framework.plugin.PluginDescriptor;
 import org.processmining.framework.util.ui.widgets.ProMTable;
 import org.processmining.planningbasedalignment.plugins.planningbasedalignment.models.PlannerSearchStrategy;
 import org.processmining.planningbasedalignment.plugins.planningbasedalignment.models.PlanningBasedReplayResult;
+import org.processmining.planningbasedalignment.utils.ConfigurationPanel;
 
 import com.fluxicon.slickerbox.factory.SlickerFactory;
-
-import info.clearthought.layout.TableLayout;
-import info.clearthought.layout.TableLayoutConstants;
 
 /**
  * The panel for setting the parameters of the planner.
@@ -28,22 +25,22 @@ import info.clearthought.layout.TableLayoutConstants;
  * @author Giacomo Lanciano
  *
  */
-public class PlannerSettingsDialog extends JComponent {
+public class PlannerSettingsDialog extends ConfigurationPanel {
 
 	private static final long serialVersionUID = -60087716353524468L;
-	private static final int TABLE_WIDTH = 400;
+	private static final int TABLE_WIDTH = 300;
 	private static final int TABLE_HEIGHT = 70;
 	private static final int TABLE_FIELDS_NUM = 2;
 
 	/**
 	 * The radio button for selecting optimal strategy.
 	 */
-	private final JRadioButton optimalStrategy;
+	private JRadioButton optimalStrategy;
 
 	/**
 	 * The radio button for selecting sub-optimal strategy.
 	 */
-	private final JRadioButton subOptimalStrategy;
+	private JRadioButton subOptimalStrategy;
 
 	/**
 	 * The table holding data for the trace interval.
@@ -57,20 +54,31 @@ public class PlannerSettingsDialog extends JComponent {
 
 
 	public PlannerSettingsDialog(XLog log, PluginDescriptor pluginDescriptor) {
+		
+		super("");
 
 		SlickerFactory slickerFactory = SlickerFactory.instance();
+		
+		// check whether the planner will be executed after configuration		
+		// show strategy selection if planner will be executed
+		if (pluginDescriptor.getReturnTypes().contains(PlanningBasedReplayResult.class)) {
+			
+			// search strategy selection
+			ButtonGroup plannerSearchStrategySelection = new ButtonGroup();
+			optimalStrategy = slickerFactory.createRadioButton("Optimal (Blind A*)");
+			plannerSearchStrategySelection.add(optimalStrategy);
+			optimalStrategy.setSelected(true);  // optimal strategy set by default
+			subOptimalStrategy = slickerFactory.createRadioButton("Sub-optimal (Lazy Greedy)");
+			plannerSearchStrategySelection.add(subOptimalStrategy);
+			
+			Box verticalBox = Box.createVerticalBox();			
+			verticalBox.add(optimalStrategy);
+			verticalBox.add(subOptimalStrategy);
+			
+			addProperty("Select Planner Search Strategy", verticalBox);
+		}
 
-		// search strategy selection
-		ButtonGroup plannerSearchStrategySelection = new ButtonGroup();
-
-		optimalStrategy = slickerFactory.createRadioButton("Optimal (Blind A*)");
-		plannerSearchStrategySelection.add(optimalStrategy);
-		optimalStrategy.setSelected(true);  // optimal strategy set by default
-
-		subOptimalStrategy = slickerFactory.createRadioButton("Sub-optimal (Lazy Greedy)");
-		plannerSearchStrategySelection.add(subOptimalStrategy);
-
-
+		
 		// trace ids interval
 		XLogInfo logInfo = XLogInfoFactory.createLogInfo(log);
 		Object[][] tracesInterval = new Object[1][TABLE_FIELDS_NUM];
@@ -87,8 +95,10 @@ public class PlannerSettingsDialog extends JComponent {
 		ProMTable tracesIntervalTable = new ProMTable(tracesIntervalModel);
 		tracesIntervalTable.setPreferredSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
 		tracesIntervalTable.setMinimumSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
-
-
+		
+		addProperty("Select the interval of trace to align", tracesIntervalTable);
+		
+		
 		// traces length bounds
 		Object[][] tracesLengthBounds = new Object[1][TABLE_FIELDS_NUM];
 		tracesLengthBounds[0] = getActualTracesLengthBounds(log);
@@ -103,59 +113,8 @@ public class PlannerSettingsDialog extends JComponent {
 		ProMTable tracesLengthBoundsTable = new ProMTable(tracesLengthBoundsModel);
 		tracesLengthBoundsTable.setPreferredSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
 		tracesLengthBoundsTable.setMinimumSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
-
 		
-		/* add components to view */
-		
-		int basicRowCounter = 0;
-
-		// check whether the planner will be executed after configuration
-		boolean plannerExecution = pluginDescriptor.getReturnTypes().contains(PlanningBasedReplayResult.class);
-		
-		// change table according to plannerExecution
-		double tableStructure[][];
-		double columnsStructure[] = { 30, TableLayoutConstants.FILL, 50 };
-		if (plannerExecution) {
-			tableStructure = new double[][] {
-				columnsStructure,
-				{ 30, 30, 30, 60, TABLE_HEIGHT, 60, TABLE_HEIGHT}
-			};
-			
-		} else {
-			tableStructure = new double[][] { 
-				columnsStructure,
-				{ 60, TABLE_HEIGHT, 60, TABLE_HEIGHT}
-			};
-		}
-		setLayout(new TableLayout(tableStructure));
-		setBackground(new Color(200, 200, 200));
-		
-		// show strategy selection if planner will be executed
-		if (plannerExecution) {
-			add(slickerFactory.createLabel("<html><h2>Select Planner Search Strategy</h2></html>"),
-					"0," + basicRowCounter + ",1," + basicRowCounter + ",l,b");
-			basicRowCounter++;
-			
-			add(optimalStrategy, "0," + basicRowCounter + ",1," + basicRowCounter + ",l,b");
-			basicRowCounter++;
-			
-			add(subOptimalStrategy, "0," + basicRowCounter + ",1," + basicRowCounter + ",l,b");
-			basicRowCounter++;
-		}
-
-		add(slickerFactory.createLabel("<html><h2>Select the interval of trace to align</h2></html>"), 
-				"0," + basicRowCounter + ",1," + basicRowCounter + ",l,b");
-		basicRowCounter++;
-
-		add(tracesIntervalTable, "0," + basicRowCounter + ",1," + basicRowCounter + ",l,t");
-		basicRowCounter++;
-
-		add(slickerFactory.createLabel("<html><h2>Select the bounds for traces length</h2></html>"), 
-				"0," + basicRowCounter + ",1," + basicRowCounter + ",l,b");
-		basicRowCounter++;
-
-		add(tracesLengthBoundsTable, "0," + basicRowCounter + ",1," + basicRowCounter + ",l,t");
-		basicRowCounter++;
+		addProperty("Select the bounds for traces length", tracesLengthBoundsTable);
 
 	}
 
@@ -187,9 +146,9 @@ public class PlannerSettingsDialog extends JComponent {
 	 * @return The chosen PlannerSearchStrategy.
 	 */
 	public PlannerSearchStrategy getChosenStrategy() {
-		if (optimalStrategy.isSelected())
+		if (optimalStrategy != null && optimalStrategy.isSelected())
 			return PlannerSearchStrategy.BLIND_A_STAR;
-		if (subOptimalStrategy.isSelected())
+		if (subOptimalStrategy != null && subOptimalStrategy.isSelected())
 			return PlannerSearchStrategy.LAZY_GREEDY;
 		return null;
 	}

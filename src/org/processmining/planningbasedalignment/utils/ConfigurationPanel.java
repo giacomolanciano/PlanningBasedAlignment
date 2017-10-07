@@ -143,43 +143,43 @@ public class ConfigurationPanel extends ProMHeaderPanel {
 		return null;
 	}
 
-	private void installHighlighter(final Component component, final RoundedPanel target) {
-		component.addMouseListener(new MouseListener() {
-			@Override
-			public void mouseClicked(final MouseEvent arg0) { /* ignore */
-			}
-
-			@Override
-			public void mouseEntered(final MouseEvent arg0) {
-				target.setBackground(new Color(60, 60, 60, 240));
-				target.repaint();
-			}
-
-			@Override
-			public void mouseExited(final MouseEvent arg0) {
-				target.setBackground(new Color(60, 60, 60, 160));
-				target.repaint();
-			}
-
-			@Override
-			public void mousePressed(final MouseEvent arg0) { /* ignore */
-			}
-
-			@Override
-			public void mouseReleased(final MouseEvent arg0) { /* ignore */
-			}
-		});
-		if (component instanceof Container) {
-			for (final Component child : ((Container) component).getComponents()) {
-				installHighlighter(child, target);
-			}
-		}
-	}
+//	private void installHighlighter(final Component component, final RoundedPanel target) {
+//		component.addMouseListener(new MouseListener() {
+//			@Override
+//			public void mouseClicked(final MouseEvent arg0) { /* ignore */
+//			}
+//
+//			@Override
+//			public void mouseEntered(final MouseEvent arg0) {
+//				target.setBackground(new Color(60, 60, 60, 240));
+//				target.repaint();
+//			}
+//
+//			@Override
+//			public void mouseExited(final MouseEvent arg0) {
+//				target.setBackground(new Color(60, 60, 60, 160));
+//				target.repaint();
+//			}
+//
+//			@Override
+//			public void mousePressed(final MouseEvent arg0) { /* ignore */
+//			}
+//
+//			@Override
+//			public void mouseReleased(final MouseEvent arg0) { /* ignore */
+//			}
+//		});
+//		if (component instanceof Container) {
+//			for (final Component child : ((Container) component).getComponents()) {
+//				installHighlighter(child, target);
+//			}
+//		}
+//	}
 
 	protected RoundedPanel packInfo(final String name, final JComponent component) {
 		final RoundedPanel packed = new RoundedPanel(10, 0, 0);
 		packed.setBackground(new Color(60, 60, 60, 160));
-		final RoundedPanel target = packed;
+//		final RoundedPanel target = packed;
 		final Component actualComponent = findComponent(component);
 		packed.addMouseListener(new MouseListener() {
 			@Override
@@ -201,14 +201,14 @@ public class ConfigurationPanel extends ProMHeaderPanel {
 
 			@Override
 			public void mouseEntered(final MouseEvent arg0) {
-				target.setBackground(new Color(60, 60, 60, 240));
-				target.repaint();
+//				target.setBackground(new Color(60, 60, 60, 240));
+//				target.repaint();
 			}
 
 			@Override
 			public void mouseExited(final MouseEvent arg0) {
-				target.setBackground(new Color(60, 60, 60, 160));
-				target.repaint();
+//				target.setBackground(new Color(60, 60, 60, 160));
+//				target.repaint();
 			}
 
 			@Override
@@ -219,7 +219,9 @@ public class ConfigurationPanel extends ProMHeaderPanel {
 			public void mouseReleased(final MouseEvent arg0) { /* ignore */
 			}
 		});
-		installHighlighter(component, target);
+		
+//		installHighlighter(component, target);
+		
 		packed.setLayout(new BoxLayout(packed, BoxLayout.X_AXIS));
 		final JLabel nameLabel = new JLabel(name);
 		nameLabel.setOpaque(false);
