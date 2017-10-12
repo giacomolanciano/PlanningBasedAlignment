@@ -2,21 +2,24 @@ package org.processmining.planningbasedalignment.plugins.planningbasedalignment.
 
 import java.awt.Dimension;
 
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.ButtonGroup;
+import javax.swing.JLabel;
 import javax.swing.JRadioButton;
-import javax.swing.table.DefaultTableModel;
 
 import org.deckfour.xes.info.XLogInfo;
 import org.deckfour.xes.info.XLogInfoFactory;
 import org.deckfour.xes.model.XLog;
 import org.deckfour.xes.model.XTrace;
 import org.processmining.framework.plugin.PluginDescriptor;
-import org.processmining.framework.util.ui.widgets.ProMTable;
+import org.processmining.framework.util.ui.widgets.WidgetColors;
 import org.processmining.planningbasedalignment.plugins.planningbasedalignment.models.PlannerSearchStrategy;
 import org.processmining.planningbasedalignment.plugins.planningbasedalignment.models.PlanningBasedReplayResult;
 import org.processmining.planningbasedalignment.utils.ConfigurationPanel;
 
+import com.fluxicon.slickerbox.components.NiceIntegerSlider;
+import com.fluxicon.slickerbox.components.NiceSlider.Orientation;
 import com.fluxicon.slickerbox.factory.SlickerFactory;
 
 /**
@@ -28,9 +31,9 @@ import com.fluxicon.slickerbox.factory.SlickerFactory;
 public class PlannerSettingsDialog extends ConfigurationPanel {
 
 	private static final long serialVersionUID = -60087716353524468L;
-	private static final int TABLE_WIDTH = 300;
-	private static final int TABLE_HEIGHT = 70;
-	private static final int TABLE_FIELDS_NUM = 2;
+	private static final int LABEL_WIDTH = 50;
+	private static final int LABEL_HEIGHT = 16;
+	private static final int PADDING = 200;
 
 	/**
 	 * The radio button for selecting optimal strategy.
@@ -41,104 +44,81 @@ public class PlannerSettingsDialog extends ConfigurationPanel {
 	 * The radio button for selecting sub-optimal strategy.
 	 */
 	private JRadioButton subOptimalStrategy;
-
+	
 	/**
-	 * The table holding data for the trace interval.
+	 * The slider for selecting the starting point of the interval of traces to align.
 	 */
-	private DefaultTableModel tracesIntervalModel;
-
+	private NiceIntegerSlider startSlider;
+	
 	/**
-	 * The table holding data for the trace length boundaries.
+	 * The slider for selecting the ending point of the interval of traces to align.
 	 */
-	private DefaultTableModel tracesLengthBoundsModel;
-
+	private NiceIntegerSlider endSlider;
+	
+	/**
+	 * The slider for selecting the minimum length of the traces to align.
+	 */
+	private NiceIntegerSlider minLenghtSlider;
+	
+	/**
+	 * The slider for selecting the maximum length of the traces to align.
+	 */
+	private NiceIntegerSlider maxLenghtSlider;
 
 	public PlannerSettingsDialog(XLog log, PluginDescriptor pluginDescriptor) {
 		
 		super("");
-
-		SlickerFactory slickerFactory = SlickerFactory.instance();
 		
+		XLogInfo logInfo = XLogInfoFactory.createLogInfo(log);
+		int tracesAmount = logInfo.getNumberOfTraces();
+		int[] tracesLengthBounds = getActualTracesLengthBounds(log);
+		
+		// trace ids interval
+		Box tracesIntervalBox = Box.createVerticalBox();
+		this.startSlider = createFormattedIntegerSlider("start", 1, tracesAmount, 1);
+		this.endSlider = createFormattedIntegerSlider("end", 1, tracesAmount, tracesAmount);
+		tracesIntervalBox.add(this.startSlider);
+		tracesIntervalBox.add(this.endSlider);
+		
+		// traces length bounds
+		Box tracesLengthBox = Box.createVerticalBox();
+		this.minLenghtSlider = createFormattedIntegerSlider(
+				"min", tracesLengthBounds[0], tracesLengthBounds[1], tracesLengthBounds[0]);
+		this.maxLenghtSlider = createFormattedIntegerSlider(
+				"max", tracesLengthBounds[0], tracesLengthBounds[1], tracesLengthBounds[1]);
+		tracesLengthBox.add(this.minLenghtSlider);
+		tracesLengthBox.add(this.maxLenghtSlider);
+				
 		// check whether the planner will be executed after configuration		
 		// show strategy selection if planner will be executed
 		if (pluginDescriptor.getReturnTypes().contains(PlanningBasedReplayResult.class)) {
 			
 			// search strategy selection
 			ButtonGroup plannerSearchStrategySelection = new ButtonGroup();
-			optimalStrategy = slickerFactory.createRadioButton("Optimal (Blind A*)");
-			plannerSearchStrategySelection.add(optimalStrategy);
-			optimalStrategy.setSelected(true);  // optimal strategy set by default
-			subOptimalStrategy = slickerFactory.createRadioButton("Sub-optimal (Lazy Greedy)");
-			plannerSearchStrategySelection.add(subOptimalStrategy);
+			this.optimalStrategy = SlickerFactory.instance().createRadioButton("Optimal (Blind A*)");
+			this.optimalStrategy.setForeground(WidgetColors.TEXT_COLOR);
+			plannerSearchStrategySelection.add(this.optimalStrategy);
+			this.optimalStrategy.setSelected(true);  // optimal strategy set by default
+			subOptimalStrategy = SlickerFactory.instance().createRadioButton("Sub-optimal (Lazy Greedy)");
+			this.subOptimalStrategy.setForeground(WidgetColors.TEXT_COLOR);
+			plannerSearchStrategySelection.add(this.subOptimalStrategy);
 			
-			Box verticalBox = Box.createVerticalBox();			
-			verticalBox.add(optimalStrategy);
-			verticalBox.add(subOptimalStrategy);
+			Box searchStrategyBox = Box.createVerticalBox();
+			searchStrategyBox.add(this.optimalStrategy);
+			searchStrategyBox.add(this.subOptimalStrategy);
 			
-			addProperty("Select Planner Search Strategy", verticalBox);
+			// adapt box dimension to other components
+			searchStrategyBox.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, PADDING));
+			
+			// add component to view
+			addProperty("Select Planner Search Strategy", searchStrategyBox);
 		}
 
-		
-		// trace ids interval
-		XLogInfo logInfo = XLogInfoFactory.createLogInfo(log);
-		Object[][] tracesInterval = new Object[1][TABLE_FIELDS_NUM];
-		tracesInterval[0][0] = "1";
-		tracesInterval[0][1] = ""+logInfo.getNumberOfTraces();
-		tracesIntervalModel = new DefaultTableModel(tracesInterval, new Object[] { "From", "To" }) {
-			private static final long serialVersionUID = -6019224467802441949L;
-
-			@Override
-			public boolean isCellEditable(int row, int column) {
-				return true;
-			};
-		};
-		ProMTable tracesIntervalTable = new ProMTable(tracesIntervalModel);
-		tracesIntervalTable.setPreferredSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
-		tracesIntervalTable.setMinimumSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
-		
-		addProperty("Select the interval of trace to align", tracesIntervalTable);
-		
-		
-		// traces length bounds
-		Object[][] tracesLengthBounds = new Object[1][TABLE_FIELDS_NUM];
-		tracesLengthBounds[0] = getActualTracesLengthBounds(log);
-		tracesLengthBoundsModel = new DefaultTableModel(tracesLengthBounds, new Object[] { "Min length", "Max length" }) {
-			private static final long serialVersionUID = -6019224467802441949L;
-
-			@Override
-			public boolean isCellEditable(int row, int column) {
-				return true;
-			};
-		};
-		ProMTable tracesLengthBoundsTable = new ProMTable(tracesLengthBoundsModel);
-		tracesLengthBoundsTable.setPreferredSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
-		tracesLengthBoundsTable.setMinimumSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
-		
-		addProperty("Select the bounds for traces length", tracesLengthBoundsTable);
+		// add components to view
+		addProperty("Select the interval of trace to align", tracesIntervalBox);
+		addProperty("Select the bounds for traces length", tracesLengthBox);
 
 	}
-
-
-	/**
-	 * Compute the minimum and maximum traces lengths of the given event log.
-	 * 
-	 * @param log The XLog representing the event log.
-	 * @return An array of Object containing the minimum and maximum traces lengths respectively.
-	 */
-	private Object[] getActualTracesLengthBounds(XLog log) {
-		int maxLength = 0;
-		int minLength = log.get(0).size();
-		int traceLength;
-		for (XTrace trace : log) {
-			traceLength = trace.size();
-			if (traceLength > maxLength)
-				maxLength = traceLength;
-			if (traceLength < minLength)
-				minLength = traceLength;
-		}
-		return new Object[] { ""+minLength, ""+maxLength };
-	}
-
 
 	/**
 	 * Tells which search strategy has been chosen.
@@ -153,18 +133,14 @@ public class PlannerSettingsDialog extends ConfigurationPanel {
 		return null;
 	}
 
-
 	/**
 	 * Returns the endpoints (trace ids) of the interval of traces to be aligned.
 	 * 
 	 * @return An array of two integers, respectively the start and the end of the interval.
 	 */
 	public int[] getChosenTracesInterval() {
-		int start = Integer.parseInt((String) tracesIntervalModel.getValueAt(0, 0));
-		int end = Integer.parseInt((String) tracesIntervalModel.getValueAt(0, 1));
-		return new int[]{start, end};
+		return new int[]{ this.startSlider.getValue(), this.endSlider.getValue() };
 	}
-
 
 	/**
 	 * Returns the length boundaries for the traces to be aligned.
@@ -172,9 +148,7 @@ public class PlannerSettingsDialog extends ConfigurationPanel {
 	 * @return An array of two integers, respectively the minimum and the maximum length.
 	 */
 	public int[] getChosenTracesLengthBounds() {
-		int minLength = Integer.parseInt((String) tracesLengthBoundsModel.getValueAt(0, 0));
-		int maxLength = Integer.parseInt((String) tracesLengthBoundsModel.getValueAt(0, 1));
-		return new int[]{minLength, maxLength};
+		return new int[]{ this.minLenghtSlider.getValue(), this.maxLenghtSlider.getValue() };
 	}
 
 	/**
@@ -186,6 +160,26 @@ public class PlannerSettingsDialog extends ConfigurationPanel {
 		return checkTracesIntervalIntegrity() && checkTracesLengthBoundsIntegrity();
 	}
 
+	/**
+	 * Compute the minimum and maximum traces lengths of the given event log.
+	 * 
+	 * @param log The XLog representing the event log.
+	 * @return An array of integers containing the minimum and maximum traces lengths respectively.
+	 */
+	private int[] getActualTracesLengthBounds(XLog log) {
+		int maxLength = 0;
+		int minLength = log.get(0).size();
+		int traceLength;
+		for (XTrace trace : log) {
+			traceLength = trace.size();
+			if (traceLength > maxLength)
+				maxLength = traceLength;
+			if (traceLength < minLength)
+				minLength = traceLength;
+		}
+		return new int[] { minLength, maxLength };
+	}
+	
 	/**
 	 * Check whether the inserted traces interval is valid.
 	 * 
@@ -204,6 +198,36 @@ public class PlannerSettingsDialog extends ConfigurationPanel {
 	private boolean checkTracesLengthBoundsIntegrity() {
 		int[] boundaries = getChosenTracesLengthBounds();
 		return boundaries[0] <= boundaries[1];
+	}
+	
+	/**
+	 * Build a slider with predefined format for title and value fields.
+	 * 
+	 * @param title The title of the slider.
+	 * @param min The minimum value.
+	 * @param max The maximum value.
+	 * @param initial The initial value.
+	 * @return A {@link NiceIntegerSlider}.
+	 */
+	private NiceIntegerSlider createFormattedIntegerSlider(String title, int min, int max, int initial) {
+		Dimension labelDimension = new Dimension(LABEL_WIDTH, LABEL_HEIGHT);
+		NiceIntegerSlider slider = SlickerFactory.instance().createNiceIntegerSlider(
+				title, min, max, initial, Orientation.HORIZONTAL);
+		
+		// set title field format
+		JLabel titleLabel = (JLabel) slider.getComponent(0); 
+		titleLabel.setForeground(WidgetColors.TEXT_COLOR);
+		titleLabel.setMinimumSize(labelDimension);
+		titleLabel.setPreferredSize(labelDimension);
+		titleLabel.setHorizontalAlignment(JLabel.LEFT);
+		
+		// set value field format
+		JLabel valueLabel = (JLabel) slider.getComponent(1);
+		valueLabel.setForeground(WidgetColors.TEXT_COLOR);
+		valueLabel.setMinimumSize(labelDimension);
+		valueLabel.setPreferredSize(labelDimension);
+		
+		return slider;
 	}
 
 }
