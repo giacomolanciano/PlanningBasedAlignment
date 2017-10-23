@@ -135,14 +135,12 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 		
 		context.log("Invoking planner...");
 		
+		// prepare command line args for external planner script
 		String[] commandArgs = buildFastDownardCommandArgs(context, parameters);
-		
-//		System.out.println("\n" + startTime + "\n" + Arrays.toString(commandArgs));
-		
+				
 		// execute external planner script and wait for results
-		ProcessBuilder processBuilder = new ProcessBuilder(commandArgs);
-		plannerManagerProcess = processBuilder.start();
-
+		plannerManagerProcess = Runtime.getRuntime().exec(commandArgs);
+		
 		// read std out & err in separated thread
 		StreamAsyncReader errorGobbler = new StreamAsyncReader(plannerManagerProcess.getErrorStream(), "ERROR");
 		StreamAsyncReader outputGobbler = new StreamAsyncReader(plannerManagerProcess.getInputStream(), "OUTPUT");
