@@ -200,7 +200,7 @@ public class PlanningBasedAlignment extends AlignmentPddlEncoding {
 		commandComponents.add(pddlFilesDir.getCanonicalPath());
 		
 		// the path of the output directory for the planner
-		commandComponents.add(plansFoundDir.getCanonicalPath());
+		commandComponents.add(plansFoundDir.getName());
 		
 
 		/* begin of command args for Fast-Downward */
