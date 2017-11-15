@@ -10,11 +10,11 @@
 	<property name="version" value="${major_minor}.${env.BUILD_NUMBER}" />
 	<property name="project" value="PlanningBasedAlignment" />
 
-	<property name="author" value="Giacomo Lanciano" />
-	<property name="organization" value="Sapienza University of Rome" />
+	<property name="author" value="Anonymized for ICAPS 2018" />
+	<property name="organization" value="Anonymized for ICAPS 2018" />
 	<property name="description" value="PlanningBasedAlignment" />
 	<property name="license" value="L-GPL" />
-	<property name="logo" value="https://corsidilaurea.uniroma1.it/sites/default/files/logo_rosso_sapienza.png" />
+	<property name="logo" value="http://www.promtools.org/prom6/packages/prom_subtitle_hat_300.png" />
 
 	<property name="ivy.lib.dir" value="ivy" />
 	<property name="ivy.cache.dir" value="/var/lib/hudson/.ivy2/cache/${env.EXECUTOR_NUMBER}" />
