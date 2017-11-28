@@ -18,7 +18,7 @@ In order to run the tool, the following prerequisites must be satisfied:
 - Having installed either Python 2.7+ or Python 3.2+ (run `python -V` to check).
 
 ### Launching ProM Nightly Builds
-Once ProM Nightly Builds are downloaded and unpacked, start \emph{ProM Package Manager} to perform the initial configuration.
+Once ProM Nightly Builds are downloaded and unpacked, start *ProM Package Manager* to perform the initial configuration.
 Depending on the operative system, choose the right executable between `PackageManager.bat` and `PackageManager.sh`.
 <br><p align="center"><img src="screenshots/pack_man.JPG" width=80%/></p>
 
@@ -52,7 +52,7 @@ look like at this point.
 4. Select "Planning-Based Alignment of Event Logs and Petri Nets" from the list of available plug-ins and click "Start".
     
 5. As shown in the figure below, the plug-in may ask for the definition of a final marking for the process model
-(i.e. the token distribution that must be reached for the \emph{replay} of the trace to be terminated), that is needed for
+(i.e. the token distribution that must be reached for the *replay* of the trace to be terminated), that is needed for
 the definition of the goal state of the planning problem. The user is allowed to define the marking on its own, or let the 
 program derive it automatically from the process model structure.
 <br><p align="center"><img src="screenshots/final_marking.JPG" width=80%/></p>
