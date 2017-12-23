@@ -11,7 +11,7 @@ For the time being, the tool is guaranteed to work only on Windows.
 However, Linux and Mac OS users can run the plug-in variant (described in *Exporting the PDDL Encodings*) that allows one to export the PDDL encodings
 of the alignment problems, which can be used to feed any planner satisfying the assumptions provided in Section 2.3 of the paper 
 *Aligning Partially-Ordered Process-Execution Traces and Models Using Automated Planning*. 
-Furthermore, at https://goo.gl/F6n2Dh (in what follows, referred to as the *repository*) we provide the PDDL files used for the 
+Furthermore, at https://goo.gl/YtNMz2 (in what follows, referred to as the *repository*) we provide the PDDL files used for the 
 experiments described in the paper.
 In order to run the tool, the following prerequisites must be satisfied:
 - Having installed Java 1.7 or later versions (run `java -version` to check).
