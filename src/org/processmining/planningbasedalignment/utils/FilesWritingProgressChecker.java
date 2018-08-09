@@ -44,6 +44,8 @@ public class FilesWritingProgressChecker extends Thread {
 	 * The message to be displayed beside the file counter.
 	 */
 	private String message;
+
+	private int previousCounter=-1;
 	
 	/**
 	 * Create a worker thread for showing the progress of a process that writes a bunch of files in a directory every
@@ -98,9 +100,12 @@ public class FilesWritingProgressChecker extends Thread {
 				// do not show negative counter
 				if (fileCounter < 0)
 					fileCounter = 0;
-				
-				context.log(fileCounter + "/" + totalFilesNum + " " + message);
-				context.getProgress().setValue(fileCounter);
+				if (previousCounter<fileCounter)
+				{
+					context.log(fileCounter + "/" + totalFilesNum + " " + message);
+					context.getProgress().setValue(fileCounter);
+					previousCounter=fileCounter;
+				}
 				Thread.sleep(delayMillisecs);
 			}
 		} catch (InterruptedException e) {

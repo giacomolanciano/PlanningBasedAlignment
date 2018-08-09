@@ -52,6 +52,10 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	private static final int PYTHON_2_MIN_VERSION = 7;
 	private static final int PYTHON_3_MIN_VERSION = 2;
 	
+	private static final String python = "Python ";
+	private static final Pattern pythonVersionRegexPattern = Pattern.compile("\\d+\\.\\d+");
+	
+	
 	/**
 	 * A flag that tells whether another run of the plug-in is in progress or not, to avoid conflicts due to the fact
 	 * that the underlying planner is not designed to handle concurrent execution.
@@ -171,6 +175,39 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 		context.getFutureResult(0).cancel(true);
 		killSubprocesses();
 	}
+	
+	private boolean checkVersionOnStream(InputStream output) throws IOException
+	{
+		InputStreamReader inputStreamReader = new InputStreamReader(output);
+		BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+		String line = null;
+		Matcher pythonVersionMatcher = null;
+		while ((line = bufferedReader.readLine()) != null) {
+							
+			// check only the line with Python version
+			if (line.startsWith(python)) {	
+				pythonVersionMatcher = pythonVersionRegexPattern.matcher(line);
+				
+				if (pythonVersionMatcher.find()) {
+					String pythonVersion = pythonVersionMatcher.group();
+					
+					String[] pythonVersionTokens = pythonVersion.split("\\.");
+					int majorVersion = Integer.parseInt(pythonVersionTokens[0]);
+					int minorVersion = Integer.parseInt(pythonVersionTokens[1]);
+
+					if ((majorVersion == PYTHON_2 && minorVersion >= PYTHON_2_MIN_VERSION)
+							|| (majorVersion == PYTHON_3 && minorVersion >= PYTHON_3_MIN_VERSION)) {
+						System.out.println("Python found.");
+						return true;	
+					}
+				}
+				
+				// no need to check other lines
+				break;
+			}
+		}
+		return false; 
+	}
 
 	/**
 	 * Check whether Python 2.7+ or 3.2+ is installed and callable from command line.
@@ -181,8 +218,6 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 	 */
 	private boolean isPythonInstalled() {
 
-		String python = "Python ";
-		Pattern pythonVersionRegexPattern = Pattern.compile("\\d+\\.\\d+");
 		String[] commandArgs = new String[]{"python", "-V"};
 		ProcessBuilder processBuilder = new ProcessBuilder(commandArgs);
 		Process pythonVersionCheckerProcess = null; 
@@ -190,36 +225,10 @@ public class PlanningBasedAlignmentPlugin extends PlanningBasedAlignment {
 		try {
 			pythonVersionCheckerProcess = processBuilder.start();
 
-			// Python version number is outputed on std error
-			InputStream output = pythonVersionCheckerProcess.getErrorStream();
-			InputStreamReader inputStreamReader = new InputStreamReader(output);
-			BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-			String line = null;
-			Matcher pythonVersionMatcher = null;
-			while ((line = bufferedReader.readLine()) != null) {
-								
-				// check only the line with Python version
-				if (line.startsWith(python)) {	
-					pythonVersionMatcher = pythonVersionRegexPattern.matcher(line);
-					
-					if (pythonVersionMatcher.find()) {
-						String pythonVersion = pythonVersionMatcher.group();
-						
-						String[] pythonVersionTokens = pythonVersion.split("\\.");
-						int majorVersion = Integer.parseInt(pythonVersionTokens[0]);
-						int minorVersion = Integer.parseInt(pythonVersionTokens[1]);
-
-						if ((majorVersion == PYTHON_2 && minorVersion >= PYTHON_2_MIN_VERSION)
-								|| (majorVersion == PYTHON_3 && minorVersion >= PYTHON_3_MIN_VERSION)) {
-							System.out.println("Python found.");
-							return true;	
-						}
-					}
-					
-					// no need to check other lines
-					break;
-				}
-			}
+			// Python version number is outputed on std error?
+			if (checkVersionOnStream(pythonVersionCheckerProcess.getInputStream()) || checkVersionOnStream(pythonVersionCheckerProcess.getErrorStream()))
+					return true;
+			
 
 			// wait for the process to return
 			pythonVersionCheckerProcess.waitFor();
