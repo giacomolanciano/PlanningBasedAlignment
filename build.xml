@@ -13,7 +13,7 @@
 	<property name="author" value="Giacomo Lanciano" />
 	<property name="organization" value="Sapienza University of Rome" />
 	<property name="description" value="PlanningBasedAlignment" />
-	<property name="license" value="L-GPL" />
+	<property name="license" value="GPL" />
 	<property name="logo" value="https://corsidilaurea.uniroma1.it/sites/default/files/logo_rosso_sapienza.png" />
 
 	<property name="ivy.lib.dir" value="ivy" />
