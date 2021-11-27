@@ -86,7 +86,7 @@ if __name__ == '__main__':
 
         # log errors to stderr if needed
         if err:
-            sys.stderr.write(err + '\n')
+            sys.stderr.write(str(err) + '\n')
 
         # decode process output to prevent errors when running with Python 3
         out = out.decode('utf-8')
