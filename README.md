@@ -1,25 +1,35 @@
 # PlanningBasedAlignment
-Mirror of the official SVN repository of PlanningBasedAlignment package for ProM.
+
+Source code of the PlanningBasedAlignment package for ProM.
+
+Useful links:
+- [Official SVN repo](https://svn.win.tue.nl/repos/prom/Packages/PlanningBasedAlignment/)
+- [GitHub mirror](https://github.com/giacomolanciano/PlanningBasedAlignment)
+- [ProM documentation](https://www.promtools.org/doku.php?id=docs:start)
 
 ## User Instructions for "Planning-Based Alignment of Event Logs and Petri Nets" Plug-in
 ### Prerequisites
 The tool for the planning-based alignment of partially-ordered event log traces and process models is available as a plug-in for **ProM**,
-an established open-source framework for implementing Process Mining tools and algorithms. ProM **Nightly Builds** are available
-at http://www.promtools.org/doku.php?id=nightly.
+an established open-source framework for implementing Process Mining tools and algorithms.
 
 For the time being, the tool is guaranteed to work only on Windows.
 However, Linux and Mac OS users can run the plug-in variant (described in *Exporting the PDDL Encodings*) that allows one to export the PDDL encodings
-of the alignment problems, which can be used to feed any planner satisfying the assumptions provided in Section 2.3 of the paper 
-*Aligning Partially-Ordered Process-Execution Traces and Models Using Automated Planning*. 
-Furthermore, at https://goo.gl/YtNMz2 (in what follows, referred to as the *repository*) we provide the PDDL files used for the 
-experiments described in the paper.
+of the alignment problems, which can be used to feed any planner satisfying the assumptions provided in Section 2.3 of the 
+[paper](http://ceur-ws.org/Vol-1920/BPM_2017_paper_187.pdf) 
+*Aligning Partially-Ordered Process-Execution Traces and Models Using Automated Planning* (BPM 2017). 
+
 In order to run the tool, the following prerequisites must be satisfied:
 - Having installed Java 1.7 or later versions (run `java -version` to check).
-- Having installed either Python 2.7+ or Python 3.2+ (run `python -V` to check).
+- Having installed either Python `2.7.*` or Python `3.2.*` (run `python -V` to check).
+
+**NOTE:** while the (simple) Python code included in this repo may work with later version of Python 3, the version of 
+[Fast Downward](https://www.fast-downward.org/) bundled with the plug-in is not guaranteed to do the same. Thus, when using
+more recent versions of Python, the plug-in may start but fail to return any result.
 
 ### Launching ProM Nightly Builds
-Once ProM Nightly Builds are downloaded and unpacked, start *ProM Package Manager* to perform the initial configuration.
-Depending on the operative system, choose the right executable between `PackageManager.bat` and `PackageManager.sh`.
+Once ProM [Nightly Builds](http://www.promtools.org/doku.php?id=nightly) are downloaded and unpacked, 
+start *ProM Package Manager* to perform the initial configuration.
+Depending on the operating system, choose the right executable between `PackageManager.bat` and `PackageManager.sh`.
 <br><p align="center"><img src="screenshots/pack_man.JPG" width=80%/></p>
 
 The figure above shows the GUI that is presented after launching the package manager. Navigate to the "Not installed" 
@@ -29,6 +39,11 @@ be visible in the list of the "Up to date" tab, together with the other packages
 
 It is now possible to start ProM to use the tool. Depending on the operative system, choose the right executable between 
 `ProM.bat` and `ProM.sh`. The first start-up could take a while to complete, since some core components have to be loaded.
+
+### Launching from Eclipse
+In case you need a version of the plug-in that is not yet available from ProM Nightly Builds, or you need to test your own
+changes, you can open this repo from Eclipse and use the provided [launch configuration]("ProM with UITopia (PlanningBasedAlignment).launch")
+to get a development instance of ProM up and running.
 
 ### Using the tool
 Once ProM GUI is loaded, it is possible to align event logs and process models.
@@ -89,7 +104,7 @@ The figure below shows such visualization of the result.
 <br><p align="center"><img src="screenshots/aligned_traces.JPG" width=80%/></p>
 
 ### Exporting the PDDL Encodings
-Despite the tool is integrate with the *Fast Downward* (http://www.fast-downward.org) 
+Despite the tool is integrate with the [Fast Downward](http://www.fast-downward.org) 
 planning framework, one could be interested in aligning the event log and the process model using a different planner,
 for instance, to compare the performances of two different implementations of the same search strategy. For these reasons, 
 we developed a small variant of the tool (also provided as a ProM plug-in) that only allows for the export of the PDDL encoding 
@@ -99,3 +114,21 @@ The usage is analogous to the previous plug-in for steps 1-3 and 5-8. Conversely
 plug-in variant "Generate PDDL Encoding for Planning-Based Alignment". Then, at the end of the configuration steps, choose the 
 destination directory for the PDDL files. These output files can now be given as inputs to any compatible planner, to get the 
 plans representing the aligned traces.
+
+## Citation
+Please consider citing:
+
+```
+@inproceedings{deLeoni2018aligning,
+  title={Aligning partially-ordered process-execution traces and models using automated planning},
+  author={de Leoni, Massimiliano and Lanciano, Giacomo and Marrella, Andrea},
+  booktitle={Twenty-Eighth International Conference on Automated Planning and Scheduling},
+  year={2018}
+}
+@inproceedings{deLeoni2017tool,
+  title={A Tool for Aligning Event Logs and Prescriptive Process Models through Automated Planning.},
+  author={de Leoni, Massimiliano and Lanciano, Giacomo and Marrella, Andrea},
+  booktitle={15th International Conference on Business Process Management},
+  year={2017}
+}
+```
